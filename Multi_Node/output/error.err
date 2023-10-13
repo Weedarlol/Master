@@ -1,0 +1,8 @@
+The --kernels jacobi switch is ignored by nsys.
+WARNING: out and any of its children processes will be profiled.
+
+SKIPPED: /global/D1/homes/vidaro/Master/Mas/Multi_CPU/report1.sqlite does not contain NV Tools Extension (NVTX) data.
+SKIPPED: /global/D1/homes/vidaro/Master/Mas/Multi_CPU/report1.sqlite does not contain CUDA trace data.
+SKIPPED: /global/D1/homes/vidaro/Master/Mas/Multi_CPU/report1.sqlite does not contain CUDA kernel data.
+SKIPPED: /global/D1/homes/vidaro/Master/Mas/Multi_CPU/report1.sqlite does not contain GPU memory data.
+SKIPPED: /global/D1/homes/vidaro/Master/Mas/Multi_CPU/report1.sqlite does not contain GPU memory data.

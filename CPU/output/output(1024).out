@@ -1,0 +1,10 @@
+make[1]: Entering directory '/global/D1/homes/vidaro/Master/Mas/CPU'
+nvcc -c main.cu -o main.o
+nvcc main.o -o out -L/../../usr/lib/x86_64-linux-gnu/libnccl.so
+./out
+The computation found a solution. It computed it within 2988060 iterations and 45120.676 seconds.
+Width = 1024, Height = 1024
+make[1]: Leaving directory '/global/D1/homes/vidaro/Master/Mas/CPU'
+make[1]: Entering directory '/global/D1/homes/vidaro/Master/Mas/CPU'
+rm -f main.o out
+make[1]: Leaving directory '/global/D1/homes/vidaro/Master/Mas/CPU'
