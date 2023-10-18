@@ -111,4 +111,3 @@ __global__ void jacobi(float *mat_gpu, float *mat_gpu_tmp, float eps, int width,
         width, height, eps, grid_g, maxEps);
 
 }
- 

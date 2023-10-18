@@ -38,6 +38,11 @@ void start(int width, int height, int iter, float eps, float dx, float dy, dim3 
     total       | int   | Total number of elements in the matrix
     dataPerGpu  | int   | Number of elements per available gpu
 
+    maxThreads     | int       | Total number of available threads within the grid_g group
+    jacobiSize     | int       | Number of elements in the matrix which is to be calculated each iteration
+    amountPerThread| int       | Number of elements to be calculated by each thread each iteration
+    leftover       | int       | Number of threads which is required to compute one more element to be calculate all the elements
+
     start       |clock_t| Start timer of program
     end         |clock_t| End timer of program
 
@@ -55,6 +60,12 @@ void start(int width, int height, int iter, float eps, float dx, float dy, dim3 
     int total = width*height;
     int print_iter = iter;
     int dataPerGpu = width*height/gpus;
+
+    int maxThreads = blockDim.x*blockDim.y*blockDim.z*gridDim.x*gridDim.y*gridDim.z;
+    int jacobiSize = (width - 2) * (height - 2);
+    int amountPerThread = jacobiSize / maxThreads;
+    int leftover = jacobiSize % maxThreads;
+
 
     clock_t start, end;
 
@@ -77,7 +88,7 @@ void start(int width, int height, int iter, float eps, float dx, float dy, dim3 
         cudaErrorHandle(cudaSetDevice(g));
         cudaErrorHandle(cudaMalloc(&mat_gpu[g], total*sizeof(float)));
         cudaErrorHandle(cudaMalloc(&mat_gpu_tmp[g], total*sizeof(float)));
-        cudaErrorHandle(cudaMalloc(&maxEps[g], (blockDim.x*blockDim.y*blockDim.z*gridDim.x*gridDim.y*gridDim.z)*sizeof(int*)));
+        cudaErrorHandle(cudaMalloc(&maxEps[g], maxThreads*sizeof(int*)));
         
         maxEps_print[g] = 1;
         device_nr[g] = g;
@@ -110,6 +121,9 @@ void start(int width, int height, int iter, float eps, float dx, float dy, dim3 
         kernelArgs[6] = &width;
         kernelArgs[7] = &height;
         kernelArgs[8] = &iter;
+        kernelArgs[9] = &jacobiSize;
+        kernelArgs[10] = &amountPerThread;
+        kernelArgs[11] = &leftover;
         
         kernelColl[g] = kernelArgs;
     }

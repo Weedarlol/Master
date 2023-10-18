@@ -52,19 +52,11 @@ __global__ void jacobi(float *mat_gpu, float *mat_gpu_tmp, int *maxEps, int devi
     /*
     Variables      | Type      | Description
     grid_g         | grid_group| Creates a group compromising of all the threads
-    maxThreads     | int       | Total number of available threads within the grid_g group
-    jacobiSize     | int       | Number of elements in the matrix which is to be calculated each iteration
-    amountPerThread| int       | Number of elements to be calculated by each thread each iteration
-    leftover       | int       | Number of threads which is required to compute one more element to be calculate all the elements
     thread         | int       | The index of each thread
     index_start    | int       | Element index the thread will start computing on, unique for each thread in grid_g group
     */
 
     grid_group grid_g = this_grid();
-    int maxThreads = grid_g.num_threads();
-    int jacobiSize = (width - 2) * (height - 2);
-    int amountPerThread = jacobiSize / maxThreads;
-    int leftover = jacobiSize % maxThreads;
     int thread = grid_g.thread_rank();
     int index_start = thread * amountPerThread + min(thread, leftover);
 
