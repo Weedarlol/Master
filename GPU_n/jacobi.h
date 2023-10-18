@@ -1,1 +1,1 @@
-__global__ void jacobi(float *phi_gpu, float *phi_tmp, int *maxEps, int device_nr, int dataPerGpu, float eps, int width, int height, int iter);
+__global__ void jacobi(float *phi_gpu, float *phi_tmp, int *maxEps, int device_nr, int dataPerGpu, float eps, int width, int height, int iter, int jacobiSize, int amountPerThread, int leftover);

@@ -3,14 +3,13 @@
 
 #include <cooperative_groups.h>
 
-using namespace cooperative_groups;
 namespace cg = cooperative_groups;
 
 __device__ int shared_var = 0;
 
 __device__ void calc(float *mat_gpu, float *mat_gpu_tmp, int thread, int iter,
     int amountPerThread, int index_start, int jacobiSize, int width, int height,
-    float eps, grid_group grid_g, int *maxEps){
+    float eps, cg::grid_group grid_g, int *maxEps){
     /*
     Variables  | Type | Description
     local_var  | int  | Calculates how many elements a thread has that is accepted between two iterations
@@ -45,7 +44,7 @@ __device__ void calc(float *mat_gpu, float *mat_gpu_tmp, int thread, int iter,
             }
         }
 
-        // If any element in the matrix is 1, the jacobian matrix is not finished, and we therefore continue
+        /* // If any element in the matrix is 1, the jacobian matrix is not finished, and we therefore continue
         maxEps[thread] = local_var;
 
         grid_g.sync();
@@ -56,6 +55,13 @@ __device__ void calc(float *mat_gpu, float *mat_gpu_tmp, int thread, int iter,
             if(thread < grid_g.num_threads()/i){
                 maxEps[thread] =  maxEps[thread] + maxEps[thread + grid_g.num_threads()/i];
             }
+        } */
+
+        for (int i = grid_g.num_threads() / 2; i > 0; i /= 2){
+            maxEps[thread] = local_var;
+            grid_g.sync(); // wait for all threads to store
+            if(thread<i) local_var += maxExp[thread + i];
+            grid_g.sync(); // wait for all threads to load
         }
 
         // If the combined value is larger than 0, it means that there is at least one element which could be reduced further.
@@ -95,7 +101,7 @@ __global__ void jacobi(float *mat_gpu, float *mat_gpu_tmp, float eps, int width,
     index_start    | int       | Element index the thread will start computing on, unique for each thread in grid_g group
     */
 
-    grid_group grid_g = this_grid();
+    cg::grid_group grid_g = cg::this_grid();
     int maxThreads = grid_g.num_threads();
     int jacobiSize = (width - 2) * (height - 2);
     int amountPerThread = jacobiSize / maxThreads;

@@ -250,9 +250,9 @@ int main() {
     blockDim    | dim3  | Number of threads in 3 directions for each block
     gridDim     | dim3  | Number of blocks in 3 directions for the whole grid
     */
-    int width = 512;
-    int height = 512;
-    int iter = 1000000;
+    int width = 1024;
+    int height = 1024;
+    int iter = 10000000;
 
     float eps = 1.0e-14;
     float dx = 2.0 / (width - 1);

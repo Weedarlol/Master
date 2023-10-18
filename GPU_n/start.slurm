@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --job-name=n_GPU_Overlap
-#SBATCH -p dgx2q
+#SBATCH -p hgx2q
 #SBATCH -N 1
 #SBATCH -n 1
 #SBATCH -t 14:00:00

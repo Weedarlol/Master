@@ -1,5 +1,5 @@
 ex3:
-	sbatch -p dgx2q ./start.slurm
+	sbatch -p hgx2q ./start.slurm
 
 
 
