@@ -44,19 +44,7 @@ __device__ void calc(float *mat_gpu, float *mat_gpu_tmp, int thread, int iter,
             }
         }
 
-        /* // If any element in the matrix is 1, the jacobian matrix is not finished, and we therefore continue
-        maxEps[thread] = local_var;
-
-        grid_g.sync();
-
-        // Try to utilize the threads, combining the value of two and two threads, and ending up with 1 value at element 0 which
-        // is 0 if all elements in are 0, or 1 if one or more elements are 1.
-        for(int i = 2; i <= grid_g.num_threads(); i*=2){
-            if(thread < grid_g.num_threads()/i){
-                maxEps[thread] =  maxEps[thread] + maxEps[thread + grid_g.num_threads()/i];
-            }
-        } */
-
+        // https://developer.nvidia.com/blog/cooperative-groups/
         for (int i = grid_g.num_threads() / 2; i > 0; i /= 2){
             maxEps[thread] = local_var;
             grid_g.sync(); // wait for all threads to store

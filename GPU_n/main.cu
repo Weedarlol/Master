@@ -140,19 +140,20 @@ void start(int width, int height, int iter, float eps, float dx, float dy, dim3 
 
         if(gpus > 1){
             for(int g = 0; g < gpus; g++){
+                cudaErrorHandle(cudaSetDevice(g)); // Unnecessary?
                 if(g == 0){
-                    // Transfers data to the second from the first device
-                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu[1] + dataPerGpu, 1, mat_gpu_tmp[0] + (dataPerGpu-width), 0, width*sizeof(float), streams[g]));
+                    // Transfers data device 0 -> device 1
+                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu[1] + dataPerGpu-width, 1, mat_gpu_tmp[0] + dataPerGpu-width, 0, width*sizeof(float), streams[g]));
                 }
                 else if(g < gpus-1){
-                    // Transfers data to device g-1 from g
-                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu[g-1] + dataPerGpu*g , g-1, mat_gpu_tmp[g] + dataPerGpu*g, g, width*sizeof(float), streams[g]));
-                    // Transfers data to device g+1 from g
+                    // Transfers data device g -> device g+1
                     cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu[g+1] + dataPerGpu*g-width, g+1, mat_gpu_tmp[g] + dataPerGpu*g-width, g, width*sizeof(float), streams[g]));
+                    // Transfers data device g-1 -> device g
+                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu[g-1] + dataPerGpu*g , g-1, mat_gpu_tmp[g] + dataPerGpu*g, g, width*sizeof(float), streams[g]));
                 }
                 else{
-                    // Transfers data to second last device from the last device
-                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu[g-1] + dataPerGpu*g-width, g-1, mat_gpu_tmp[g] + dataPerGpu*g-width, g, width*sizeof(float), streams[g]));
+                    // Transfers data device -1 -> device -2
+                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu[g-1] + dataPerGpu*g, g-1, mat_gpu_tmp[g] + dataPerGpu*g, g, width*sizeof(float), streams[g]));
                 }
             }
         }
@@ -187,17 +188,6 @@ void start(int width, int height, int iter, float eps, float dx, float dy, dim3 
     
 
     cudaErrorHandle(cudaDeviceSynchronize());
-
-    for(int g = 0; g < gpus; g++){
-        printf("iter %i - gpu %i - maxeps %i\n", iter, g, maxEps_print[g]);
-    }
-
-    for(int i = 0; i < 20; i++){
-        for(int j = 0; j < 20; j++){
-            printf("%.4f, ", mat[i*width + j]);
-        }
-        printf("\n");
-    }
     
     if(iter != 0){
         printf("The computation found a solution. It computed it within %i iterations (%i - %i) and %.3f seconds.\nWidth = %i, Height = %i\nthreadBlock = (%d, %d, %d), gridDim = (%d, %d, %d)\n\n", 

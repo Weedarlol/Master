@@ -32,20 +32,6 @@ __device__ void calc(float *mat_gpu, float *mat_gpu_tmp, int device_nr, int thre
         }
     }
 
-    /* // If any element in the matrix is 1, the jacobian matrix is not finished, and we therefore continue
-    maxEps[thread] = local_var;
-
-    grid_g.sync();
-
-    for(int i = 2; i <= grid_g.num_threads(); i*=2){
-        if(thread < grid_g.num_threads()/i){
-            maxEps[thread] =  maxEps[thread] + maxEps[thread + grid_g.num_threads()/i];
-        }
-    }
-
-    grid_g.sync(); */
-
-
     // https://developer.nvidia.com/blog/cooperative-groups/
     for (int i = grid_g.num_threads() / 2; i > 0; i /= 2)
     {
@@ -54,7 +40,6 @@ __device__ void calc(float *mat_gpu, float *mat_gpu_tmp, int device_nr, int thre
         if(thread<i) local_var += maxExp[thread + i];
         grid_g.sync(); // wait for all threads to load
     }
-
 }
 
 __global__ void jacobi(float *mat_gpu, float *mat_gpu_tmp, int *maxEps, int device_nr, int dataPerGpu, float eps, int width, int height, int iter, int jacobiSize, int amountPerThread, int leftover){
@@ -62,12 +47,12 @@ __global__ void jacobi(float *mat_gpu, float *mat_gpu_tmp, int *maxEps, int devi
     Variables      | Type      | Description
     grid_g         | grid_group| Creates a group compromising of all the threads
     thread         | int       | The index of each thread
-    index_start    | int       | Element index the thread will start computing on, unique for each thread in grid_g group
+    index_start    | int       | Element index the thread will start computing on, unique for each thread in grid_g group. It is also taking into consideration what device is computing
     */
 
     cg::grid_group grid_g = cg::this_grid();
     int thread = grid_g.thread_rank();
-    int index_start = thread * amountPerThread + min(thread, leftover);
+    int index_start = (thread * amountPerThread + min(thread, leftover)) + dataPerGpu*device_nr;
 
     if(thread < leftover){
         amountPerThread++;
