@@ -37,7 +37,7 @@ __device__ void calc(float *mat_gpu, float *mat_gpu_tmp, int device_nr, int thre
     {
         maxEps[thread] = local_var;
         grid_g.sync(); // wait for all threads to store
-        if(thread<i) local_var += maxExp[thread + i];
+        if(thread<i) local_var += maxEps[thread + i];
         grid_g.sync(); // wait for all threads to load
     }
 

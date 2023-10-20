@@ -2,7 +2,7 @@
 
 #SBATCH --job-name=Cluster
 #SBATCH -p dgx2q
-#SBATCH -N 2
+#SBATCH -N 1
 #SBATCH -n 1
 #SBATCH -t 14:00:00
 #SBATCH --ntasks-per-node=1

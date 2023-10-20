@@ -18,8 +18,6 @@ __device__ void calc(float *mat_gpu, float *mat_gpu_tmp, int thread, int iter,
 
 	int local_var;
 
-    grid_g.sync();
-
     // Calculating Jacobian Matrix
     while(iter > 0 && shared_var == 0){
         // Resets the local_var value
@@ -48,7 +46,7 @@ __device__ void calc(float *mat_gpu, float *mat_gpu_tmp, int thread, int iter,
         for (int i = grid_g.num_threads() / 2; i > 0; i /= 2){
             maxEps[thread] = local_var;
             grid_g.sync(); // wait for all threads to store
-            if(thread<i) local_var += maxExp[thread + i];
+            if(thread<i) local_var += maxEps[thread + i];
             grid_g.sync(); // wait for all threads to load
         }
 
@@ -67,7 +65,6 @@ __device__ void calc(float *mat_gpu, float *mat_gpu_tmp, int thread, int iter,
         iter--;
 
         grid_g.sync();
-    
     }
 
     // Sets the maxEps value to be equal to the iter value, which will be 0 if all the iterations are run and a solution was not found.
@@ -103,5 +100,4 @@ __global__ void jacobi(float *mat_gpu, float *mat_gpu_tmp, float eps, int width,
 
     calc(mat_gpu, mat_gpu_tmp, thread, iter, amountPerThread, index_start, jacobiSize,
         width, height, eps, grid_g, maxEps);
-
 }

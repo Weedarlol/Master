@@ -162,8 +162,8 @@ int main() {
     gridDim     | dim3  | Number of blocks in 3 directions for the whole grid
     */
 
-    int width = 1024;
-    int height = 1024;
+    int width = 512;
+    int height = 512;
     int iter = 10000000;
     
     // Burde stoppe etter 409020

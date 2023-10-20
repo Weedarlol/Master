@@ -1,0 +1,13 @@
+make[1]: Entering directory '/global/D1/homes/vidaro/Master/Mas/GPU_1'
+nvcc -c main.cu -o main.o
+nvcc -c jacobi.cu -o jacobi.o
+nvcc main.o jacobi.o -o out -L/../../usr/lib/x86_64-linux-gnu/libnccl.so
+./out
+The computation found a solution. It computed it within 2988060 iterations (10000000 - 7011940) and 693.964 seconds.
+Width = 1024, Height = 1024
+threadBlock = (32, 32, 1), gridDim = (16, 1, 1)
+
+make[1]: Leaving directory '/global/D1/homes/vidaro/Master/Mas/GPU_1'
+make[1]: Entering directory '/global/D1/homes/vidaro/Master/Mas/GPU_1'
+rm -f main.o out jacobi.o
+make[1]: Leaving directory '/global/D1/homes/vidaro/Master/Mas/GPU_1'
