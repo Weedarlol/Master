@@ -14,7 +14,7 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort =
     }
 }
 
-#define N 1000
+#define N 1000000
 
 int main() {
     int *h_a, *h_b;
@@ -38,28 +38,28 @@ int main() {
     }
 
     // Record start time
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
-    cudaEventRecord(start);
+    cudaErrorHandle(cudaEventCreate(&start));
+    cudaErrorHandle(cudaEventCreate(&stop));
+    cudaErrorHandle(cudaEventRecord(start));
 
     // Transfer data from host to device
-    cudaMemcpy(d_a, h_a, N * sizeof(int), cudaMemcpyHostToDevice);
+    cudaErrorHandle(cudaMemcpy(d_a, h_a, N * sizeof(int), cudaMemcpyHostToDevice));
 
     // Transfer data from device to host
-    cudaMemcpy(h_b, d_b, N * sizeof(int), cudaMemcpyDeviceToHost);
+    cudaErrorHandle(cudaMemcpy(h_b, d_b, N * sizeof(int), cudaMemcpyDeviceToHost));
 
     // Record stop time
-    cudaEventRecord(stop);
-    cudaEventSynchronize(stop);
-    cudaEventElapsedTime(&milliseconds, start, stop);
+    cudaErrorHandle(cudaEventRecord(stop));
+    cudaErrorHandle(cudaEventSynchronize(stop));
+    cudaErrorHandle(cudaEventElapsedTime(&milliseconds, start, stop));
 
     printf("Latency: %f milliseconds\n", milliseconds);
 
     // Clean up
-    cudaFree(d_a);
-    cudaFree(d_b);
-    free(h_a);
-    free(h_b);
+    cudaErrorHandle(cudaFree(d_a));
+    cudaErrorHandle(cudaFree(d_b));
+    cudaErrorHandle(cudaFreeHost(h_a));
+    cudaErrorHandle(cudaFreeHost(h_b));
 
     return 0;
 }

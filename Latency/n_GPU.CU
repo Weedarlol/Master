@@ -2,28 +2,35 @@
 #include <stdlib.h>
 #include <cuda_runtime.h>
 
-#define N 1000
-
-__global__ void kernel(int *d_a, int *d_b) {
-    int tid = threadIdx.x + blockIdx.x * blockDim.x;
-    if (tid < N) {
-        d_b[tid] = d_a[tid];
+// https://ori-cohen.medium.com/real-life-cuda-programming-part-4-error-checking-e66dcbad6b55
+#define cudaErrorHandle(ans) { gpuAssert((ans), __FILE__, __LINE__); }
+inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort = true) 
+{
+    if (code != cudaSuccess) {
+        fprintf(stderr, "GPUassert: %s %s %d\n", cudaGetErrorString(code), file,
+                line);
+        if (abort)
+            exit(code);
     }
 }
+
+#define N 1000000
 
 int main() {
     int *h_a, *h_b;
     int *d_a, *d_b;
-    cudaEvent_t start, stop;
+
     float milliseconds = 0;
 
+    cudaEvent_t start, stop;
+
     // Allocate memory on the host (CPU)
-    h_a = (int *)malloc(N * sizeof(int));
-    h_b = (int *)malloc(N * sizeof(int));
+    cudaErrorHandle(cudaMallocHost(&h_a, N*sizeof(int)));
+    cudaErrorHandle(cudaMallocHost(&h_a, N*sizeof(int)));
 
     // Allocate memory on the device (GPU)
-    cudaMalloc((void**)&d_a, N * sizeof(int));
-    cudaMalloc((void**)&d_b, N * sizeof(int));
+    cudaErrorHandle(cudaMalloc((void**)&d_a, N * sizeof(int)));
+    cudaErrorHandle(cudaMalloc((void**)&d_b, N * sizeof(int)));
 
     // Initialize data on the host
     for (int i = 0; i < N; i++) {
@@ -31,35 +38,29 @@ int main() {
     }
 
     // Record start time
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
-    cudaEventRecord(start);
+    cudaErrorHandle(cudaEventCreate(&start));
+    cudaErrorHandle(cudaEventCreate(&stop));
+    cudaErrorHandle(cudaEventRecord(start));
 
     // Transfer data from host to device
-    cudaMemcpy(d_a, h_a, N * sizeof(int), cudaMemcpyHostToDevice);
-
-    // Launch the kernel
-    int blockSize = 256;
-    int numBlocks = (N + blockSize - 1) / blockSize;
-    kernel<<<numBlocks, blockSize>>>(d_a, d_b);
+    cudaErrorHandle(cudaMemcpy(d_a, h_a, N * sizeof(int), cudaMemcpyHostToDevice));
 
     // Transfer data from device to host
-    cudaMemcpy(h_b, d_b, N * sizeof(int), cudaMemcpyDeviceToHost);
+    cudaErrorHandle(cudaMemcpy(h_b, d_b, N * sizeof(int), cudaMemcpyDeviceToHost));
 
     // Record stop time
-    cudaEventRecord(stop);
-    cudaEventSynchronize(stop);
-    cudaEventElapsedTime(&milliseconds, start, stop);
+    cudaErrorHandle(cudaEventRecord(stop));
+    cudaErrorHandle(cudaEventSynchronize(stop));
+    cudaErrorHandle(cudaEventElapsedTime(&milliseconds, start, stop));
 
     printf("Latency: %f milliseconds\n", milliseconds);
 
     // Clean up
-    cudaFree(d_a);
-    cudaFree(d_b);
-    free(h_a);
-    free(h_b);
+    cudaErrorHandle(cudaFree(d_a));
+    cudaErrorHandle(cudaFree(d_b));
+    cudaErrorHandle(cudaFreeHost(h_a));
+    cudaErrorHandle(cudaFreeHost(h_b));
 
     return 0;
 }
-
 
