@@ -1,0 +1,4 @@
+make[1]: Entering directory '/global/D1/homes/vidaro/Master/Mas/CPU'
+nvcc -c main.cu -o main.o
+nvcc main.o -o out -L/../../usr/lib/x86_64-linux-gnu/libnccl.so
+nsys nvprof ./out --kernels "kernelName"

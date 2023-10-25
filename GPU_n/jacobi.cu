@@ -5,8 +5,6 @@
 
 namespace cg = cooperative_groups;
 
-__device__ int shared_var = 1;
-
 __device__ void calc(float *mat_gpu, float *mat_gpu_tmp, int device_nr, int thread, int iter,
     int amountPerThread, int index_start, int jacobiSize, int width, int height,
     float eps, cg::grid_group grid_g, int *maxEps){
@@ -42,7 +40,7 @@ __device__ void calc(float *mat_gpu, float *mat_gpu_tmp, int device_nr, int thre
     }
 }
 
-__global__ void jacobi(float *mat_gpu, float *mat_gpu_tmp, int *maxEps, int device_nr, int dataPerGpu, float eps, int width, int height, int iter, int jacobiSize, int amountPerThread, int leftover){
+__global__ void jacobi(float *mat_gpu, float *mat_gpu_tmp, int *maxEps, int device_nr, int dataLeftover, float eps, int width, int height, int iter, int jacobiSize, int amountPerThread, int leftover){
     /*
     Variables      | Type      | Description
     grid_g         | grid_group| Creates a group compromising of all the threads
@@ -52,7 +50,26 @@ __global__ void jacobi(float *mat_gpu, float *mat_gpu_tmp, int *maxEps, int devi
 
     cg::grid_group grid_g = cg::this_grid();
     int thread = grid_g.thread_rank();
-    int index_start = (thread * amountPerThread + min(thread, leftover)) + dataPerGpu*device_nr;
+    int index_start;
+    index_start = (thread * amountPerThread + min(thread, leftover)) + jacobiSize*device_nr;
+
+
+
+    // If one device requires more elements than the other device
+    // If dataLeftover > gpus, add 1 element to device
+    // need to move all starting elements in later devices device_nr steps forward
+    if(dataLeftover > gpus){
+        index_start = (thread * amountPerThread + min(thread, leftover+1)) + jacobiSize*device_nr + device_nr;
+        jacobiSize += jacobiSize*device_nr + device_nr;
+    }
+    else{
+        index_start = (thread * amountPerThread + min(thread, leftover)) + jacobiSize*device_nr + dataLeftover;
+        jacobiSize += jacobiSize*device_nr + dataLeftover;
+    }
+    
+
+
+
 
     if(thread < leftover){
         amountPerThread++;

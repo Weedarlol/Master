@@ -5,8 +5,6 @@
 
 namespace cg = cooperative_groups;
 
-__device__ int shared_var = 1;
-
 __device__ void calc(float *mat_gpu, float *mat_gpu_tmp, int device_nr, int thread, int iter,
     int amountPerThread, int index_start, int jacobiSize, int width, int height,
     float eps, cg::grid_group grid_g, int *maxEps){
@@ -40,7 +38,6 @@ __device__ void calc(float *mat_gpu, float *mat_gpu_tmp, int device_nr, int thre
         if(thread<i) local_var += maxEps[thread + i];
         grid_g.sync(); // wait for all threads to load
     }
-
 }
 
 __global__ void jacobi(float *mat_gpu, float *mat_gpu_tmp, int *maxEps, int device_nr, int dataPerGpu, float eps, int width, int height, int iter, int jacobiSize, int amountPerThread, int leftover){
@@ -53,7 +50,8 @@ __global__ void jacobi(float *mat_gpu, float *mat_gpu_tmp, int *maxEps, int devi
 
     cg::grid_group grid_g = cg::this_grid();
     int thread = grid_g.thread_rank();
-    int index_start = (thread * amountPerThread + min(thread, leftover)) + dataPerGpu*device_nr;
+    int index_start = (thread * amountPerThread + min(thread, leftover)) + jacobiSize*device_nr;
+    jacobiSize += jacobiSize*device_nr;
 
     if(thread < leftover){
         amountPerThread++;

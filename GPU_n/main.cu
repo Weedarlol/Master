@@ -36,7 +36,7 @@ void start(int width, int height, int iter, float eps, float dx, float dy, dim3 
     Variables   | Type  | Description
     gpus        | int   | Number of available gpus
     total       | int   | Total number of elements in the matrix
-    dataPerGpu  | int   | Number of elements given to each gpu
+    dataPerGpu  | int   | Number of elements given to each GPU
     maxThreads  | int   | Total number of available threads within the grid_g group
     jacobiSize  | int   | Number of elements in the matrix which is to be calculated each iteration
     amountPerThread|int | Number of elements to be calculated by each thread each iteration
@@ -58,9 +58,10 @@ void start(int width, int height, int iter, float eps, float dx, float dy, dim3 
 
     int total = width*height;
     int print_iter = iter;
-    int dataPerGpu = width*height/gpus;
+    int dataPerGpu = (width*height)/gpus;
+    int dataLeftover = (width*height)%gpus;
     int maxThreads = blockDim.x*blockDim.y*blockDim.z*gridDim.x*gridDim.y*gridDim.z;
-    int jacobiSize = (width - 2) * (height - 2);
+    int jacobiSize = ((width - 2) * (height - 2))/gpus;
     int amountPerThread = jacobiSize / maxThreads;
     int leftover = jacobiSize % maxThreads;
 
@@ -108,12 +109,12 @@ void start(int width, int height, int iter, float eps, float dx, float dy, dim3 
     cudaErrorHandle(cudaMallocHost(&kernelColl, gpus * sizeof(void**)));
     // Allocates the elements in the kernelColl, used for cudaLaunchCooperativeKernel as functon variables.
     for (int g = 0; g < gpus; g++) {
-        void **kernelArgs = new void*[9];
+        void **kernelArgs = new void*[12];
         kernelArgs[0] = &mat_gpu[g];
         kernelArgs[1] = &mat_gpu_tmp[g];
         kernelArgs[2] = &maxEps[g];
         kernelArgs[3] = &device_nr[g];
-        kernelArgs[4] = &dataPerGpu;
+        kernelArgs[4] = &dataLeftover;
         kernelArgs[5] = &eps;
         kernelArgs[6] = &width;
         kernelArgs[7] = &height;
@@ -123,6 +124,10 @@ void start(int width, int height, int iter, float eps, float dx, float dy, dim3 
         kernelArgs[11] = &leftover;
         
         kernelColl[g] = kernelArgs;
+    }
+
+    for(int g = 0; g < gpus; g++){
+        cudaErrorHandle(cudaStreamSynchronize(streams[g]));
     }
 
 
@@ -136,23 +141,36 @@ void start(int width, int height, int iter, float eps, float dx, float dy, dim3 
         }
 
         if(gpus > 1){
-            for(int g = 0; g < gpus; g++){
+            for(int g = 0; g < dataLeftover; g++){
                 cudaErrorHandle(cudaSetDevice(g)); // Unnecessary?
                 if(g == 0){
                     // Transfers data device 0 -> device 1
-                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu[1] + dataPerGpu-width, 1, mat_gpu_tmp[0] + dataPerGpu-width, 0, width*sizeof(float), streams[g]));
+                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[1] + dataPerGpu+1-width, 1, mat_gpu_tmp[0] + dataPerGpu+1-width, 0, width*sizeof(float), streams[g]));
                 }
                 else if(g < gpus-1){
                     // Transfers data device g -> device g+1
-                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu[g+1] + dataPerGpu*g-width, g+1, mat_gpu_tmp[g] + dataPerGpu*g-width, g, width*sizeof(float), streams[g]));
+                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g+1] + dataPerGpu*g+1-width, g+1, mat_gpu_tmp[g] + dataPerGpu*g+1-width, g, width*sizeof(float), streams[g]));
                     // Transfers data device g-1 -> device g
-                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu[g-1] + dataPerGpu*g , g-1, mat_gpu_tmp[g] + dataPerGpu*g, g, width*sizeof(float), streams[g]));
+                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g-1] + dataPerGpu*g+1 , g-1, mat_gpu_tmp[g] + dataPerGpu*g+1, g, width*sizeof(float), streams[g]));
+                }
+            }
+            for(int g = dataLeftover; g < gpus; g++){
+                cudaErrorHandle(cudaSetDevice(g)); // Unnecessary?
+                if(g < gpus-1){
+                    // Transfers data device g -> device g+1
+                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g+1] + dataPerGpu*g-width, g+1, mat_gpu_tmp[g] + dataPerGpu*g-width, g, width*sizeof(float), streams[g]));
+                    // Transfers data device g-1 -> device g
+                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g-1] + dataPerGpu*g , g-1, mat_gpu_tmp[g] + dataPerGpu*g, g, width*sizeof(float), streams[g]));
                 }
                 else{
                     // Transfers data device -1 -> device -2
-                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu[g-1] + dataPerGpu*g, g-1, mat_gpu_tmp[g] + dataPerGpu*g, g, width*sizeof(float), streams[g]));
+                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g-1] + dataPerGpu*g, g-1, mat_gpu_tmp[g] + dataPerGpu*g, g, width*sizeof(float), streams[g]));
                 }
             }
+        }
+
+        for(int g = 0; g < gpus; g++){
+            cudaErrorHandle(cudaStreamSynchronize(streams[g]));
         }
 
         for(int g = 1; g < gpus; g++){
@@ -165,12 +183,9 @@ void start(int width, int height, int iter, float eps, float dx, float dy, dim3 
             mat_gpu_tmp[g] = mat_change;
         }
 
-
         iter--;
 
-        for(int g = 0; g < gpus; g++){
-            cudaErrorHandle(cudaStreamSynchronize(streams[g]));
-        }
+        
     }
 
 
@@ -185,13 +200,22 @@ void start(int width, int height, int iter, float eps, float dx, float dy, dim3 
 
     cudaErrorHandle(cudaDeviceSynchronize());
     
+    printf("\nout %i\n", maxEps_print[0]);
+
     if(iter != 0){
-        printf("The computation found a solution. It computed it within %i iterations (%i - %i) and %.3f seconds.\nWidth = %i, Height = %i\nthreadBlock = (%d, %d, %d), gridDim = (%d, %d, %d)\n\n", 
-        print_iter - iter, print_iter, iter, ((double) (end - start)) / CLOCKS_PER_SEC, width, height, blockDim.x, blockDim.y, blockDim.z, gridDim.x, gridDim.y, gridDim.z);
+        printf("The computation found a solution with %i gpus. It computed it within %i iterations (%i - %i) and %.3f seconds.\nWidth = %i, Height = %i\nthreadBlock = (%d, %d, %d), gridDim = (%d, %d, %d)\n\n", 
+        gpus, print_iter - iter, print_iter, iter, ((double) (end - start)) / CLOCKS_PER_SEC, width, height, blockDim.x, blockDim.y, blockDim.z, gridDim.x, gridDim.y, gridDim.z);
     }
     else{
-        printf("The computation did not find a solution after all its iterations, it ran = %i iterations (%i - %i). It completed it in %.3f seconds.\nWidth = %i, Height = %i\nthreadBlock = (%d, %d, %d), gridDim = (%d, %d, %d)\n\n", 
-        print_iter - iter, print_iter, iter, ((double) (end - start)) / CLOCKS_PER_SEC, width, height, blockDim.x, blockDim.y, blockDim.z, gridDim.x, gridDim.y, gridDim.z);
+        printf("The computation did not find a solution with %i gpus after all its iterations, it ran = %i iterations (%i - %i). It completed it in %.3f seconds.\nWidth = %i, Height = %i\nthreadBlock = (%d, %d, %d), gridDim = (%d, %d, %d)\n\n", 
+        gpus, print_iter - iter, print_iter, iter, ((double) (end - start)) / CLOCKS_PER_SEC, width, height, blockDim.x, blockDim.y, blockDim.z, gridDim.x, gridDim.y, gridDim.z);
+    }
+
+    for(int i = 0; i < 20; i++){
+        for(int j = 0; j < 20; j++){
+            printf("%.3f, ", mat[j + i*width]);
+        }
+        printf("\n");
     }
 
     cudaErrorHandle(cudaFreeHost(mat));
@@ -236,9 +260,9 @@ int main() {
     blockDim    | dim3  | Number of threads in 3 directions for each block
     gridDim     | dim3  | Number of blocks in 3 directions for the whole grid
     */
-    int width = 1024;
-    int height = 1024;
-    int iter = 10000000;
+    int width = 512;
+    int height = 512;
+    int iter = 500000;
 
     float eps = 1.0e-14;
     float dx = 2.0 / (width - 1);

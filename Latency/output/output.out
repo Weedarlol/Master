@@ -1,0 +1,7 @@
+make[1]: Entering directory '/global/D1/homes/vidaro/Master/Mas/Latency'
+nvcc -rdc=true -c GPU.cu -o GPU.o
+nvcc -rdc=true GPU.o -o GPU_out 
+make[1]: Leaving directory '/global/D1/homes/vidaro/Master/Mas/Latency'
+make[1]: Entering directory '/global/D1/homes/vidaro/Master/Mas/Latency'
+rm -f n_GPU.o GPU.o n_GPU_out GPU_out
+make[1]: Leaving directory '/global/D1/homes/vidaro/Master/Mas/Latency'

@@ -87,25 +87,36 @@ int main() {
 
     end = clock();
 
-    for(int i = 0; i < 20; i++){
+    /* for(int i = 0; i < 20; i++){
         for(int j = 0; j < 20; j++){
             printf("%.5f ", mat[i*width+j]);
         }
         printf("\n");
+    } */
+
+    FILE *fptr;
+
+    fptr = fopen("CPUMatrix.txt", "w");
+    for(int i = 0; i < width; i++){
+        for(int j = 0; j < height; j++){
+            fprintf(fptr, "%.14f ", mat[j + i*width]);
+        }
+        fprintf(fptr, "\n");
     }
+    fclose(fptr);
 
 
     free(mat);
     free(mat_tmp);
 
-    if(maxdelta <= eps){
+    /* if(maxdelta <= eps){
         printf("The computation found a solution. It computed it within %i iterations(%i - %i) in %.3f seconds.\nWidth = %i, Height = %i\n", 
         print_iter - iter, print_iter, iter, ((double) (end - start)) / CLOCKS_PER_SEC, width, height);
     }
     else{
         printf("The computation did not find a solution. It computed through the whole %i iteration(%i - %i) in %.3f seconds \nWidth = %i, Height = %i\n", 
         print_iter - iter, print_iter, iter, ((double) (end - start)) / CLOCKS_PER_SEC, width, height);
-    }
+    } */
 
     return 0;
 }

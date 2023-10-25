@@ -1,0 +1,6 @@
+make[1]: Entering directory '/global/D1/homes/vidaro/Master/Mas/Multi_Node'
+nvcc -rdc=true -c main.cu -o main.o 
+make[1]: Leaving directory '/global/D1/homes/vidaro/Master/Mas/Multi_Node'
+make[1]: Entering directory '/global/D1/homes/vidaro/Master/Mas/Multi_Node'
+rm -f main.o out jacobi.o
+make[1]: Leaving directory '/global/D1/homes/vidaro/Master/Mas/Multi_Node'
