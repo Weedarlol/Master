@@ -59,9 +59,9 @@ void start(int width, int height, int iter, float eps, float dx, float dy, dim3 
     int total = width*height;
     int print_iter = iter;
     int dataPerGpu = (width*height)/gpus;
-    int dataLeftover = (width*height)%gpus;
     int maxThreads = blockDim.x*blockDim.y*blockDim.z*gridDim.x*gridDim.y*gridDim.z;
     int jacobiSize = ((width - 2) * (height - 2))/gpus;
+    int dataLeftover = ((width - 2) * (height - 2))%gpus;
     int amountPerThread = jacobiSize / maxThreads;
     int leftover = jacobiSize % maxThreads;
 
@@ -143,29 +143,36 @@ void start(int width, int height, int iter, float eps, float dx, float dy, dim3 
         if(gpus > 1){
             for(int g = 0; g < dataLeftover; g++){
                 cudaErrorHandle(cudaSetDevice(g)); // Unnecessary?
+                int tmpVar = dataPerGpu*g + g + 1;
                 if(g == 0){
                     // Transfers data device 0 -> device 1
-                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[1] + dataPerGpu+1-width, 1, mat_gpu_tmp[0] + dataPerGpu+1-width, 0, width*sizeof(float), streams[g]));
+                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[1]   + tmpVar+dataPerGpu-width,   1, mat_gpu_tmp[0] + tmpVar+dataPerGpu-width, 0, width*sizeof(float), streams[g]));
                 }
                 else if(g < gpus-1){
                     // Transfers data device g -> device g+1
-                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g+1] + dataPerGpu*g+1-width, g+1, mat_gpu_tmp[g] + dataPerGpu*g+1-width, g, width*sizeof(float), streams[g]));
+                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g+1] + tmpVar+dataPerGpu-width, g+1, mat_gpu_tmp[g] + tmpVar+dataPerGpu-width, g, width*sizeof(float), streams[g]));
                     // Transfers data device g-1 -> device g
-                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g-1] + dataPerGpu*g+1 , g-1, mat_gpu_tmp[g] + dataPerGpu*g+1, g, width*sizeof(float), streams[g]));
+                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g-1] + tmpVar                 , g-1, mat_gpu_tmp[g] + tmpVar                 , g, width*sizeof(float), streams[g]));
                 }
             }
             for(int g = dataLeftover; g < gpus; g++){
                 cudaErrorHandle(cudaSetDevice(g)); // Unnecessary?
-                if(g < gpus-1){
+                // Calculating which index one should start transferring from and to depending on the GPU and if there is unequal elements for the devices
+                int tmpVar = dataPerGpu*g + dataLeftover;
+                if(g == 0){
+                    // Transfers data device 0 -> device 1
+                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[1]   + tmpVar+dataPerGpu-width,   1, mat_gpu_tmp[0] + tmpVar+dataPerGpu-width, 0, width*sizeof(float), streams[g]));
+                }
+                else if(g < gpus-1){
                     // Transfers data device g -> device g+1
-                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g+1] + dataPerGpu*g-width, g+1, mat_gpu_tmp[g] + dataPerGpu*g-width, g, width*sizeof(float), streams[g]));
+                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g+1] + tmpVar+dataPerGpu-width, g+1, mat_gpu_tmp[g] + tmpVar+dataPerGpu-width, g, width*sizeof(float), streams[g]));
                     // Transfers data device g-1 -> device g
-                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g-1] + dataPerGpu*g , g-1, mat_gpu_tmp[g] + dataPerGpu*g, g, width*sizeof(float), streams[g]));
+                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g-1] + tmpVar                 , g-1, mat_gpu_tmp[g] + tmpVar                 , g, width*sizeof(float), streams[g]));
                 }
                 else{
                     // Transfers data device -1 -> device -2
-                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g-1] + dataPerGpu*g, g-1, mat_gpu_tmp[g] + dataPerGpu*g, g, width*sizeof(float), streams[g]));
-                }
+                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g-1] + tmpVar                 , g-1, mat_gpu_tmp[g] + tmpVar                 , g, width*sizeof(float), streams[g]));
+                }  
             }
         }
 
@@ -262,7 +269,7 @@ int main() {
     */
     int width = 512;
     int height = 512;
-    int iter = 500000;
+    int iter = 10000000;
 
     float eps = 1.0e-14;
     float dx = 2.0 / (width - 1);

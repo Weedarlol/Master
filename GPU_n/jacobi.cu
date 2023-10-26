@@ -51,29 +51,60 @@ __global__ void jacobi(float *mat_gpu, float *mat_gpu_tmp, int *maxEps, int devi
     cg::grid_group grid_g = cg::this_grid();
     int thread = grid_g.thread_rank();
     int index_start;
-    index_start = (thread * amountPerThread + min(thread, leftover)) + jacobiSize*device_nr;
 
 
+    // jacobiSize = antall elementer per device
+    // amountPerThread = antall elementer per thread
+    // dataLeftover = antal GPUer som krever 1 ekstra element
+    // leftover = antall elementer som krever 1 ekstra element
 
-    // If one device requires more elements than the other device
-    // If dataLeftover > gpus, add 1 element to device
-    // need to move all starting elements in later devices device_nr steps forward
-    if(dataLeftover > gpus){
-        index_start = (thread * amountPerThread + min(thread, leftover+1)) + jacobiSize*device_nr + device_nr;
+
+    // If there are an unequal amount of elements to spread to the devices, compute as below
+    if(dataLeftover > device_nr){
+        // Add another element to compute for the device
+        jacobiSize++;
+        // Find the starting location for the thread based on device and elements
+        index_start = thread * amountPerThread + min(thread, leftover+1) + jacobiSize*device_nr;
+        // Find the last element to compute on
+        jacobiSize += jacobiSize*device_nr;
+
+        // If elements are unequal within the device, all threads with id less than "leftover" is granted one more element
+        if(thread <= leftover){
+            amountPerThread++;
+        }
+    }
+    // If there are an equal number of elements spread to the devices, do this instead
+    else{
+        index_start = thread * amountPerThread + min(thread, leftover) + jacobiSize*device_nr + dataLeftover;
+        jacobiSize += jacobiSize*device_nr + dataLeftover;
+
+        if(thread < leftover){
+            amountPerThread++;
+        }
+    }
+
+/* 
+
+
+    // If number of elements per device is unequal, if true, then add push index of element start per thread backwards
+    if(dataLeftover > device_nr){
+        index_start = thread * amountPerThread + min(thread, leftover) + jacobiSize*device_nr + device_nr;
         jacobiSize += jacobiSize*device_nr + device_nr;
     }
     else{
-        index_start = (thread * amountPerThread + min(thread, leftover)) + jacobiSize*device_nr + dataLeftover;
+        index_start = thread * amountPerThread + min(thread, leftover) + jacobiSize*device_nr + dataLeftover;
         jacobiSize += jacobiSize*device_nr + dataLeftover;
     }
-    
 
 
 
-
+    // If number of elements per thread is unequal
     if(thread < leftover){
         amountPerThread++;
     }
+    else if(thread = leftover && dataLeftover > device_nr){
+        amountPerThread++;
+    } */
 
     calc(mat_gpu, mat_gpu_tmp, device_nr, thread, iter, amountPerThread, index_start, jacobiSize, width, height, eps, grid_g, maxEps);
 
