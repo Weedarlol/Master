@@ -1,3 +1,0 @@
-make[1]: Entering directory '/global/D1/homes/vidaro/Master/Mas/GPU_n'
-nvcc -rdc=true -c main.cu -o main.o
-nvcc -rdc=true -c jacobi.cu -o jacobi.o

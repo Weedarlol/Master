@@ -1,0 +1,1 @@
+__global__ void jacobi(float *mat_gpu, float *mat_gpu_tmp, int rows, int device_nr, int gpus);

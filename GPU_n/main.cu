@@ -142,7 +142,7 @@ void start(int width, int height, int iter, float eps, float dx, float dy, dim3 
 
         if(gpus > 1){
             for(int g = 0; g < dataLeftover; g++){
-                cudaErrorHandle(cudaSetDevice(g)); // Unnecessary?
+                cudaErrorHandle(cudaSetDevice(g));
                 int tmpVar = dataPerGpu*g + g + 1;
                 if(g == 0){
                     // Transfers data device 0 -> device 1
@@ -156,7 +156,7 @@ void start(int width, int height, int iter, float eps, float dx, float dy, dim3 
                 }
             }
             for(int g = dataLeftover; g < gpus; g++){
-                cudaErrorHandle(cudaSetDevice(g)); // Unnecessary?
+                cudaErrorHandle(cudaSetDevice(g));
                 // Calculating which index one should start transferring from and to depending on the GPU and if there is unequal elements for the devices
                 int tmpVar = dataPerGpu*g + dataLeftover;
                 if(g == 0){

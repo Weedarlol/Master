@@ -2,6 +2,7 @@
 #include <math.h>
 #include <time.h>
 
+
 #include "jacobi.h"
 #include <nvtx3/nvToolsExt.h>
 
@@ -31,6 +32,7 @@ void fillValues(float *mat, float dx, float dy, int width, int height){
     }
 }
 
+
 void start(int width, int height, int iter, float eps, float dx, float dy, dim3 blockDim, dim3 gridDim){
     /*
     Variables   | Type  | Description
@@ -56,166 +58,31 @@ void start(int width, int height, int iter, float eps, float dx, float dy, dim3 
     int gpus;
     cudaErrorHandle(cudaGetDeviceCount(&gpus));
 
-    int total = width*height;
-    int print_iter = iter;
-    int dataPerGpu = (width*height)/gpus;
-    int maxThreads = blockDim.x*blockDim.y*blockDim.z*gridDim.x*gridDim.y*gridDim.z;
-    int jacobiSize = ((width - 2) * (height - 2))/gpus;
-    int amountPerThread = jacobiSize / maxThreads;
-    int leftover = jacobiSize % maxThreads;
-
-    clock_t start, end;
-
-    float *mat;
-    float **mat_gpu, **mat_gpu_tmp;
-
-    int *device_nr;
-    int **maxEps, *maxEps_print;
-
-    cudaErrorHandle(cudaMallocHost(&mat, total*sizeof(float*)));
-
-    cudaErrorHandle(cudaMallocHost(&mat_gpu,      gpus*sizeof(float*)));
-    cudaErrorHandle(cudaMallocHost(&mat_gpu_tmp,  gpus*sizeof(float*)));
-    cudaErrorHandle(cudaMallocHost(&device_nr,    gpus*sizeof(int*)));
-    cudaErrorHandle(cudaMallocHost(&maxEps,       gpus*sizeof(int*)));
-    cudaErrorHandle(cudaMallocHost(&maxEps_print, gpus*sizeof(int)));
-    
-
+    // GPUDirect
     for(int g = 0; g < gpus; g++){
-        cudaErrorHandle(cudaSetDevice(g));
-        cudaErrorHandle(cudaMalloc(&mat_gpu[g],     total*sizeof(float)));
-        cudaErrorHandle(cudaMalloc(&mat_gpu_tmp[g], total*sizeof(float)));
-        cudaErrorHandle(cudaMalloc(&maxEps[g],      maxThreads*sizeof(int*)));
-        
-        maxEps_print[g] = 1;
-        device_nr[g] = g;
-    }
-
-    cudaStream_t streams[gpus];
-    for(int g = 0; g < gpus; g++){
-        cudaErrorHandle(cudaSetDevice(g));
-        cudaErrorHandle(cudaStreamCreate(&streams[g]));
-    }
-
-    for(int g = 0; g < gpus; g++){
+        cudaSetDevice(g);
         for(int j = 0; j < gpus; j++){
-            cudaSetDevice(i);
-            cudaDeviceEnablePeerAccess(j, g);
+            cudaDeviceEnablePeerAccess(g, j);
         }
     }
 
-    fillValues(mat, dx, dy, width, height);
+    float* dataOnGPU0;
+    float* dataOnGPU1;
+    cudaErrorHandle(cudaMalloc((void**)&dataOnGPU0, sizeof(float) * width * height));
+    cudaErrorHandle(cudaMalloc((void**)&dataOnGPU1, sizeof(float) * width * height));
 
-    for(int g = 0; g < gpus; g++){
-        cudaErrorHandle(cudaSetDevice(g));
-        cudaErrorHandle(cudaMemcpyAsync(mat_gpu[g], mat, total*sizeof(float), cudaMemcpyHostToDevice, streams[g]));
-    }
+    // Fill the data on GPU 0 with some values.
 
-    void ***kernelColl;
-    cudaErrorHandle(cudaMallocHost(&kernelColl, gpus * sizeof(void**)));
-    // Allocates the elements in the kernelColl, used for cudaLaunchCooperativeKernel as functon variables.
-    for (int g = 0; g < gpus; g++) {
-        void **kernelArgs = new void*[12];
-        kernelArgs[0] = &mat_gpu[g];
-        kernelArgs[1] = &mat_gpu_tmp[g];
-        kernelArgs[2] = &maxEps[g];
-        kernelArgs[3] = &device_nr[g];
-        kernelArgs[4] = &dataPerGpu;
-        kernelArgs[5] = &eps;
-        kernelArgs[6] = &width;
-        kernelArgs[7] = &height;
-        kernelArgs[8] = &iter;
-        kernelArgs[9] = &jacobiSize;
-        kernelArgs[10] = &amountPerThread;
-        kernelArgs[11] = &leftover;
-        
-        kernelColl[g] = kernelArgs;
-    }
+    // Transfer data from GPU 0 to GPU 1 using cudaMemcpyPeer.
+    cudaErrorHandle(cudaMemcpyPeer(dataOnGPU1, 1, dataOnGPU0, 0, sizeof(float) * width * height));
 
+    // Cleanup and deallocate memory if needed.
 
-    start = clock();
-    // ________________________________________________________
-    while(iter > 0 && maxEps_print[0] != 0){
-        for(int g = 0; g < gpus; g++){
-            cudaErrorHandle(cudaSetDevice(g));
-            cudaErrorHandle(cudaLaunchCooperativeKernel((void*)jacobi, gridDim, blockDim, kernelColl[g], 0, streams[g]));
-            cudaErrorHandle(cudaMemcpyAsync(&maxEps_print[g], maxEps[g], sizeof(int), cudaMemcpyDeviceToHost, streams[g]));
-        }
-
-        if(gpus > 1){
-            for(int g = 0; g < gpus; g++){
-                cudaErrorHandle(cudaSetDevice(g)); // Unnecessary?
-                if(g == 0){
-                    // Transfers data device 0 -> device 1
-                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu[1] + dataPerGpu-width, 1, mat_gpu_tmp[0] + dataPerGpu-width, 0, width*sizeof(float), streams[g]));
-                }
-                else if(g < gpus-1){
-                    // Transfers data device g -> device g+1
-                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu[g+1] + dataPerGpu*g-width, g+1, mat_gpu_tmp[g] + dataPerGpu*g-width, g, width*sizeof(float), streams[g]));
-                    // Transfers data device g-1 -> device g
-                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu[g-1] + dataPerGpu*g , g-1, mat_gpu_tmp[g] + dataPerGpu*g, g, width*sizeof(float), streams[g]));
-                }
-                else{
-                    // Transfers data device -1 -> device -2
-                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu[g-1] + dataPerGpu*g, g-1, mat_gpu_tmp[g] + dataPerGpu*g, g, width*sizeof(float), streams[g]));
-                }
-            }
-        }
-
-        for(int g = 0; g < gpus; g++){
-            cudaErrorHandle(cudaStreamSynchronize(streams[g]));
-        }
-
-        for(int g = 1; g < gpus; g++){
-            maxEps_print[0] += maxEps_print[g];
-        }
-
-        for(int g = 0; g < gpus; g++){
-            float *mat_change = mat_gpu[g];
-            mat_gpu[g] = mat_gpu_tmp[g];
-            mat_gpu_tmp[g] = mat_change;
-        }
-
-
-        iter--;
-
-        
-    }
-
-
-    for(int g = 0; g < gpus; g++){
-        cudaErrorHandle(cudaSetDevice(g));
-        cudaErrorHandle(cudaMemcpyAsync(mat + (total/gpus)*g, mat_gpu[g] + (total/gpus)*g, (total/gpus)*sizeof(float), cudaMemcpyDeviceToHost, streams[g]));
-    }
-
-    end = clock();
+    // Disable P2P access if you no longer need it.
+    cudaErrorHandle(cudaDeviceDisablePeerAccess(1));
+    cudaErrorHandle(cudaFree(dataOnGPU0));
 
     
-
-    cudaErrorHandle(cudaDeviceSynchronize());
-    
-    printf("\nout %i\n", maxEps_print[0]);
-    if(iter != 0){
-        printf("The computation found a solution with %i gpus. It computed it within %i iterations (%i - %i) and %.3f seconds.\nWidth = %i, Height = %i\nthreadBlock = (%d, %d, %d), gridDim = (%d, %d, %d)\n\n", 
-        gpus, print_iter - iter, print_iter, iter, ((double) (end - start)) / CLOCKS_PER_SEC, width, height, blockDim.x, blockDim.y, blockDim.z, gridDim.x, gridDim.y, gridDim.z);
-    }
-    else{
-        printf("The computation did not find a solution with %i gpus after all its iterations, it ran = %i iterations (%i - %i). It completed it in %.3f seconds.\nWidth = %i, Height = %i\nthreadBlock = (%d, %d, %d), gridDim = (%d, %d, %d)\n\n", 
-        gpus, print_iter - iter, print_iter, iter, ((double) (end - start)) / CLOCKS_PER_SEC, width, height, blockDim.x, blockDim.y, blockDim.z, gridDim.x, gridDim.y, gridDim.z);
-    }
-
-    cudaErrorHandle(cudaFreeHost(mat));
-    for(int g = 0; g < gpus; g++){
-        cudaErrorHandle(cudaFree(mat_gpu[g]));
-        cudaErrorHandle(cudaFree(mat_gpu_tmp[g]));
-        cudaErrorHandle(cudaFree(maxEps[g]));
-    }
-    cudaErrorHandle(cudaFreeHost(mat_gpu));
-    cudaErrorHandle(cudaFreeHost(mat_gpu_tmp));
-    cudaErrorHandle(cudaFreeHost(maxEps));
-    cudaErrorHandle(cudaFreeHost(device_nr));
-    cudaErrorHandle(cudaFreeHost(maxEps_print));
-    cudaErrorHandle(cudaFreeHost(kernelColl));
 }
 
 

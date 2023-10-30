@@ -1,4 +1,0 @@
-main.cu(105): error: identifier "i" is undefined
-
-1 error detected in the compilation of "main.cu".
-make[1]: *** [Makefile:16: main.o] Error 1
