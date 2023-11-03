@@ -1,8 +1,0 @@
-main.cu(21): warning #550-D: variable "x" was set but never used
-
-main.cu(21): warning #550-D: variable "y" was set but never used
-
-main.cu(62): warning #177-D: variable "jacobiSize" was declared but never referenced
-
-jacobi.cu(44): warning #177-D: variable "index_start" was declared but never referenced
-

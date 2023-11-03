@@ -26,7 +26,7 @@ void fillValues(float *mat, float dx, float dy, int width, int height){
         y = i * dy; // y coordinate
         for(int j = 1; j < width - 1; j++) {
             x = j * dx; // x coordinate
-            mat[j + i*width] = i*width+j;
+            mat[j + i*width] = sin(M_PI*y)*sin(M_PI*x);
         }
     }
 }
@@ -52,116 +52,169 @@ void start(int width, int height, int iter, float eps, float dx, float dy, dim3 
     maxEps_print|*int   | Variable used to for the CPU to check if the GPUs are finished
     device_nr   |*int   | An array used to send the GPU number to each device when computing
     */
-    
-    int gpus;
-    int *device_nr;
-    cudaErrorHandle(cudaGetDeviceCount(&gpus));
-    cudaErrorHandle(cudaMallocHost(&device_nr, gpus*sizeof(float*)));
 
     int total = width*height;
     int jacobiSize = (width-2)*(height-2);
+    
 
 
+    int gpus;
+    int *device_nr;
+    cudaErrorHandle(cudaGetDeviceCount(&gpus));
+    cudaErrorHandle(cudaMallocHost(&device_nr, gpus*sizeof(int*)));
+    for(int g = 0; g < gpus; g++){
+        device_nr[g] = g;
+    }
+
+
+    int **maxEps, *maxEps_print;
+    cudaErrorHandle(cudaMallocHost(&maxEps,       gpus*sizeof(int*)));
+    cudaErrorHandle(cudaMallocHost(&maxEps_print, gpus*sizeof(int)));
 
 
     // Ignores first and last row
-    int row_extra = (height-2)%gpus;
-    int *rows;
-    cudaErrorHandle(cudaMallocHost(&rows, gpus*sizeof(float*)));
-    // Finds the number of rows that each device should compute
-     for(int g = 0; g < gpus; g++){
-        // Adds number of rodes to each based on height and width
-        if(g < row_extra){
-            rows[g] = (height-2)/gpus+1;
-        }
-        else{
-            rows[g] = (height-2)/gpus;
-        }
+    int rows_total = height-2;
+    int rows_leftover = rows_total%gpus;
+    int rows_per_device = rows_total/gpus;
+    int *rows_device, *rows_index, *rows_compute;
+    cudaErrorHandle(cudaMallocHost(&rows_device, gpus*sizeof(int*)));
+    cudaErrorHandle(cudaMallocHost(&rows_index, gpus*sizeof(int*)));
+    cudaErrorHandle(cudaMallocHost(&rows_compute, gpus*sizeof(int*)));
+    // Calculate the number of rows for each device
+    for (int g = 0; g < gpus; g++) {
+        int extra_row = (g < rows_leftover) ? 1 : 0;
+  
+        rows_device[g] = rows_per_device + extra_row + 2;
 
-        // Adds number of roder to each based on neighboring dervices
-        if(g == 0 || g == gpus-1){
-            rows[g] += 1;
-        }
-        else{
-            rows[g] += 2;
-        }
+        rows_compute[g] = rows_per_device + extra_row;
 
-        // Adds device_nr for each GPU so it knows which device number it is
-        device_nr[g] = g;
+        rows_index[g] = g * rows_per_device + min(g, rows_leftover);
     }
-    
+
+
+
     
 
 
     int *threadInformation;
+    int threadSize = blockDim.x*blockDim.y*blockDim.z*gridDim.x*gridDim.y*gridDim.z;
     cudaErrorHandle(cudaMallocHost(&threadInformation, 4*sizeof(int*)));
-    threadInformation[0] = blockDim.x*blockDim.y*blockDim.z*gridDim.x*gridDim.y*gridDim.z; // Threads per device
-    threadInformation[1] = row_extra; // How many rows there are extra
-    threadInformation[2] = rows[gpus-1]-1; // How many rows per device, without adding ghost point, rounded down
+    threadInformation[0] = (rows_compute[0]     *(width-2))/threadSize; // Find number of elements to compute for each thread, ignoring border elements.
+    threadInformation[1] = (rows_compute[0]     *(width-2))%threadSize; // Finding which threads require 1 more element
+    threadInformation[2] = (rows_compute[gpus-1]*(width-2))/threadSize; // Find number of elements to compute for each thread, ignoring border elements. -1 because of ghost row
+    threadInformation[3] = (rows_compute[gpus-1]*(width-2))%threadSize; // Finding which threads require 1 more element
 
-
-
+    for(int g = 0; g < gpus; g++){
+        printf("%i -> index = %i, device = %i, compute = %i, leftover = %i, element_per_thread = %i, extra_element = %i\n", g, rows_index[g], rows_device[g], rows_compute[g], rows_leftover, threadInformation[2], threadInformation[3]);
+    }
 
 
 
     float *mat;
     float **mat_gpu, **mat_gpu_tmp;
-    cudaErrorHandle(cudaMallocHost(&mat, total*sizeof(float*)));
+    cudaErrorHandle(cudaMallocHost(&mat,          total*sizeof(float*)));
     cudaErrorHandle(cudaMallocHost(&mat_gpu,      gpus*sizeof(float*)));
     cudaErrorHandle(cudaMallocHost(&mat_gpu_tmp,  gpus*sizeof(float*)));
     // Allocates memory on devices based on number of rows for each device
     for(int g = 0; g < gpus; g++){
-        if(g == 0 || g == gpus-1){
-            cudaErrorHandle(cudaSetDevice(g));
-            cudaErrorHandle(cudaMalloc(&mat_gpu[g],     width*rows[g]*sizeof(float)));
-            cudaErrorHandle(cudaMalloc(&mat_gpu_tmp[g], width*rows[g]*sizeof(float)));
-        }
-        else{
-            cudaErrorHandle(cudaSetDevice(g));
-            cudaErrorHandle(cudaMalloc(&mat_gpu[g],     width*rows[g]*sizeof(float)));
-            cudaErrorHandle(cudaMalloc(&mat_gpu_tmp[g], width*rows[g]*sizeof(float)));
-        }
+        cudaErrorHandle(cudaSetDevice(g));
+        cudaErrorHandle(cudaMalloc(&mat_gpu[g],     width*rows_device[g]*sizeof(float)));
+        cudaErrorHandle(cudaMalloc(&mat_gpu_tmp[g], width*rows_device[g]*sizeof(float)));
+        cudaErrorHandle(cudaMalloc(&maxEps[g],      threadSize*sizeof(int*)));
+        maxEps_print[g] = 1;
     }
+
 
     cudaStream_t streams[gpus];
     for(int g = 0; g < gpus; g++){
         cudaErrorHandle(cudaSetDevice(g));
         cudaErrorHandle(cudaStreamCreate(&streams[g]));
     }
+    
 
     fillValues(mat, dx, dy, width, height);
 
 
-    int sum_of_row = 0;
     for(int g = 0; g < gpus; g++){
         cudaErrorHandle(cudaSetDevice(g));
-        cudaErrorHandle(cudaMemcpyAsync(mat_gpu[g], mat+width+sum_of_row, rows[g]*width*sizeof(float), cudaMemcpyHostToDevice, streams[g]));
-        sum_of_row += rows[g];
+        cudaErrorHandle(cudaMemcpyAsync(mat_gpu[g], mat+(rows_index[g])*width, rows_device[g]*width*sizeof(float), cudaMemcpyHostToDevice, streams[g]));
     }
 
     void ***kernelColl;
     cudaErrorHandle(cudaMallocHost(&kernelColl, gpus * sizeof(void**)));
     // Allocates the elements in the kernelColl, used for cudaLaunchCooperativeKernel as functon variables.
     for (int g = 0; g < gpus; g++) {
-        void **kernelArgs = new void*[5];
+        void **kernelArgs = new void*[13];
         kernelArgs[0] = &mat_gpu[g];
         kernelArgs[1] = &mat_gpu_tmp[g];
-        kernelArgs[2] = &rows[g];
-        kernelArgs[3] = &device_nr[g];
-        kernelArgs[4] = &gpus;
-        
+        kernelArgs[2] = &rows_device[g]; // How many rows for each device
+        kernelArgs[3] = &width;
+        kernelArgs[4] = &height;
+        kernelArgs[5] = &rows_leftover; // Tells how many of the devices will have 1 extra row
+        kernelArgs[6] = &device_nr[g];
+        kernelArgs[7] = &rows_compute[g];
+        kernelArgs[8] = &threadInformation[0];
+        kernelArgs[9] = &threadInformation[1];
+        kernelArgs[10] = &threadInformation[2];
+        kernelArgs[11] = &threadInformation[3];
+        kernelArgs[12] = &maxEps[g];
+        kernelArgs[13] = &eps;
+
         kernelColl[g] = kernelArgs;
     }
 
 
-    while(iter > 0){
+
+
+
+    // FØR __________________________________________________________
+
+
+
+    while(iter > 0 && maxEps_print[0] != 0){
         for(int g = 0; g < gpus; g++){
             cudaErrorHandle(cudaSetDevice(g));
-            cudaErrorHandle(cudaLaunchCooperativeKernel((void*)jacobi, gridDim, blockDim, kernelColl[g], 0, streams[g]))
+            cudaErrorHandle(cudaLaunchCooperativeKernel((void*)jacobi, gridDim, blockDim, kernelColl[g], 0, streams[g]));
+            cudaErrorHandle(cudaMemcpyAsync(&maxEps_print[g], maxEps[g], sizeof(int), cudaMemcpyDeviceToHost, streams[g]));
         }
 
         for(int g = 0; g < gpus; g++){
             cudaErrorHandle(cudaStreamSynchronize(streams[g]));
+        }
+
+        if(gpus > 1){
+            for(int g = 0; g < gpus; g++){
+                cudaErrorHandle(cudaSetDevice(g));
+                if(g == 0){
+                    // Transfers data device 0 -> device 1
+                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[1],     1, mat_gpu_tmp[0] + (rows_compute[0]-1)*width, 0, width*sizeof(float), streams[g]));
+                }
+                else if(g < gpus-1){
+                    // Transfers data device g -> device g+1
+                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g+1], g+1, mat_gpu_tmp[g] + (rows_compute[g]-1)*width, g, width*sizeof(float), streams[g]));
+                    // Transfers data device g -> device g-1
+                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g-1] + (rows_compute[g-1]-1)*width, g-1, mat_gpu_tmp[g], g, width*sizeof(float), streams[g]));
+                }
+                else{
+                    // Transfers data device -1 -> device -2
+                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g-1] + (rows_compute[g-1]-1)*width, g-1, mat_gpu_tmp[g], g, width*sizeof(float), streams[g]));
+                }  
+            }
+        }
+
+        for(int g = 0; g < gpus; g++){
+            cudaErrorHandle(cudaStreamSynchronize(streams[g]));
+        }
+
+        for(int g = 1; g < gpus; g++){
+            maxEps_print[0] += maxEps_print[g];
+        }
+
+
+        for(int g = 0; g < gpus; g++){
+            float *mat_change = mat_gpu[g];
+            mat_gpu[g] = mat_gpu_tmp[g];
+            mat_gpu_tmp[g] = mat_change;
         }
 
         iter--;
@@ -169,12 +222,46 @@ void start(int width, int height, int iter, float eps, float dx, float dy, dim3 
 
 
 
+    
+
+    // ETTER __________________________________________________________
 
 
 
 
+    float *mat_tmp;
+    cudaErrorHandle(cudaMallocHost(&mat_tmp, total*sizeof(float)));
+    cudaErrorHandle(cudaMemset(mat_tmp, 1, total*sizeof(float)));
 
-    printf("FUNGERER!\n");
+
+    for(int g = 0; g < gpus; g++){
+        cudaErrorHandle(cudaSetDevice(g));
+        cudaErrorHandle(cudaMemcpyAsync(mat_tmp + (rows_index[g]+1)*width, mat_gpu[g] + width, rows_compute[g]*width*sizeof(float), cudaMemcpyDeviceToHost, streams[g]));
+    }
+
+    for(int g = 0; g < gpus; g++){
+        cudaErrorHandle(cudaStreamSynchronize(streams[g]));
+    }
+
+    for(int g = 0; g < 128; g++){
+        for(int j = 0; j < 20; j++){
+            printf("%.3f, ", mat_tmp[j + g*width]);
+        }
+        printf("\n");
+    }
+
+    printf("MaxEps \n");
+    for(int g = 0; g < gpus; g++){
+        printf("%i, ", maxEps_print[g]);
+    }
+    printf("\niter \n%i\n", iter);
+
+
+    
+    // 0-99
+    // [0, 33, 66]
+    // 0-97
+    // [0, 32, 64]
 
 
 
@@ -182,7 +269,7 @@ void start(int width, int height, int iter, float eps, float dx, float dy, dim3 
         cudaErrorHandle(cudaStreamSynchronize(streams[g]));
     }
 
-    cudaErrorHandle(cudaFreeHost(mat));
+    /* cudaErrorHandle(cudaFreeHost(mat));
     for(int g = 0; g < gpus; g++){
         cudaErrorHandle(cudaFree(mat_gpu[g]));
         cudaErrorHandle(cudaFree(mat_gpu_tmp[g]));
@@ -190,7 +277,8 @@ void start(int width, int height, int iter, float eps, float dx, float dy, dim3 
     cudaErrorHandle(cudaFreeHost(mat_gpu));
     cudaErrorHandle(cudaFreeHost(mat_gpu_tmp));
 
-    cudaErrorHandle(cudaFreeHost(rows));
+    cudaErrorHandle(cudaFreeHost(rows)); */
+    printf("FUNGERER!\n");
 }
 
 
@@ -221,16 +309,16 @@ int main() {
     blockDim    | dim3  | Number of threads in 3 directions for each block
     gridDim     | dim3  | Number of blocks in 3 directions for the whole grid
     */
-    int width = 100;
-    int height = 100;
-    int iter = 100;
+    int width = 64;
+    int height = 128;
+    int iter = 5;
 
     float eps = 1.0e-14;
     float dx = 2.0 / (width - 1);
     float dy = 2.0 / (height - 1);
 
-    dim3 blockDim(32, 32, 1);
-    dim3 gridDim(16, 1, 1);
+    dim3 blockDim(16, 16, 1);
+    dim3 gridDim(2, 1, 1);
 
     start(width, height, iter, eps, dx, dy, blockDim, gridDim);
 
