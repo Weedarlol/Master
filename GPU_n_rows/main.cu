@@ -55,8 +55,9 @@ void start(int width, int height, int iter, float eps, float dx, float dy, dim3 
 
     int total = width*height;
     int jacobiSize = (width-2)*(height-2);
-    
+    int print_iter = iter;
 
+    clock_t start, end;
 
     int gpus;
     int *device_nr;
@@ -170,7 +171,7 @@ void start(int width, int height, int iter, float eps, float dx, float dy, dim3 
     // FØR __________________________________________________________
 
 
-
+    start = clock();
     while(iter > 0 && maxEps_print[0] != 0){
         for(int g = 0; g < gpus; g++){
             cudaErrorHandle(cudaSetDevice(g));
@@ -187,17 +188,17 @@ void start(int width, int height, int iter, float eps, float dx, float dy, dim3 
                 cudaErrorHandle(cudaSetDevice(g));
                 if(g == 0){
                     // Transfers data device 0 -> device 1
-                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[1],     1, mat_gpu_tmp[0] + (rows_compute[0]-1)*width, 0, width*sizeof(float), streams[g]));
+                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[1],     1, mat_gpu_tmp[0] + (rows_compute[0])*width, 0, width*sizeof(float), streams[g]));
                 }
                 else if(g < gpus-1){
                     // Transfers data device g -> device g+1
-                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g+1], g+1, mat_gpu_tmp[g] + (rows_compute[g]-1)*width, g, width*sizeof(float), streams[g]));
+                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g+1], g+1, mat_gpu_tmp[g] + (rows_compute[g])*width, g, width*sizeof(float), streams[g]));
                     // Transfers data device g -> device g-1
-                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g-1] + (rows_compute[g-1]-1)*width, g-1, mat_gpu_tmp[g], g, width*sizeof(float), streams[g]));
+                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g-1] + (rows_compute[g-1]+1)*width, g-1, mat_gpu_tmp[g] + width, g, width*sizeof(float), streams[g]));
                 }
                 else{
                     // Transfers data device -1 -> device -2
-                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g-1] + (rows_compute[g-1]-1)*width, g-1, mat_gpu_tmp[g], g, width*sizeof(float), streams[g]));
+                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g-1] + (rows_compute[g-1]+1)*width, g-1, mat_gpu_tmp[g] + width, g, width*sizeof(float), streams[g]));
                 }  
             }
         }
@@ -206,7 +207,7 @@ void start(int width, int height, int iter, float eps, float dx, float dy, dim3 
             cudaErrorHandle(cudaStreamSynchronize(streams[g]));
         }
 
-        for(int g = 1; g < gpus; g++){
+        for(int g = 1; g < gpus-1; g++){
             maxEps_print[0] += maxEps_print[g];
         }
 
@@ -217,9 +218,11 @@ void start(int width, int height, int iter, float eps, float dx, float dy, dim3 
             mat_gpu_tmp[g] = mat_change;
         }
 
+
+        
         iter--;
     }
-
+    end = clock();
 
 
     
@@ -243,25 +246,24 @@ void start(int width, int height, int iter, float eps, float dx, float dy, dim3 
         cudaErrorHandle(cudaStreamSynchronize(streams[g]));
     }
 
-    for(int g = 0; g < 128; g++){
-        for(int j = 0; j < 20; j++){
-            printf("%.3f, ", mat_tmp[j + g*width]);
-        }
-        printf("\n");
+    printf("\nout %i\n", maxEps_print[0]);
+
+    if(iter != 0){
+        printf("The computation found a solution with %i gpus. It computed it within %i iterations (%i - %i) and %.3f seconds.\nWidth = %i, Height = %i\nthreadBlock = (%d, %d, %d), gridDim = (%d, %d, %d)\n\n", 
+        gpus, print_iter - iter, print_iter, iter, ((double) (end - start)) / CLOCKS_PER_SEC, width, height, blockDim.x, blockDim.y, blockDim.z, gridDim.x, gridDim.y, gridDim.z);
+    }
+    else{
+        printf("The computation did not find a solution with %i gpus after all its iterations, it ran = %i iterations (%i - %i). It completed it in %.3f seconds.\nWidth = %i, Height = %i\nthreadBlock = (%d, %d, %d), gridDim = (%d, %d, %d)\n\n", 
+        gpus, print_iter - iter, print_iter, iter, ((double) (end - start)) / CLOCKS_PER_SEC, width, height, blockDim.x, blockDim.y, blockDim.z, gridDim.x, gridDim.y, gridDim.z);
     }
 
-    printf("MaxEps \n");
+
+    /* printf("MaxEps \n");
     for(int g = 0; g < gpus; g++){
         printf("%i, ", maxEps_print[g]);
     }
-    printf("\niter \n%i\n", iter);
+    printf("\niter \n%i\n", iter); */
 
-
-    
-    // 0-99
-    // [0, 33, 66]
-    // 0-97
-    // [0, 32, 64]
 
 
 
@@ -309,16 +311,16 @@ int main() {
     blockDim    | dim3  | Number of threads in 3 directions for each block
     gridDim     | dim3  | Number of blocks in 3 directions for the whole grid
     */
-    int width = 64;
-    int height = 128;
-    int iter = 5;
+    int width = 512;
+    int height = 512;
+    int iter = 500000;
 
     float eps = 1.0e-14;
     float dx = 2.0 / (width - 1);
     float dy = 2.0 / (height - 1);
 
-    dim3 blockDim(16, 16, 1);
-    dim3 gridDim(2, 1, 1);
+    dim3 blockDim(32, 32, 1);
+    dim3 gridDim(16, 1, 1);
 
     start(width, height, iter, eps, dx, dy, blockDim, gridDim);
 

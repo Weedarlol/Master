@@ -11,7 +11,7 @@ SOURCES = main.cu jacobi.cu
 OBJECTS = $(SOURCES:.cu=.o)
 
 ex3:
-	sbatch -p hgx2q ./start.slurm
+	sbatch -p dgx2q ./start.slurm
 
 
 # Targets

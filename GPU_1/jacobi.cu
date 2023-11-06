@@ -16,12 +16,10 @@ __device__ void calc(float *mat_gpu, float *mat_gpu_tmp, int thread, int iter,
     shared_var | int  | Is a while condition that decides when the jacobian iteration is complete or not.
     */
 
-	int local_var;
-
     // Calculating Jacobian Matrix
     while(iter > 0 && shared_var == 0){
         // Resets the local_var value
-        local_var = 0;
+        int local_var = 0;
 
         // Calculates each element except the border
         for(int i = 0; i < amountPerThread; i++){

@@ -10,7 +10,7 @@ __device__ void calc(float *mat_gpu, float *mat_gpu_tmp, int amountPerThread, in
 
     for(int i = 0; i < amountPerThread; i++){
         int index = index_start + i;
-        int x = index % (width-2) +1;
+        int x = index % (width-2) + 1;
         int y = index / (width-2) + 1;
         index = x+y*width;
         mat_gpu_tmp[index] = 0.25 * (
@@ -20,16 +20,14 @@ __device__ void calc(float *mat_gpu, float *mat_gpu_tmp, int amountPerThread, in
         if(abs(mat_gpu[index] - mat_gpu_tmp[index]) > eps){
             local_var++;
         }
+    }
 
      // https://developer.nvidia.com/blog/cooperative-groups/
-    for (int i = grid_g.num_threads() / 2; i > 0; i /= 2)
-    {
+    for (int i = grid_g.num_threads() / 2; i > 0; i /= 2){
         maxEps[thread] = local_var;
         grid_g.sync(); // wait for all threads to store
         if(thread<i) local_var += maxEps[thread + i];
         grid_g.sync(); // wait for all threads to load
-    }
-
     }
 }
 
