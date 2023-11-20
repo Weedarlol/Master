@@ -1,9 +1,12 @@
+ERROR: Unable to locate a modulefile for 'cuda11.8/blas/11.8.0'
+ERROR: Unable to locate a modulefile for 'cuda11.8/fft/11.8.0'
+ERROR: Unable to locate a modulefile for 'cuda11.8/nsight/11.8.0'
+ERROR: Unable to locate a modulefile for 'cuda11.8/profiler/11.8.0'
+ERROR: Unable to locate a modulefile for 'cuda11.8/toolkit/11.8.0'
 make[1]: Entering directory '/global/D1/homes/vidaro/Master/Mas/Multi_Node'
-nvcc -rdc=true -c main.cu -o main.o 
-nvcc -rdc=true -c jacobi.cu -o jacobi.o 
-nvcc main.o jacobi.o -o out -L/../../usr/lib/x86_64-linux-gnu/libnccl.so
-./out
+nvcc -rdc=true -c main.cu -o main.o
+Makefile:37: recipe for target 'main.o' failed
 make[1]: Leaving directory '/global/D1/homes/vidaro/Master/Mas/Multi_Node'
 make[1]: Entering directory '/global/D1/homes/vidaro/Master/Mas/Multi_Node'
-rm -f main.o out jacobi.o
+rm -f main.o out
 make[1]: Leaving directory '/global/D1/homes/vidaro/Master/Mas/Multi_Node'

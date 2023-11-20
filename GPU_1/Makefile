@@ -10,6 +10,9 @@ SOURCES = main.cu jacobi.cu
 # Object files derived from sources
 OBJECTS = $(SOURCES:.cu=.o)
 
+ex3:
+	sbatch -p hgx2q ./start.slurm
+
 # Targets
 all: nvprofiler
 

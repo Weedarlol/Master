@@ -21,6 +21,6 @@ module load cuda11.8/profiler/11.8.0
 module load cuda11.8/toolkit/11.8.0
 
 
-make nvprofiler
+make nvprofilerr
 
 make clean

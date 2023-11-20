@@ -1,0 +1,8 @@
+The computation found a solution with 3 gpus. It computed it within 1132338 iterations (10000000 - 8867662) and 205.975 seconds.
+Width = 1024, Height = 1024
+threadBlock = (32, 32, 1), gridDim = (16, 1, 1)
+
+0 -> index = 0, device = 343, compute = 341, leftover = 2, element_per_thread = 21, extra_element = 3416
+1 -> index = 341, device = 343, compute = 341, leftover = 2, element_per_thread = 21, extra_element = 3416
+2 -> index = 682, device = 342, compute = 340, leftover = 2, element_per_thread = 21, extra_element = 3416
+FUNGERER!

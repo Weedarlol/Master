@@ -1,130 +1,76 @@
 #include <stdio.h>
-#include <math.h>
-#include <time.h>
+#include <stdlib.h>
+#include <cuda_runtime.h>
+#include <mpi.h>
 
+void mpi_gpu_communication(int my_rank, int gpu_count) {
+    int cuda_device;
+    cudaGetDevice(&cuda_device);
+    float data = 0.0f;
 
-#include "jacobi.h"
-#include <nvtx3/nvToolsExt.h>
+    if (my_rank == 0) {
+        // On the first node (rank 0), initialize data
+        data = 42.0f;
+    }
 
-// https://ori-cohen.medium.com/real-life-cuda-programming-part-4-error-checking-e66dcbad6b55
-#define cudaErrorHandle(ans) { gpuAssert((ans), __FILE__, __LINE__); }
-inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort = true) 
-{
-    if (code != cudaSuccess) {
-        fprintf(stderr, "GPUassert: %s %s %d\n", cudaGetErrorString(code), file,
-                line);
-        if (abort)
-            exit(code);
+    // Use MPI to send data from rank 0 to rank 1 (different nodes)
+    if (my_rank == 0) {
+        MPI_Send(&data, 1, MPI_FLOAT, 1, 0, MPI_COMM_WORLD);
+    } else if (my_rank == 1) {
+        MPI_Recv(&data, 1, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    }
+
+    // GPU-to-GPU communication between different nodes (node 0 to node 1)
+    if (my_rank == 0) {
+        cudaSetDevice(cuda_device); // Select the GPU
+        cudaDeviceEnablePeerAccess(1, 0); // Enable GPU Direct for GPU 0 on node 0
+        cudaMemcpyPeer(data, 1, &data, 0, sizeof(float)); // Copy data to GPU 1 on node 1
+    } else if (my_rank == 1) {
+        cudaSetDevice(cuda_device); // Select the GPU
+        cudaDeviceEnablePeerAccess(0, 0); // Enable GPU Direct for GPU 0 on node 1
+        cudaMemcpyPeer(&data, 0, &data, 1, sizeof(float)); // Copy data to GPU 0 on node 0
+    }
+
+    // Clean up and disable GPU Direct if needed
+    if (my_rank == 0) {
+        cudaDeviceDisablePeerAccess(1); // Disable GPU Direct for GPU 0 on node 0
+    } else if (my_rank == 1) {
+        cudaDeviceDisablePeerAccess(0); // Disable GPU Direct for GPU 0 on node 1
     }
 }
 
-void fillValues(float *mat, float dx, float dy, int width, int height){
-    float x, y;
+int main(int argc, char** argv) {
+    int rank, size;
+    MPI_Init(&argc, &argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    memset(mat, 0, height*width*sizeof(float));
+    int gpu_count;
+    cudaGetDeviceCount(&gpu_count);
 
-    for(int i = 1; i < height - 1; i++) {
-        y = i * dy; // y coordinate
-        for(int j = 1; j < width - 1; j++) {
-            x = j * dx; // x coordinate
-            mat[j + i*width] = sin(M_PI*y)*sin(M_PI*x);
-        }
-    }
-}
-
-
-void start(int width, int height, int iter, float eps, float dx, float dy, dim3 blockDim, dim3 gridDim){
-    /*
-    Variables   | Type  | Description
-    gpus        | int   | Number of available gpus
-    total       | int   | Total number of elements in the matrix
-    dataPerGpu  | int   | Number of elements given to each GPU
-    maxThreads  | int   | Total number of available threads within the grid_g group
-    jacobiSize  | int   | Number of elements in the matrix which is to be calculated each iteration
-    amountPerThread|int | Number of elements to be calculated by each thread each iteration
-    leftover    | int   | Number of threads which is required to compute one more element to calculate all the elements
-
-    start       |clock_t| Start timer of area of interest
-    end         |clock_t| End timer of area of interest
-
-    mat         |*float | Pointer to the matrix allocated in the CPU
-    mat_gpu     |**float| An array of pointers, where each pointer points at an device, specifically a matrix within that device
-    mat_gpu_tmp |**float| An array of pointers, where each pointer points at an device, specifically a matrix within that device
-    maxEps      |**int  | An array of pointers, where each pointer points at an device, specifically an array within that device that checks if the elements is in an acceptable state
-    maxEps_print|*int   | Variable used to for the CPU to check if the GPUs are finished
-    device_nr   |*int   | An array used to send the GPU number to each device when computing
-    */
-    
-    int gpus;
-    cudaErrorHandle(cudaGetDeviceCount(&gpus));
-
-    // GPUDirect
-    for(int g = 0; g < gpus; g++){
-        cudaSetDevice(g);
-        for(int j = 0; j < gpus; j++){
-            cudaDeviceEnablePeerAccess(g, j);
-        }
+    if (size != 2) {
+        printf("This example requires exactly 2 MPI processes.\n");
+        MPI_Finalize();
+        return 1;
     }
 
-    float* dataOnGPU0;
-    float* dataOnGPU1;
-    cudaErrorHandle(cudaMalloc((void**)&dataOnGPU0, sizeof(float) * width * height));
-    cudaErrorHandle(cudaMalloc((void**)&dataOnGPU1, sizeof(float) * width * height));
+    if (gpu_count < 2) {
+        printf("This example requires at least 2 GPUs.\n");
+        MPI_Finalize();
+        return 1;
+    }
 
-    // Fill the data on GPU 0 with some values.
+    if (rank < 2) {
+        cudaSetDevice(rank % gpu_count);
+        cudaDeviceEnablePeerAccess(0, 0); // Enable GPU Direct for GPU 0 on each node
+    }
 
-    // Transfer data from GPU 0 to GPU 1 using cudaMemcpyPeer.
-    cudaErrorHandle(cudaMemcpyPeer(dataOnGPU1, 1, dataOnGPU0, 0, sizeof(float) * width * height));
+    mpi_gpu_communication(rank, gpu_count);
 
-    // Cleanup and deallocate memory if needed.
+    if (rank < 2) {
+        cudaDeviceDisablePeerAccess(0); // Disable GPU Direct for GPU 0 on each node
+    }
 
-    // Disable P2P access if you no longer need it.
-    cudaErrorHandle(cudaDeviceDisablePeerAccess(1));
-    cudaErrorHandle(cudaFree(dataOnGPU0));
-
-    
-}
-
-
-
-int main() {
-    /*
-    Functions   | Type           | Input
-    start       | void           | int width, int height, int iter, float eps,
-                                   float dx, float dy, dim3 blockDim,
-                                   dim3 gridDim
-
-    fillValues  | void           | float *mat, float dx, float dy, int width,
-                                   int height
-
-    jacobi      |__global__ void | float *mat_gpu, float *mat_tmp, float eps,
-                                   int width, int height, int iter
-
-    ____________________________________________________________________________
-    Variables   | Type  | Description
-    width       | int   | The width of the matrix
-    height      | int   | The height of the matrix
-    iter        | int   | Number of max iterations for the jacobian algorithm
-
-    eps         | float | The limit for accepting the state of the matrix during jacobian algorithm
-    dx          | float | Distance between each element in the matrix in x direction
-    dy          | float | Distance between each element in the matrix in y direction
-
-    blockDim    | dim3  | Number of threads in 3 directions for each block
-    gridDim     | dim3  | Number of blocks in 3 directions for the whole grid
-    */
-    int width = 512;
-    int height = 512;
-    int iter = 500000;
-
-    float eps = 1.0e-14;
-    float dx = 2.0 / (width - 1);
-    float dy = 2.0 / (height - 1);
-
-    dim3 blockDim(32, 32, 1);
-    dim3 gridDim(16, 1, 1);
-
-    start(width, height, iter, eps, dx, dy, blockDim, gridDim);
-
+    MPI_Finalize();
     return 0;
 }

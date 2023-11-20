@@ -5,14 +5,14 @@
 
 namespace cg = cooperative_groups;
 
-__device__ void calc(float *mat_gpu, float *mat_gpu_tmp, int amountPerThread, int index_start, int jacobiSize, int width, int height, float eps, int *maxEps, int thread, cg::grid_group grid_g){
+__device__ void calc(double *mat_gpu, double *mat_gpu_tmp, int amountPerThread, int index_start, int jacobiSize, int width, int height, double eps, int *maxEps, int thread, cg::grid_group grid_g){
     int local_var = 0;
 
     for(int i = 0; i < amountPerThread; i++){
         int index = index_start + i;
         int x = index % (width-2) + 1;
         int y = index / (width-2) + 1;
-        index = x+y*width;
+        index = x + y*width;
         mat_gpu_tmp[index] = 0.25 * (
             mat_gpu[index + 1]     + mat_gpu[index - 1] +
             mat_gpu[index + width] + mat_gpu[index - width]);
@@ -31,9 +31,9 @@ __device__ void calc(float *mat_gpu, float *mat_gpu_tmp, int amountPerThread, in
     }
 }
 
-__global__ void jacobi(float *mat_gpu, float *mat_gpu_tmp, int number_rows, int width, int height, 
-                        int rows_leftover, int device_nr, int rows_compute, int amountPerThreadExtra, int extraLeftover,
-                        int amountPerThread, int leftover, int *maxEps, float eps){
+__global__ void jacobi(double *mat_gpu, double *mat_gpu_tmp, int number_rows, int width, int height, 
+                        int rows_leftover, int device_nr, int rows_compute, int amountPerThreadExtra, int leftoverExtra,
+                        int amountPerThread, int leftover, int *maxEps, double eps){
     /*
     Variables      | Type      | Description
     grid_g         | grid_group| Creates a group compromising of all the threads
@@ -46,13 +46,25 @@ __global__ void jacobi(float *mat_gpu, float *mat_gpu_tmp, int number_rows, int 
 
     cg::grid_group grid_g = cg::this_grid();
     int thread = grid_g.thread_rank();
-    int index_start = width;
+    int index_start;
+
     
-    index_start = thread*amountPerThread + min(thread, leftover);
-    if(thread < leftover){
-        amountPerThread++;
+    if(device_nr < rows_leftover){
+        index_start = thread*amountPerThreadExtra + min(thread, leftoverExtra);
+        if(thread < leftoverExtra){
+            amountPerThreadExtra++;
+        }
+        calc(mat_gpu, mat_gpu_tmp, amountPerThreadExtra, index_start, rows_compute, width, height, eps, maxEps, thread, grid_g);
+    }
+    else{
+        index_start = thread*amountPerThread + min(thread, leftover);
+        if(thread < leftover){
+            amountPerThread++;
+        }
+        calc(mat_gpu, mat_gpu_tmp, amountPerThread, index_start, rows_compute, width, height, eps, maxEps, thread, grid_g);
     }
     
-    calc(mat_gpu, mat_gpu_tmp, amountPerThread, index_start, rows_compute, width, height, eps, maxEps, thread, grid_g);
+    
+    
 
 }

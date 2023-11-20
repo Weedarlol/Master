@@ -269,7 +269,7 @@ int main() {
     */
     int width = 512;
     int height = 512;
-    int iter = 10000000;
+    int iter = 10;
 
     float eps = 1.0e-14;
     float dx = 2.0 / (width - 1);

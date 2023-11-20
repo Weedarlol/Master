@@ -1,9 +1,0 @@
-main.cu(38): warning #177-D: variable "print_iter" was declared but never referenced
-
-main.cu(48): warning #550-D: variable "start" was set but never used
-
-main.cu(48): warning #550-D: variable "end" was set but never used
-
-WARNING: out and any of its children processes will be profiled.
-
-slurmstepd: error: *** JOB 28273 ON g001 CANCELLED AT 2023-10-26T06:44:47 DUE TO TIME LIMIT ***

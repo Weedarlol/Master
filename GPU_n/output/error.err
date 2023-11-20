@@ -1,0 +1,2 @@
+nvlink fatal   : Could not open input file 'main.o'
+make[1]: *** [Makefile:27: out] Error 1

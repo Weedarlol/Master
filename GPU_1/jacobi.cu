@@ -7,9 +7,9 @@ namespace cg = cooperative_groups;
 
 __device__ int shared_var = 0;
 
-__device__ void calc(float *mat_gpu, float *mat_gpu_tmp, int thread, int iter,
+__device__ void calc(double *mat_gpu, double *mat_gpu_tmp, int thread, int iter,
     int amountPerThread, int index_start, int jacobiSize, int width, int height,
-    float eps, cg::grid_group grid_g, int *maxEps){
+    double eps, cg::grid_group grid_g, int *maxEps){
     /*
     Variables  | Type | Description
     local_var  | int  | Calculates how many elements a thread has that is accepted between two iterations
@@ -56,7 +56,7 @@ __device__ void calc(float *mat_gpu, float *mat_gpu_tmp, int thread, int iter,
         }
 
         // Changes pointers
-        float *mat_tmp_cha = mat_gpu_tmp;
+        double *mat_tmp_cha = mat_gpu_tmp;
         mat_gpu_tmp = mat_gpu;
         mat_gpu = mat_tmp_cha;
 
@@ -72,7 +72,7 @@ __device__ void calc(float *mat_gpu, float *mat_gpu_tmp, int thread, int iter,
 
 }
 
-__global__ void jacobi(float *mat_gpu, float *mat_gpu_tmp, float eps, int width, int height, int iter, int *maxEps){
+__global__ void jacobi(double *mat_gpu, double *mat_gpu_tmp, double eps, int width, int height, int iter, int *maxEps){
     /*
     Variables      | Type      | Description
     grid_g         | grid_group| Creates a group compromising of all the threads
@@ -86,11 +86,13 @@ __global__ void jacobi(float *mat_gpu, float *mat_gpu_tmp, float eps, int width,
 
     cg::grid_group grid_g = cg::this_grid();
     int maxThreads = grid_g.num_threads();
+    int thread = grid_g.thread_rank();
     int jacobiSize = (width - 2) * (height - 2);
     int amountPerThread = jacobiSize / maxThreads;
     int leftover = jacobiSize % maxThreads;
-    int thread = grid_g.thread_rank();
     int index_start = thread * amountPerThread + min(thread, leftover); //- (thread < leftover ? thread : 0);
+
+    
 
     if(thread < leftover){
         amountPerThread++;
