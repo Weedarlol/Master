@@ -17,10 +17,10 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort =
     }
 }
 
-void fillValues(float *mat, float dx, float dy, int width, int height){
-    float x, y;
+void fillValues(double *mat, double dx, double dy, int width, int height){
+    double x, y;
 
-    memset(mat, 0, height*width*sizeof(float));
+    memset(mat, 0, height*width*sizeof(double));
 
     for(int i = 1; i < height - 1; i++) {
         y = i * dy; // y coordinate
@@ -31,108 +31,151 @@ void fillValues(float *mat, float dx, float dy, int width, int height){
     }
 }
 
-void start(int width, int height, int iter, float eps, float dx, float dy, dim3 blockDim, dim3 gridDim){
+void start(int width, int height, int iter, double eps, double dx, double dy, dim3 blockDim, dim3 gridDim){
     /*
     Variables   | Type  | Description
-    gpus        | int   | Number of available gpus
-    total       | int   | Total number of elements in the matrix
-    dataPerGpu  | int   | Number of elements given to each GPU
-    maxThreads  | int   | Total number of available threads within the grid_g group
-    jacobiSize  | int   | Number of elements in the matrix which is to be calculated each iteration
-    amountPerThread|int | Number of elements to be calculated by each thread each iteration
-    leftover    | int   | Number of threads which is required to compute one more element to calculate all the elements
+    total          | int    | The total number of elements within the matrix
 
-    start       |clock_t| Start timer of area of interest
-    end         |clock_t| End timer of area of interest
+    print_iter     | int    | Placeholder, used to find the number of iterations which has been run
 
-    mat         |*float | Pointer to the matrix allocated in the CPU
-    mat_gpu     |**float| An array of pointers, where each pointer points at an device, specifically a matrix within that device
-    mat_gpu_tmp |**float| An array of pointers, where each pointer points at an device, specifically a matrix within that device
-    maxEps      |**int  | An array of pointers, where each pointer points at an device, specifically an array within that device that checks if the elements is in an acceptable state
-    maxEps_print|*int   | Variable used to for the CPU to check if the GPUs are finished
-    device_nr   |*int   | An array used to send the GPU number to each device when computing
+    start          | clock_t| The clock when we reach a certain part of the code
+    end            | clock_t| The clock when we are finished with that part of the code
+
+    gpus           | int    | Number of GPUs used when running the program
+    device_nr      |*int    | An array which will allow the GPU to see which GPU number it has
+
+    maxEps         |**double| Used by the GPU to calculate how many elements which exceed the allowed limit of change for an element between two iterations
+    maxEps_print   |*double | Used as a destination for the number of elements which the GPU has calculated exceeding the limit
+
+    rows_total     | int    | Is the total number of rows which will be computed on by the devices
+    rows_per_device| int    | The number of rows per 
+    rows_leftover  | int    | The number of GPUs which is required to have an additional row when rows_total cannot be split equally between the devices
+    rows_device    | int    | Number of rows each gpus will recieve, including ghostrows
+    rows_index     | int    | Contains the index of the row which will be the first row to be transferred to the designated GPU
+    rows_compute   | int    | Will tell the GPU how many rows it will compute on
+
+    threadSize     | int    | Total number of threads in work in a GPU
+    threadInformatin| int   | Is used to give the GPU information of how many elements each thread has to compute on
+
+    mat            |*double | The matrix which is to be used as base for computations
+    mat_gpu        |**double| The matrix which will be a part of the mat matrix, will be the part which is given to one GPU
+    mat_gpu_tmp    |**double| Is used so that the GPU can change between the two matrixes every iteration
+
+    streams        |cudaStream_t| Contains the streams each GPU will use to allow for asynchronous computing
+
+    kernelColl     |***void | Is a collection of all the functions each GPU will use to run the CUDA function on in a kernel
+
+    filename       | char   | The name of the textdocument which will be created to compare resulting matrixes
+    fptr           |*FILE   | Used to create the file
     */
-    
-    int gpus;
-    cudaErrorHandle(cudaGetDeviceCount(&gpus));
+
 
     int total = width*height;
     int print_iter = iter;
-    int dataPerGpu = (width*height)/gpus;
-    int maxThreads = blockDim.x*blockDim.y*blockDim.z*gridDim.x*gridDim.y*gridDim.z;
-    int jacobiSize = ((width - 2) * (height - 2))/gpus;
-    int dataLeftover = ((width - 2) * (height - 2))%gpus;
-    int amountPerThread = jacobiSize / maxThreads;
-    int leftover = jacobiSize % maxThreads;
 
     clock_t start, end;
 
-    float *mat;
-    float **mat_gpu, **mat_gpu_tmp;
-
+    int gpus;
     int *device_nr;
-    int **maxEps, *maxEps_print;
-
-    cudaErrorHandle(cudaMallocHost(&mat, total*sizeof(float*)));
-
-    cudaErrorHandle(cudaMallocHost(&mat_gpu,      gpus*sizeof(float*)));
-    cudaErrorHandle(cudaMallocHost(&mat_gpu_tmp,  gpus*sizeof(float*)));
-    cudaErrorHandle(cudaMallocHost(&device_nr,    gpus*sizeof(int*)));
-    cudaErrorHandle(cudaMallocHost(&maxEps,       gpus*sizeof(int*)));
-    cudaErrorHandle(cudaMallocHost(&maxEps_print, gpus*sizeof(int)));
-    
-
+    cudaErrorHandle(cudaGetDeviceCount(&gpus));
+    cudaErrorHandle(cudaMallocHost(&device_nr, gpus*sizeof(int*)));
     for(int g = 0; g < gpus; g++){
-        cudaErrorHandle(cudaSetDevice(g));
-        cudaErrorHandle(cudaMalloc(&mat_gpu[g],     total*sizeof(float)));
-        cudaErrorHandle(cudaMalloc(&mat_gpu_tmp[g], total*sizeof(float)));
-        cudaErrorHandle(cudaMalloc(&maxEps[g],      maxThreads*sizeof(int*)));
-        
-        maxEps_print[g] = 1;
         device_nr[g] = g;
     }
+
+
+    int **maxEps, *maxEps_print;
+    cudaErrorHandle(cudaMallocHost(&maxEps,       gpus*sizeof(int*)));
+    cudaErrorHandle(cudaMallocHost(&maxEps_print, gpus*sizeof(int)));
+
+
+    // Ignores first and last row
+    int rows_total = height-2;
+    int rows_per_device = rows_total/gpus;
+    int rows_leftover = rows_total%gpus;
+    int *rows_device, *rows_index, *rows_compute;
+    cudaErrorHandle(cudaMallocHost(&rows_device, gpus*sizeof(int*)));
+    cudaErrorHandle(cudaMallocHost(&rows_index, gpus*sizeof(int*)));
+    cudaErrorHandle(cudaMallocHost(&rows_compute, gpus*sizeof(int*)));
+    // Calculate the number of rows for each device
+    for (int g = 0; g < gpus; g++) {
+        int extra_row = (g < rows_leftover) ? 1 : 0;
+  
+        rows_device[g] = rows_per_device + extra_row + 2;
+
+        rows_compute[g] = rows_per_device + extra_row;
+
+        rows_index[g] = g * rows_per_device + min(g, rows_leftover);
+    }
+
+    int *threadInformation;
+    int threadSize = blockDim.x*blockDim.y*blockDim.z*gridDim.x*gridDim.y*gridDim.z;
+    cudaErrorHandle(cudaMallocHost(&threadInformation, 4*sizeof(int)));
+    threadInformation[0] = (rows_compute[0]     *(width-2))/threadSize; // Find number of elements to compute for each thread, ignoring border elements.
+    threadInformation[1] = (rows_compute[0]     *(width-2))%threadSize; // Finding which threads require 1 more element
+    threadInformation[2] = (rows_compute[gpus-1]*(width-2))/threadSize; // Find number of elements to compute for each thread, ignoring border elements. -1 because of ghost row
+    threadInformation[3] = (rows_compute[gpus-1]*(width-2))%threadSize; // Finding which threads require 1 more element
+
+    double *mat;
+    double **mat_gpu, **mat_gpu_tmp;
+    cudaErrorHandle(cudaMallocHost(&mat,          total*sizeof(double)));
+    cudaErrorHandle(cudaMallocHost(&mat_gpu,      gpus*sizeof(double*)));
+    cudaErrorHandle(cudaMallocHost(&mat_gpu_tmp,  gpus*sizeof(double*)));
+    // Allocates memory on devices based on number of rows for each device
+    for(int g = 0; g < gpus; g++){
+        cudaErrorHandle(cudaSetDevice(g));
+        cudaErrorHandle(cudaMalloc(&mat_gpu[g],     width*rows_device[g]*sizeof(double)));
+        cudaErrorHandle(cudaMalloc(&mat_gpu_tmp[g], width*rows_device[g]*sizeof(double)));
+        cudaErrorHandle(cudaMalloc(&maxEps[g],      threadSize*sizeof(int*)));
+        maxEps_print[g] = 1;
+    }
+
 
     cudaStream_t streams[gpus];
     for(int g = 0; g < gpus; g++){
         cudaErrorHandle(cudaSetDevice(g));
         cudaErrorHandle(cudaStreamCreate(&streams[g]));
     }
+    
 
     fillValues(mat, dx, dy, width, height);
 
+
     for(int g = 0; g < gpus; g++){
         cudaErrorHandle(cudaSetDevice(g));
-        cudaErrorHandle(cudaMemcpyAsync(mat_gpu[g], mat, total*sizeof(float), cudaMemcpyHostToDevice, streams[g]));
+        cudaErrorHandle(cudaMemcpyAsync(mat_gpu[g], mat+(rows_index[g])*width, rows_device[g]*width*sizeof(double), cudaMemcpyHostToDevice, streams[g]));
     }
 
     void ***kernelColl;
     cudaErrorHandle(cudaMallocHost(&kernelColl, gpus * sizeof(void**)));
     // Allocates the elements in the kernelColl, used for cudaLaunchCooperativeKernel as functon variables.
     for (int g = 0; g < gpus; g++) {
-        void **kernelArgs = new void*[12];
+        void **kernelArgs = new void*[13];
         kernelArgs[0] = &mat_gpu[g];
         kernelArgs[1] = &mat_gpu_tmp[g];
-        kernelArgs[2] = &maxEps[g];
-        kernelArgs[3] = &device_nr[g];
-        kernelArgs[4] = &dataLeftover;
-        kernelArgs[5] = &eps;
-        kernelArgs[6] = &width;
-        kernelArgs[7] = &height;
-        kernelArgs[8] = &iter;
-        kernelArgs[9] = &jacobiSize;
-        kernelArgs[10] = &amountPerThread;
-        kernelArgs[11] = &leftover;
-        
+        kernelArgs[2] = &rows_device[g]; // How many rows for each device
+        kernelArgs[3] = &width;
+        kernelArgs[4] = &height;
+        kernelArgs[5] = &rows_leftover; // Tells how many of the devices will have 1 extra row
+        kernelArgs[6] = &device_nr[g];
+        kernelArgs[7] = &rows_compute[g];
+        kernelArgs[8] = &threadInformation[0];
+        kernelArgs[9] = &threadInformation[1];
+        kernelArgs[10] = &threadInformation[2];
+        kernelArgs[11] = &threadInformation[3];
+        kernelArgs[12] = &maxEps[g];
+        kernelArgs[13] = &eps;
+
         kernelColl[g] = kernelArgs;
     }
 
-    for(int g = 0; g < gpus; g++){
-        cudaErrorHandle(cudaStreamSynchronize(streams[g]));
-    }
+
+
+
+    // FØR __________________________________________________________
 
 
     start = clock();
-    // ________________________________________________________
     while(iter > 0 && maxEps_print[0] != 0){
         for(int g = 0; g < gpus; g++){
             cudaErrorHandle(cudaSetDevice(g));
@@ -140,38 +183,26 @@ void start(int width, int height, int iter, float eps, float dx, float dy, dim3 
             cudaErrorHandle(cudaMemcpyAsync(&maxEps_print[g], maxEps[g], sizeof(int), cudaMemcpyDeviceToHost, streams[g]));
         }
 
+        for(int g = 0; g < gpus; g++){
+            cudaErrorHandle(cudaStreamSynchronize(streams[g]));
+        }
+
         if(gpus > 1){
-            for(int g = 0; g < dataLeftover; g++){
+            for(int g = 0; g < gpus; g++){
                 cudaErrorHandle(cudaSetDevice(g));
-                int tmpVar = dataPerGpu*g + g + 1;
                 if(g == 0){
                     // Transfers data device 0 -> device 1
-                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[1]   + tmpVar+dataPerGpu-width,   1, mat_gpu_tmp[0] + tmpVar+dataPerGpu-width, 0, width*sizeof(float), streams[g]));
+                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[1],                                   1, mat_gpu_tmp[0] + (rows_compute[0])*width, 0, width*sizeof(double), streams[g]));
                 }
                 else if(g < gpus-1){
                     // Transfers data device g -> device g+1
-                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g+1] + tmpVar+dataPerGpu-width, g+1, mat_gpu_tmp[g] + tmpVar+dataPerGpu-width, g, width*sizeof(float), streams[g]));
-                    // Transfers data device g-1 -> device g
-                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g-1] + tmpVar                 , g-1, mat_gpu_tmp[g] + tmpVar                 , g, width*sizeof(float), streams[g]));
-                }
-            }
-            for(int g = dataLeftover; g < gpus; g++){
-                cudaErrorHandle(cudaSetDevice(g));
-                // Calculating which index one should start transferring from and to depending on the GPU and if there is unequal elements for the devices
-                int tmpVar = dataPerGpu*g + dataLeftover;
-                if(g == 0){
-                    // Transfers data device 0 -> device 1
-                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[1]   + tmpVar+dataPerGpu-width,   1, mat_gpu_tmp[0] + tmpVar+dataPerGpu-width, 0, width*sizeof(float), streams[g]));
-                }
-                else if(g < gpus-1){
-                    // Transfers data device g -> device g+1
-                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g+1] + tmpVar+dataPerGpu-width, g+1, mat_gpu_tmp[g] + tmpVar+dataPerGpu-width, g, width*sizeof(float), streams[g]));
-                    // Transfers data device g-1 -> device g
-                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g-1] + tmpVar                 , g-1, mat_gpu_tmp[g] + tmpVar                 , g, width*sizeof(float), streams[g]));
+                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g+1],                               g+1, mat_gpu_tmp[g] + (rows_compute[g])*width, g, width*sizeof(double), streams[g]));
+                    // Transfers data device g -> device g-1
+                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g-1] + (rows_compute[g-1]+1)*width, g-1, mat_gpu_tmp[g] + width,                   g, width*sizeof(double), streams[g]));
                 }
                 else{
                     // Transfers data device -1 -> device -2
-                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g-1] + tmpVar                 , g-1, mat_gpu_tmp[g] + tmpVar                 , g, width*sizeof(float), streams[g]));
+                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g-1] + (rows_compute[g-1]+1)*width, g-1, mat_gpu_tmp[g] + width,                   g, width*sizeof(double), streams[g]));
                 }  
             }
         }
@@ -184,31 +215,37 @@ void start(int width, int height, int iter, float eps, float dx, float dy, dim3 
             maxEps_print[0] += maxEps_print[g];
         }
 
+
         for(int g = 0; g < gpus; g++){
-            float *mat_change = mat_gpu[g];
+            double *mat_change = mat_gpu[g];
             mat_gpu[g] = mat_gpu_tmp[g];
             mat_gpu_tmp[g] = mat_change;
         }
 
-        iter--;
 
         
+        iter--;
     }
+    end = clock();
+
+
+    
+
+    // ETTER __________________________________________________________
+
+
 
 
     for(int g = 0; g < gpus; g++){
-        cudaErrorHandle(cudaSetDevice(g));
-        cudaErrorHandle(cudaMemcpyAsync(mat + (total/gpus)*g, mat_gpu[g] + (total/gpus)*g, (total/gpus)*sizeof(float), cudaMemcpyDeviceToHost, streams[g]));
+        cudaErrorHandle(cudaStreamSynchronize(streams[g]));
     }
-
-    end = clock();
-
-    
-
-    cudaErrorHandle(cudaDeviceSynchronize());
-    
-    printf("\nout %i\n", maxEps_print[0]);
-
+    for(int g = 0; g < gpus; g++){
+        cudaErrorHandle(cudaSetDevice(g));
+        cudaErrorHandle(cudaMemcpyAsync(mat + (rows_index[g]+1)*width, mat_gpu[g] + width, rows_compute[g]*width*sizeof(double), cudaMemcpyDeviceToHost, streams[g]));
+    }
+    for(int g = 0; g < gpus; g++){
+        cudaErrorHandle(cudaStreamSynchronize(streams[g]));
+    }
     if(iter != 0){
         printf("The computation found a solution with %i gpus. It computed it within %i iterations (%i - %i) and %.3f seconds.\nWidth = %i, Height = %i\nthreadBlock = (%d, %d, %d), gridDim = (%d, %d, %d)\n\n", 
         gpus, print_iter - iter, print_iter, iter, ((double) (end - start)) / CLOCKS_PER_SEC, width, height, blockDim.x, blockDim.y, blockDim.z, gridDim.x, gridDim.y, gridDim.z);
@@ -217,41 +254,73 @@ void start(int width, int height, int iter, float eps, float dx, float dy, dim3 
         printf("The computation did not find a solution with %i gpus after all its iterations, it ran = %i iterations (%i - %i). It completed it in %.3f seconds.\nWidth = %i, Height = %i\nthreadBlock = (%d, %d, %d), gridDim = (%d, %d, %d)\n\n", 
         gpus, print_iter - iter, print_iter, iter, ((double) (end - start)) / CLOCKS_PER_SEC, width, height, blockDim.x, blockDim.y, blockDim.z, gridDim.x, gridDim.y, gridDim.z);
     }
-
-    for(int i = 0; i < 20; i++){
-        for(int j = 0; j < 20; j++){
-            printf("%.3f, ", mat[j + i*width]);
-        }
-        printf("\n");
+    for(int g = 0; g < gpus; g++){
+        cudaErrorHandle(cudaStreamSynchronize(streams[g]));
     }
 
-    cudaErrorHandle(cudaFreeHost(mat));
+
+
+
     for(int g = 0; g < gpus; g++){
+        printf("%i -> index = %i, device = %i, compute = %i, leftover = %i, element_per_thread = %i, extra_element = %i\n", 
+        g, rows_index[g], rows_device[g], rows_compute[g], rows_leftover, threadInformation[2], threadInformation[3]);
+    }
+
+
+
+
+    // Creates an output which can be used to compare the different resulting matrixes
+    FILE *fptr;
+    char filename[20];
+    sprintf(filename, "CPUMatrix%i_%i.txt", gpus, width);
+    fptr = fopen(filename, "w");
+    for(int i = 0; i < height; i++){
+        for(int j = 0; j < width; j++){
+            fprintf(fptr, "%.16f ", mat[j + i*width]);
+        }
+        fprintf(fptr, "\n");
+    }
+    fclose(fptr);
+
+
+
+
+
+
+
+    // Frees up memory as we are finished with the program
+    for(int g = 0; g < gpus; g++){
+        cudaErrorHandle(cudaSetDevice(g));
         cudaErrorHandle(cudaFree(mat_gpu[g]));
         cudaErrorHandle(cudaFree(mat_gpu_tmp[g]));
         cudaErrorHandle(cudaFree(maxEps[g]));
+        cudaErrorHandle(cudaStreamDestroy(streams[g]));
     }
+    cudaErrorHandle(cudaFreeHost(mat));
     cudaErrorHandle(cudaFreeHost(mat_gpu));
     cudaErrorHandle(cudaFreeHost(mat_gpu_tmp));
-    cudaErrorHandle(cudaFreeHost(maxEps));
+    cudaErrorHandle(cudaFreeHost(threadInformation));
     cudaErrorHandle(cudaFreeHost(device_nr));
+    cudaErrorHandle(cudaFreeHost(maxEps));
     cudaErrorHandle(cudaFreeHost(maxEps_print));
-    cudaErrorHandle(cudaFreeHost(kernelColl));
+    cudaErrorHandle(cudaFreeHost(rows_device));
+    cudaErrorHandle(cudaFreeHost(rows_index));
+    cudaErrorHandle(cudaFreeHost(rows_compute));
 }
 
 
 
-int main() {
+int main(int argc, char *argv[]) {
     /*
     Functions   | Type           | Input
-    start       | void           | int width, int height, int iter, float eps,
-                                   float dx, float dy, dim3 blockDim,
+    start       | void           | int width, int height, int iter, double eps,
+                                   double dx, double dy, dim3 blockDim,
                                    dim3 gridDim
 
-    fillValues  | void           | float *mat, float dx, float dy, int width,
+    fillValues  | void           | double *mat, double dx, double dy, int width,
                                    int height
 
-    jacobi      |__global__ void | float *mat_gpu, float *mat_tmp, float eps,
+    jacobi      |__global__ void | double *mat_gpu, double *mat_tmp, double eps,
                                    int width, int height, int iter
 
     ____________________________________________________________________________
@@ -260,20 +329,25 @@ int main() {
     height      | int   | The height of the matrix
     iter        | int   | Number of max iterations for the jacobian algorithm
 
-    eps         | float | The limit for accepting the state of the matrix during jacobian algorithm
-    dx          | float | Distance between each element in the matrix in x direction
-    dy          | float | Distance between each element in the matrix in y direction
+    eps         | double | The limit for accepting the state of the matrix during jacobian algorithm
+    dx          | double | Distance between each element in the matrix in x direction
+    dy          | double | Distance between each element in the matrix in y direction
 
     blockDim    | dim3  | Number of threads in 3 directions for each block
     gridDim     | dim3  | Number of blocks in 3 directions for the whole grid
     */
-    int width = 512;
-    int height = 512;
-    int iter = 10;
+    if (argc != 4) {
+        printf("Usage: %s <Width> <Height> <Iterations>", argv[0]); // Programname
+        return 1;
+    }
 
-    float eps = 1.0e-14;
-    float dx = 2.0 / (width - 1);
-    float dy = 2.0 / (height - 1);
+    int width = atoi(argv[1]);
+    int height = atoi(argv[2]);
+    int iter = atoi(argv[3]);
+
+    double eps = 1.0e-14;
+    double dx = 2.0 / (width - 1);
+    double dy = 2.0 / (height - 1);
 
     dim3 blockDim(32, 32, 1);
     dim3 gridDim(16, 1, 1);

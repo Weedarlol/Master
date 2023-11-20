@@ -18,7 +18,7 @@ MPICXXFLAGS = -L$(LIBDIR)
 MPI_FLAGS = -Xcompiler $(MPICXX)
 
 ex3:
-	sbatch -p a40q ./start.slurm
+	sbatch -p hgx2q ./start.slurm
 
 # Targets
 all: nvprofilerr

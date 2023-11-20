@@ -1,9 +1,8 @@
 #include <stdio.h>
 #include <math.h>
-#include <nvtx3/nvToolsExt.h>
 #include <time.h>
-#include "jacobi.h"
 
+#include "jacobi.h"
 #include <cooperative_groups.h>
 
 using namespace cooperative_groups;
@@ -63,13 +62,13 @@ void start(int width, int height, int iter, double eps, double dx, double dy, di
 
 
     double *mat, *mat_gpu, *mat_gpu_tmp;
-    cudaErrorHandle(cudaMallocHost(&mat, total*sizeof(double*)));
+    cudaErrorHandle(cudaMallocHost(&mat, total*sizeof(double)));
     cudaErrorHandle(cudaMalloc(&mat_gpu, total*sizeof(double*)));
     cudaErrorHandle(cudaMalloc(&mat_gpu_tmp, total*sizeof(double*)));
     
 
     int *maxEps, *comp_suc;;
-    cudaErrorHandle(cudaMalloc(&maxEps, blockDim.x*blockDim.y*blockDim.z*gridDim.x*gridDim.y*gridDim.z*sizeof(int*)));
+    cudaErrorHandle(cudaMalloc(&maxEps, blockDim.x*blockDim.y*blockDim.z*gridDim.x*gridDim.y*gridDim.z*sizeof(int)));
     cudaErrorHandle(cudaMallocHost(&comp_suc, sizeof(int*)));
 
 
@@ -82,7 +81,6 @@ void start(int width, int height, int iter, double eps, double dx, double dy, di
 
 
     // Here we are done with the allocation, and start with the compution
-    nvtxRangePushA("Area of Interest");
     start = clock();
 
     // Copies elemts over from CPU to the device.
@@ -107,7 +105,6 @@ void start(int width, int height, int iter, double eps, double dx, double dy, di
     cudaErrorHandle(cudaDeviceSynchronize());
 
     end = clock();
-    nvtxRangePop();
 
 
 
@@ -131,14 +128,18 @@ void start(int width, int height, int iter, double eps, double dx, double dy, di
 
 
 
-int main() {
+int main(int argc, char *argv[]) {
     /*
     Functions   | Type           | Input
-    start       | void           | int width, int height, int iter, double eps, double dx, double dy, dim3 blockDim, dim3 gridDim
+    start       | void           | int width, int height, int iter, double eps,
+                                   double dx, double dy, dim3 blockDim,
+                                   dim3 gridDim
 
-    fillValues  | void           | double *mat, double dx, double dy, int width, int height
+    fillValues  | void           | double *mat, double dx, double dy, int width,
+                                   int height
 
-    jacobi      |__global__ void | double *mat_gpu, double *mat_gpu_tmp, double eps, int width, int height, int iter
+    jacobi      |__global__ void | double *mat_gpu, double *mat_tmp, double eps,
+                                   int width, int height, int iter
 
     ____________________________________________________________________________
     Variables   | Type  | Description
@@ -153,12 +154,14 @@ int main() {
     blockDim    | dim3  | Number of threads in 3 directions for each block
     gridDim     | dim3  | Number of blocks in 3 directions for the whole grid
     */
+    if (argc != 4) {
+        printf("Usage: %s <Width> <Height> <Iterations>", argv[0]); // Programname
+        return 1;
+    }
 
-    int width = 1024;
-    int height = 1024;
-    int iter = 10000000;
-    
-    // Burde stoppe etter 409020
+    int width = atoi(argv[1]);
+    int height = atoi(argv[2]);
+    int iter = atoi(argv[3]);
 
     double eps = 1.0e-14;
     double dx = 2.0 / (width - 1);
@@ -166,7 +169,6 @@ int main() {
 
     dim3 blockDim(32, 32, 1);
     dim3 gridDim(16, 1, 1);
-
 
     start(width, height, iter, eps, dx, dy, blockDim, gridDim);
 

@@ -1,7 +1,0 @@
-make[1]: Entering directory '/global/D1/homes/vidaro/Master/Mas/GPU_n'
-nvcc -rdc=true -c jacobi.cu -o jacobi.o
-nvcc -rdc=true main.o jacobi.o -o out -L/../../usr/lib/x86_64-linux-gnu/libnccl.so
-make[1]: Leaving directory '/global/D1/homes/vidaro/Master/Mas/GPU_n'
-make[1]: Entering directory '/global/D1/homes/vidaro/Master/Mas/GPU_n'
-rm -f main.o jacobi.o out
-make[1]: Leaving directory '/global/D1/homes/vidaro/Master/Mas/GPU_n'
