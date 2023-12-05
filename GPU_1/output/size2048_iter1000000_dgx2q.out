@@ -1,4 +1,0 @@
-The computation did not find a solution after all its iterations, it ran = 1000000 iterations (1000000 - 0). It completed it in 1278.528 seconds.
-Width = 2048, Height = 2048
-threadBlock = (32, 32, 1), gridDim = (16, 1, 1)
-
