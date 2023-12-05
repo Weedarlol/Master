@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#include <nvtx3/nvToolsExt.h>
 
 #include "jacobi.h"
 #include <cooperative_groups.h>
@@ -52,7 +53,9 @@ void start(int width, int height, int iter, double eps, double dx, double dy, di
     mat         |*double | Pointer to the allocated matrix in the CPU
     mat_gpu     |**double| Pointer to an allocated matrix in the GPU
     mat_gpu_tmp |**double| Pointer to an allocated matrix in the GPU
+
     maxEps      |*int   | Pointer to an allocated vector in the GPU used for checking if the matrix is in an acceptable state
+    
     comp_suc    |*int   | Checks if the computation is successfull or not
     */
 
@@ -120,6 +123,19 @@ void start(int width, int height, int iter, double eps, double dx, double dy, di
         printf("The computation did not find a solution after all its iterations, it ran = %i iterations (%i - %i). It completed it in %.3f seconds.\nWidth = %i, Height = %i\nthreadBlock = (%d, %d, %d), gridDim = (%d, %d, %d)\n\n", 
         print_iter - *comp_suc, print_iter, *comp_suc, ((double) (end - start)) / CLOCKS_PER_SEC, width, height, blockDim.x, blockDim.y, blockDim.z, gridDim.x, gridDim.y, gridDim.z);
     }
+
+    // Creates an output which can be used to compare the different resulting matrixes
+    FILE *fptr;
+    char filename[20];
+    sprintf(filename, "GPUMatrix%i_%i.txt", width, height);
+    fptr = fopen(filename, "w");
+    for(int i = 0; i < height; i++){
+        for(int j = 0; j < width; j++){
+            fprintf(fptr, "%.16f ", mat[j + i*width]);
+        }
+        fprintf(fptr, "\n");
+    }
+    fclose(fptr);
 
     cudaErrorHandle(cudaFreeHost(mat));
     cudaErrorHandle(cudaFree(mat_gpu));

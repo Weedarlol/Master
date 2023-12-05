@@ -1,54 +1,49 @@
-# Common flags for nvcc
-NVCCFLAGS = -rdc=true
+# Creates a list of values for GPU allocation
+GPU_COUNTS = 1
 
-# Directory for your library (adjust this to the actual path)
-LIBDIR = /../../usr/lib/x86_64-linux-gnu/libnccl.so
+# Decides the number of nodes to work on
+NODES = 2
 
-# List of source files
-SOURCES = main.cu
+# Define different matrix sizes
+MATRIX_SIZES = 512
 
-# Object files derived from sources
-OBJECTS = $(SOURCES:.cu=.o)
+# Number of iterations
+ITERATIONS = 10000000
 
-# Compiler and flags
-MPICXX = mpic++
-MPICXXFLAGS = -L$(LIBDIR)
+# Which partition/nodes
+PARTITION = a40q
 
-# MPI-specific flags
-MPI_FLAGS = -Xcompiler $(MPICXX)
 
-ex3:
-	sbatch -p hgx2q ./start.slurm
 
-# Targets
-all: nvprofilerr
 
-nvprofiler: out
-	./out
 
-nvprofilerr: out
-	nsys nvprof ./out
 
-out: $(OBJECTS)
-	$(MPICXX) $(MPI_FLAGS) $(MPICXXFLAGS) $^ -o $@
 
-# Rule for compiling CUDA source files into object files
-%.o: %.cu
-	nvcc $(NVCCFLAGS) -c $< -o $@
 
-# Clean rule
-clean:
-	$(RM) $(OBJECTS) out
 
-# Additional targets for your convenience
+
+
+# Create a list of run identifiers for all combinations
+RUN_IDENTIFIERS = $(foreach size,$(MATRIX_SIZES),$(foreach gpu,$(GPU_COUNTS),size$(size)_gpu$(gpu)_iter$(ITERATIONS)_nodes$(NODES)_$(PARTITION)))
+
+submit:
+	sbatch -p $(PARTITION) ./start.slurm $(RUN_IDENTIFIERS)
+
+
+
+
+
+
+# View rules
 view:
 	cat output/output.out
 
 vieww:
 	cat output/error.err
 
-cleann:
-	$(RM) main.o out output/output.out output/error.err  report1.nsys-rep report1.sqlite report2.nsys-rep report2.sqlite report3.nsys-rep report3.sqlite report4.nsys-rep report4.sqlite report5.nsys-rep report5.sqlite
+# Clean rules
+clean:
+	$(foreach identifier,$(RUN_IDENTIFIERS),$(RM) out_$(identifier)) rm -rf slurm*
 
 cancel:
 	scancel -u vidaro

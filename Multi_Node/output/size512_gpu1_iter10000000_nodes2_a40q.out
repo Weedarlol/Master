@@ -1,0 +1,5 @@
+ERROR: Unable to locate a modulefile for 'cuda11.6/blas/11.6.0'
+ERROR: Unable to locate a modulefile for 'cuda11.6/fft/11.6.0'
+ERROR: Unable to locate a modulefile for 'cuda11.6/nsight/11.6.0'
+ERROR: Unable to locate a modulefile for 'cuda11.6/profiler/11.6.0'
+ERROR: Unable to locate a modulefile for 'cuda11.6/toolkit/11.6.0'

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <math.h>
+#include <nvtx3/nvToolsExt.h>
 
 #include <cooperative_groups.h>
 

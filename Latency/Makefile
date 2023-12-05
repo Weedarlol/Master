@@ -1,44 +1,31 @@
-# Common flags for nvcc
-NVCCFLAGS = -rdc=true
+# Define different matrix sizes (integers)
+HEIGHT = 2048
+WIDTH = 2048
 
-# List of source files for n_GPU and GPU
-n_GPU_SOURCES = n_GPU.cu
-GPU_SOURCES = GPU.cu
+# Decide partition, (dgx2q, hgx2q)
+PARTITION = dgx2q
 
-# Object files derived from sources
-n_GPU_OBJECTS = $(n_GPU_SOURCES:.cu=.o)
-GPU_OBJECTS = $(GPU_SOURCES:.cu=.o)
+# Create a list of run identifiers for all combinations
+RUN_IDENTIFIERS = $(foreach height,$(HEIGHT),$(foreach width,$(WIDTH),width$(width)_height$(height)_$(PARTITION)))
 
-# Starting the ex3 system
-ex3:
-	sbatch -p dgx2q ./start.slurm
-
-
-# Checking latency between CPU and GPU
-GPU_out: $(GPU_OBJECTS)
-	nvcc $(NVCCFLAGS) $^ -o $@ 
-
-# Rule for compiling CUDA source files into object files
-%.o: %.cu
-	nvcc $(NVCCFLAGS) -c $< -o $@
+submit:
+	sbatch -p $(PARTITION) ./start.slurm $(RUN_IDENTIFIERS)
 
 
 
-# To view the output
+
+
+
+# View rules
 view:
 	cat output/output.out
-# To view the error
+
 vieww:
 	cat output/error.err
 
-
-# Clean content
+# Clean rules
 clean:
-	$(RM) $(n_GPU_OBJECTS) $(GPU_OBJECTS) n_GPU_out GPU_out
-# Clean all content
-cleann:
-	$(RM) main.o out output/output.out output/error.err  report1.nsys-rep report1.sqlite report2.nsys-rep report2.sqlite report3.nsys-rep report3.sqlite report4.nsys-rep report4.sqlite report5.nsys-rep report5.sqlite
-
+	$(foreach identifier,$(RUN_IDENTIFIERS),$(RM) out_$(identifier)) rm -rf slurm*
 
 cancel:
 	scancel -u vidaro

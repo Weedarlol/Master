@@ -1,27 +1,26 @@
-ex3:
-	sbatch -p dgx2q ./start.slurm
+
+# Define different matrix sizes
+MATRIX_SIZES = 512 1024 2048
+
+ITERATIONS = 1000000
+
+PARTITION = dgx2q hgx2q
+
+# Create a list of run identifiers for all combinations
+RUN_IDENTIFIERS = $(foreach size,$(MATRIX_SIZES),size$(size)_iter$(ITERATIONS))
 
 
-
-
-nvprofiler: out
-	nsys nvprof ./out --kernels "kernelName"
-
-nvprofilerr: out
-	./out
-
-out: main.o
-	nvcc $^ -o $@ -L/../../usr/lib/x86_64-linux-gnu/libnccl.so
-
-%.o: %.cu
-	nvcc -c $< -o $@
-
-
+submit:
+	$(foreach partition,$(PARTITION), \
+		sbatch -p $(partition) ./start.slurm $(partition) $(RUN_IDENTIFIERS); \
+	)
 
 
 
 
 
+
+# View rules
 view:
 	cat output/output.out
 
@@ -30,13 +29,17 @@ vieww:
 
 
 
-
-
+# Clean rules
 clean:
-	$(RM) main.o out
+	$(foreach partition,$(PARTITION), \
+		$(foreach identifier,$(RUN_IDENTIFIERS),$(RM) out_$(identifier)_$(partition)); \
+	) rm -rf slurm*
 
-cleann:
-	$(RM) main.o out output/output.out output/error.err  report1.nsys-rep report1.sqlite report2.nsys-rep report2.sqlite report3.nsys-rep report3.sqlite report4.nsys-rep report4.sqlite report5.nsys-rep report5.sqlite
+cleannn:
+	$(foreach partition,$(PARTITION), \
+		$(foreach identifier,$(RUN_IDENTIFIERS),$(RM) error/$(identifier)_$(partition).err output/$(identifier)_$(partition).out); \
+	)
+
 
 
 

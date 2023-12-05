@@ -1,2 +1,0 @@
-make[1]: nvcc: Command not found
-make[1]: *** [main.o] Error 127

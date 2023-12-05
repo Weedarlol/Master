@@ -1,0 +1,4 @@
+The computation found a solution. It computed it within 300891 iterations (1000000 - 699109) and 28.000 seconds.
+Width = 512, Height = 512
+threadBlock = (32, 32, 1), gridDim = (16, 1, 1)
+

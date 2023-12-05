@@ -1,6 +1,0 @@
-The computation found a solution with 1 gpus. It computed it within 300891 iterations (1000000 - 699109) and 34.064 seconds.
-Width = 512, Height = 512
-threadBlock = (32, 32, 1), gridDim = (16, 1, 1)
-
-0 -> index = 0, device = 512, compute = 510, leftover = 0, element_per_thread = 15, extra_element = 14340
-FUNGERER!

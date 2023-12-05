@@ -17,7 +17,7 @@ void fillValues(double *mat, double dx, double dy, int width, int height){
     }
 }
 
-int main() {
+int main(int argc, char *argv[]) {
     /*
     width       | int   | The width of the matrix
     height      | int   | The height of the matrix
@@ -32,9 +32,14 @@ int main() {
     mat_tmp     |*double | Pointer to the matrix
     */
 
-    int width = 512;
-    int height = 512;
-    int iter = 1000000;
+    if (argc != 4) {
+        printf("Usage: %s <Width> <Height> <Iterations>", argv[0]); // Programname
+        return 1;
+    }
+
+    int width = atoi(argv[1]);
+    int height = atoi(argv[2]);
+    int iter = atoi(argv[3]);
     int print_iter = iter;
 
     double dx = 2.0 / (width - 1);
@@ -94,16 +99,18 @@ int main() {
         printf("\n");
     } */
 
-    /* FILE *fptr;
-
-    fptr = fopen("CPUMatrix.txt", "w");
-    for(int i = 0; i < width; i++){
-        for(int j = 0; j < height; j++){
-            fprintf(fptr, "%.14f ", mat[j + i*width]);
+    // Creates an output which can be used to compare the different resulting matrixes
+    FILE *fptr;
+    char filename[20];
+    sprintf(filename, "CPUMatrix%i_%i.txt", width, height);
+    fptr = fopen(filename, "w");
+    for(int i = 0; i < height; i++){
+        for(int j = 0; j < width; j++){
+            fprintf(fptr, "%.16f ", mat[j + i*width]);
         }
         fprintf(fptr, "\n");
     }
-    fclose(fptr); */
+    fclose(fptr);
 
 
     free(mat);
