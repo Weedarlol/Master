@@ -1,12 +1,12 @@
 
 # Creates a list of values for GPU allocation
-GPU_COUNTS = 1
+GPU_COUNTS = 1 2 3
 
 # Define different matrix sizes
-WIDTH = 512 
-HEIGHT = 512 
+WIDTH = 512 1024
+HEIGHT = 512 1024
 
-ITERATIONS = 100 1000 10000
+ITERATIONS = 100_1000_10000_100000_1000000_10000000
 
 PARTITION = dgx2q
 
