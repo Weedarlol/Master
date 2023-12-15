@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # Common flags for nvcc
 NVCCFLAGS="-rdc=true"
@@ -20,12 +21,13 @@ shift
 # Creates a scenario for the rest of the elements
 for SCENARIO in "$@"; do
     # Extract matrix size and GPU count from the run identifier
-    MATRIX_SIZE=$(echo $SCENARIO | awk -F'size' '{print $2}' | awk -F'_' '{print $1}')
+    WIDTH=$(echo $SCENARIO | awk -F'width' '{print $2}' | awk -F'_' '{print $1}')
+    HEIGHT=$(echo $SCENARIO | awk -F'height' '{print $2}' | awk -F'_' '{print $1}')
     ITERATIONS=$(echo $SCENARIO | awk -F'iter' '{print $2}')
 
     # Define the variable values
-    VAR1=$MATRIX_SIZE # Width
-    VAR2=$MATRIX_SIZE # Height
+    VAR1=$WIDTH # Width
+    VAR2=$HEIGHT # Height
     VAR3=$ITERATIONS  # Iterations
 
     # Create a temporary Slurm script for this scenario
@@ -53,7 +55,7 @@ module load cuda11.8/nsight/11.8.0
 module load cuda11.8/profiler/11.8.0
 module load cuda11.8/toolkit/11.8.0
 
-nvcc $NVCCFLAGS $SOURCES -o out_${SCENARIO}_${PARTITION}
+nvcc $NVCCFLAGS $SOURCES -o out_${SCENARIO}_${PARTITION} -L$LIBDIR -lnccl
 
 ./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3
 

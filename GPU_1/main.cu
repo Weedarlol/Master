@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 #include <time.h>
 #include <nvtx3/nvToolsExt.h>
@@ -41,7 +42,7 @@ void fillValues(double *mat, double dx, double dy, int width, int height){
 
 
 
-void start(int width, int height, int iter, double eps, double dx, double dy, dim3 blockDim, dim3 gridDim){
+void start(int width, int height, int iter, double eps, double dx, double dy, int compare, dim3 blockDim, dim3 gridDim){
     /*
     Variables   | Type  | Description
     total       | int   | Total number of elements in the matrix
@@ -95,7 +96,6 @@ void start(int width, int height, int iter, double eps, double dx, double dy, di
 
 
     // Runs device
-    // jacobi<<<gridDim, blockDim>>>(mat_gpu, mat_gpu_tmp, eps, width, height, iter, maxEps);
     cudaErrorHandle(cudaLaunchCooperativeKernel((void*)jacobi, gridDim, blockDim, kernelArgs));
 
     cudaErrorHandle(cudaDeviceSynchronize());
@@ -124,18 +124,57 @@ void start(int width, int height, int iter, double eps, double dx, double dy, di
         print_iter - *comp_suc, print_iter, *comp_suc, ((double) (end - start)) / CLOCKS_PER_SEC, width, height, blockDim.x, blockDim.y, blockDim.z, gridDim.x, gridDim.y, gridDim.z);
     }
 
-    // Creates an output which can be used to compare the different resulting matrixes
-    FILE *fptr;
-    char filename[20];
-    sprintf(filename, "GPUMatrix%i_%i.txt", width, height);
-    fptr = fopen(filename, "w");
-    for(int i = 0; i < height; i++){
-        for(int j = 0; j < width; j++){
-            fprintf(fptr, "%.16f ", mat[j + i*width]);
+
+    // Used to compare the matrix to the matrix which only the CPU created
+    if(compare == 1){
+        double* mat_compare = (double*)malloc(width * height * sizeof(double));
+        FILE *fptr;
+        char filename[30];
+        sprintf(filename, "../CPU/CPUMatrix%i_%i.txt", width, height);
+
+        printf("Comparing the matrixes\n");
+
+        fptr = fopen(filename, "r");
+        if (fptr == NULL) {
+            printf("Error opening file.\n");
+            exit(EXIT_FAILURE);
         }
-        fprintf(fptr, "\n");
+
+        // Read matrix values from the file
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
+                if (fscanf(fptr, "%lf", &mat_compare[j + i * width]) != 1) {
+                    printf("Error reading from file.\n");
+                    fclose(fptr);
+                    free(mat_compare);
+                    exit(EXIT_FAILURE);
+                }
+            }
+        }
+
+        fclose(fptr);
+
+
+        // Comparing the elements
+        for (int i = 1; i < height-1; i++) {
+            for (int j = 1; j < width-1; j++) {
+                if (fabs(mat[j + i * width] - mat_compare[j + i * width]) > 1e-15)  {
+                    printf("Mismatch found at position (%d, %d) (%.16f, %.16f)\n", i, j, mat[j + i * width], mat_compare[j + i * width]);
+                    free(mat_compare);
+                    exit(EXIT_FAILURE);
+                    cudaErrorHandle(cudaDeviceSynchronize());
+                }
+            }
+        }
+
+
+        printf("All elements match!\n");
+        
+
+        // Free allocated memory
+        free(mat_compare);
     }
-    fclose(fptr);
+    
 
     cudaErrorHandle(cudaFreeHost(mat));
     cudaErrorHandle(cudaFree(mat_gpu));
@@ -170,7 +209,7 @@ int main(int argc, char *argv[]) {
     blockDim    | dim3  | Number of threads in 3 directions for each block
     gridDim     | dim3  | Number of blocks in 3 directions for the whole grid
     */
-    if (argc != 4) {
+    if (argc != 5) {
         printf("Usage: %s <Width> <Height> <Iterations>", argv[0]); // Programname
         return 1;
     }
@@ -178,6 +217,7 @@ int main(int argc, char *argv[]) {
     int width = atoi(argv[1]);
     int height = atoi(argv[2]);
     int iter = atoi(argv[3]);
+    int compare = atoi(argv[4]);
 
     double eps = 1.0e-14;
     double dx = 2.0 / (width - 1);
@@ -186,7 +226,7 @@ int main(int argc, char *argv[]) {
     dim3 blockDim(32, 32, 1);
     dim3 gridDim(16, 1, 1);
 
-    start(width, height, iter, eps, dx, dy, blockDim, gridDim);
+    start(width, height, iter, eps, dx, dy, compare, blockDim, gridDim);
 
     return 0;
 }

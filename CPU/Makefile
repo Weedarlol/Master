@@ -1,13 +1,16 @@
-
 # Define different matrix sizes
-MATRIX_SIZES = 512 1024 2048
+WIDTH = 4096
+HEIGHT = 8192
 
-ITERATIONS = 1000000
+# Number of max iterations to run for the scenario
+ITERATIONS = 10000
 
-PARTITION = dgx2q hgx2q
+# Chooses which partition to run at. (hgx2q and dgx2q for more than 1 GPU, a100q and a40q for more than 1 cluster)
+# Example = hgx2q, dgx2q, a100q
+PARTITION = dgx2q
 
 # Create a list of run identifiers for all combinations
-RUN_IDENTIFIERS = $(foreach size,$(MATRIX_SIZES),size$(size)_iter$(ITERATIONS))
+RUN_IDENTIFIERS = $(foreach width,$(WIDTH),$(foreach height,$(HEIGHT),$(foreach iter,$(ITERATIONS),width$(width)_height$(height)_iter$(ITERATIONS))))
 
 
 submit:
@@ -21,24 +24,17 @@ submit:
 
 
 # View rules
-view:
-	cat output/output.out
-
-vieww:
-	cat output/error.err
+JobName:
+	sacct --format="JobID,JobName%60"
 
 
 
 # Clean rules
 clean:
-	$(foreach partition,$(PARTITION), \
-		$(foreach identifier,$(RUN_IDENTIFIERS),$(RM) out_$(identifier)_$(partition)); \
-	) rm -rf slurm*
+	rm -rf slurm* out_*
 
 cleannn:
-	$(foreach partition,$(PARTITION), \
-		$(foreach identifier,$(RUN_IDENTIFIERS),$(RM) error/$(identifier)_$(partition).err output/$(identifier)_$(partition).out); \
-	)
+	rm -rf output/* error/*
 
 
 

@@ -15,6 +15,7 @@ OBJECTS=$(echo "$SOURCES" | sed 's/\.cu/\.o/g')
 
 # Gets the first element which indicates the partition type
 PARTITION="$1"
+
 shift
 
 
@@ -24,7 +25,8 @@ for SCENARIO in "$@"; do
     WIDTH=$(echo $SCENARIO | awk -F'width' '{print $2}' | awk -F'_' '{print $1}')
     HEIGHT=$(echo $SCENARIO | awk -F'height' '{print $2}' | awk -F'_' '{print $1}')
     NUM_GPUS=$(echo $SCENARIO | awk -F'gpu' '{print $2}' | awk -F'_' '{print $1}')
-    ITERATIONS=$(echo $SCENARIO | awk -F'iter' '{print $2}' | awk -F'overlap' '{print $1}')
+    ITERATIONS=$(echo $SCENARIO | awk -F'iter' '{print $2}' | awk -F'_' '{print $1}')
+    COMPARE=$(echo $SCENARIO | awk -F'compare' '{print $2}' | awk -F'_' '{print $1}')
     OVERLAP=$(echo $SCENARIO | awk -F'overlap' '{print $2}')
 
     # Define the variable values
@@ -32,7 +34,8 @@ for SCENARIO in "$@"; do
     VAR2=$HEIGHT # Height
     VAR3=$ITERATIONS  # Iterations
     VAR4=$NUM_GPUS    # GPUs
-    VAR5=$OVERLAP
+    VAR5=$COMPARE
+    VAR6=$OVERLAP
 
     # Create a temporary Slurm script for this scenario
     TEMP_SCRIPT="slurm_script_${SCENARIO}_${PARTITION}.sh"
@@ -61,7 +64,8 @@ module load cuda11.8/toolkit/11.8.0
 
 nvcc $NVCCFLAGS $SOURCES -o out_${SCENARIO}_${PARTITION} -L$LIBDIR -lnccl
 
-./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5
+#nsys nvprof -o nsight/nsight_${SCENARIO}_${PARTITION} ./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5
+./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5 $VAR6
 
 exit 0
 

@@ -1,20 +1,27 @@
 
-# Creates a list of values for GPU allocation
-GPU_COUNTS = 1 2 3
+# Creates a list of values for GPU allocation, max 3 integers when running with nsys nvprof
+# Example  = 1 2 4
+GPU_COUNTS = 1 2 3 4
 
 # Define different matrix sizes
-WIDTH = 512 1024
-HEIGHT = 512 1024
+WIDTH = 131072
+HEIGHT = 512
 
-ITERATIONS = 100_1000_10000_100000_1000000_10000000
+# Number of max iterations to run for the scenario
+ITERATIONS = 10000
 
+# Chooses which partition to run at. (hgx2q and dgx2q for more than 1 GPU, a100q and a40q for more than 1 cluster)
+# Example = hgx2q, dgx2q, a100q, a40q
 PARTITION = dgx2q
 
 # Enables or disables overlap, 1 = overlap, 0 = no overlap
-OVERLAP = 1
+OVERLAP = 0 1
+
+# If you want to compare the final resulting matrix with the matrix created by the CPU. (CPU has to computed it first and created its own textfile containing its matrix called "CPUMatrix%i_%i.txt" where %i are the width and height)
+COMPARE = 1
 
 # Create a list of run identifiers for all combinations
-RUN_IDENTIFIERS = $(foreach width,$(WIDTH),$(foreach height,$(HEIGHT),$(foreach gpu,$(GPU_COUNTS),$(foreach iter,$(ITERATIONS),$(foreach overlap,$(OVERLAP),width$(width)_height$(height)_gpu$(gpu)_iter$(ITERATIONS)_overlap$(overlap))))))
+RUN_IDENTIFIERS = $(foreach width,$(WIDTH),$(foreach height,$(HEIGHT),$(foreach gpu,$(GPU_COUNTS),$(foreach iter,$(ITERATIONS),$(foreach overlap,$(OVERLAP),width$(width)_height$(height)_gpu$(gpu)_iter$(ITERATIONS)_compare$(COMPARE)_overlap$(overlap))))))
 
 
 submit:
@@ -33,7 +40,7 @@ plot:
 	
 
 JobName:
-	sacct --format="JobID,JobName%40"
+	sacct --format="JobID,JobName%60"
 
 
 
@@ -41,14 +48,10 @@ JobName:
 
 # Clean rules
 clean:
-	$(foreach partition,$(PARTITION), \
-		$(foreach identifier,$(RUN_IDENTIFIERS),$(RM) out_$(identifier)_$(partition)); \
-	) rm -rf slurm*
+	rm -rf slurm* out_*
 
 cleannn:
-	$(foreach partition,$(PARTITION), \
-		$(foreach identifier,$(RUN_IDENTIFIERS),$(RM) error/$(identifier)_$(partition).err output/$(identifier)_$(partition).out); \
-	)
+	rm -rf output/* error/* nsight/*
 
 
 

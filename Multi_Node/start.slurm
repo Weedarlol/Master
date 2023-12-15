@@ -56,9 +56,9 @@ module load cuda11.6/toolkit/11.6.0
 
 
 
-nvcc $SOURCES -o out_${SCENARIO} -L$LIBDIR -I$INCDIR $MPIFLAGS $NVCCFLAGS
+mpicc $SOURCES -o out_${SCENARIO} -L$LIBDIR -I$INCDIR $MPIFLAGS $NVCCFLAGS
 
-ldd ./out_${SCENARIO}
+mpirun -np ${NODES} ./out_${SCENARIO}
 
 exit 0
 
