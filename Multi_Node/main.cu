@@ -213,6 +213,7 @@ void start(int width, int height, int iter, double eps, double dx, double dy, in
                     }  
                 }
             } 
+            
             for(int g = 0; g < gpus; g++){
                 cudaErrorHandle(cudaStreamSynchronize(streams[g]));
             }
