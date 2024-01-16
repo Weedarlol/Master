@@ -1,9 +1,9 @@
 # Define different matrix sizes
-WIDTH = 8192
-HEIGHT = 8192
+WIDTH = 4096 8192
+HEIGHT = 4096 8192
 
 # Number of max iterations to run for the scenario
-ITERATIONS = 1000
+ITERATIONS = 10000
 
 # Chooses which partition to run at. (hgx2q and dgx2q for more than 1 GPU, a100q and a40q for more than 1 cluster)
 # Example = hgx2q, dgx2q, a100q
