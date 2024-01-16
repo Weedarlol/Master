@@ -13,6 +13,8 @@ __device__ void calc(double *mat_gpu, double *mat_gpu_tmp, int amountPerThread, 
         int x = index % (width-2) + 1;
         int y = index / (width-2) + 1;
         index = x + y*width;
+        /* mat_gpu_tmp[index] = 0.25 * (
+            mat_gpu[index + 1]     + mat_gpu[index - 1]); */
         mat_gpu_tmp[index] = 0.25 * (
             mat_gpu[index + 1]     + mat_gpu[index - 1] +
             mat_gpu[index + width] + mat_gpu[index - width]);
@@ -82,7 +84,7 @@ __global__ void jacobiBot(double *mat_gpu, double *mat_gpu_tmp, int number_rows,
 
 __global__ void jacobiMid(double *mat_gpu, double *mat_gpu_tmp, int number_rows, int width, int height, 
                         int rows_leftover, int device_nr, int rows_compute, int amountPerThreadExtra, int leftoverExtra,
-                        int amountPerThread, int leftover, int *maxEps, double eps, int overlap){
+                        int amountPerThread, int leftover, int *maxEps, double eps, int overlap_calc){
 
 
     cg::grid_group grid_g = cg::this_grid();
@@ -91,14 +93,14 @@ __global__ void jacobiMid(double *mat_gpu, double *mat_gpu_tmp, int number_rows,
 
     
     if(device_nr < rows_leftover){
-        index_start = thread*amountPerThreadExtra + min(thread, leftoverExtra) + (width-2)*overlap;
+        index_start = thread*amountPerThreadExtra + min(thread, leftoverExtra) + overlap_calc;
         if(thread < leftoverExtra){
             amountPerThreadExtra++;
         }
         calc(mat_gpu, mat_gpu_tmp, amountPerThreadExtra, index_start, width, height, eps, maxEps, thread, grid_g);
     }
     else{
-        index_start = thread*amountPerThread + min(thread, leftover) + (width-2)*overlap;
+        index_start = thread*amountPerThread + min(thread, leftover) + overlap_calc;
         if(thread < leftover){
             amountPerThread++;
         }

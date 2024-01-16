@@ -64,7 +64,7 @@ module load cuda11.8/toolkit/11.8.0
 
 nvcc $NVCCFLAGS $SOURCES -o out_${SCENARIO}_${PARTITION} -L$LIBDIR -lnccl
 
-#nsys nvprof -o nsight/nsight_${SCENARIO}_${PARTITION} ./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5
+#nsys nvprof -o nsight/nsight_${SCENARIO}_${PARTITION} ./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5 $VAR6
 ./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5 $VAR6
 
 exit 0
