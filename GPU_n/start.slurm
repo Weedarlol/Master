@@ -45,12 +45,14 @@ for SCENARIO in "$@"; do
 
 #SBATCH --job-name=${SCENARIO}_${PARTITION}_GPU${NUM_GPUS}
 #SBATCH -p ${PARTITION}
-#SBATCH -N 1
-#SBATCH -n 1
+#SBATCH -N 1                                  # Antall noder, i dgx2q så er det bare 1 node bygd opp av DualProcessor AMD EPYC Milan 7763 64-core w/ 8 qty Nvidia Volta A100/80GB
+#SBATCH -n 1                                  # Antall CPU cores som vil bli allokert
 #SBATCH -t 14:00:00
-#SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=1
-#SBATCH --gres=gpu:${NUM_GPUS}
+#SBATCH --ntasks-per-node=1                   # Antall ganger en vil kjøre programmet på hver node
+#SBATCH --cpus-per-task=1                     # Antall CPUer en vil allokere, er 64 cores per CPU, så kan i teorien bare trenge å øke dene når -n > 64
+#SBATCH --gres=gpu:${NUM_GPUS}                # Antall GPUer en allokerer per job, så totale antall GPU
+#SBATCH --gpus-per-task=${NUM_GPUS}           # Antall GPUer en allokerer per task, så totale antall GPU delt på antall noder
+#SBATCH --gpus=${NUM_GPUS}                    # Antall GPUer en allokerer per node, så totale antall GPU delt på antall noder
 #SBATCH --output=output/${SCENARIO}_${PARTITION}.out
 #SBATCH --error=error/${SCENARIO}_${PARTITION}.err
 

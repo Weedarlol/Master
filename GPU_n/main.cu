@@ -132,7 +132,7 @@ void start(int width, int height, int iter, double eps, double dx, double dy, in
     }
 
     cudaStream_t streams[gpus][2];
-    cudaEvent_t events[gpus][2];
+    cudaEvent_t events[gpus][2], startevent, stopevent;
     for(int g = 0; g < gpus; g++){
         cudaErrorHandle(cudaSetDevice(g));
         cudaErrorHandle(cudaStreamCreate(&streams[g][0]));
@@ -140,6 +140,8 @@ void start(int width, int height, int iter, double eps, double dx, double dy, in
         cudaErrorHandle(cudaEventCreate(&events[g][0]));
         cudaErrorHandle(cudaEventCreate(&events[g][1]));
     }
+    cudaErrorHandle(cudaEventCreate(&startevent));
+    cudaErrorHandle(cudaEventCreate(&stopevent));
     
 
     fillValues(mat, dx, dy, width, height);
@@ -179,7 +181,7 @@ void start(int width, int height, int iter, double eps, double dx, double dy, in
         void **kernelArgs = new void*[15];
         kernelArgs[0] = &mat_gpu[g];     
         kernelArgs[1] = &mat_gpu_tmp[g];
-        kernelArgs[2] = &rows_device[g]; 
+        kernelArgs[2] = &rows_device[g];
         kernelArgs[3] = &width;
         kernelArgs[4] = &height;
         kernelArgs[5] = &rows_leftover;
@@ -196,15 +198,17 @@ void start(int width, int height, int iter, double eps, double dx, double dy, in
         kernelCollMid[g] = kernelArgs;
     }
 
-    printf("0 %i, 1 %i, 2 %i, 3 %i\n", threadInformation[0], threadInformation[1], threadInformation[2], threadInformation[3]);
+    //printf("0 %i, 1 %i, 2 %i, 3 %i\n", threadInformation[0], threadInformation[1], threadInformation[2], threadInformation[3]);
     
 
 
     nvtxRangePushA("Area of Interest");
-    start = clock();
+    cudaErrorHandle(cudaEventRecord(startevent));
     if(overlap == 1){
         if(gpus > 1){
             while(iter > 0){
+                
+                // Step 1
                 // Computes the 2 row
                 for(int g = 0; g < gpus; g++){
                     cudaErrorHandle(cudaSetDevice(g));
@@ -212,45 +216,52 @@ void start(int width, int height, int iter, double eps, double dx, double dy, in
                     cudaErrorHandle(cudaEventRecord(events[g][0], streams[g][0]));
                 }
 
+
+
+
+                // Step 2
                 // Transfer and recieve 2 row of the matrix
                 for(int g = 1; g < gpus; g++){
                     cudaErrorHandle(cudaSetDevice(g));
                     cudaErrorHandle(cudaStreamWaitEvent(streams[g][0], events[g][0]));
-                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g-1] + (rows_device[g-1]-1)*width, g-1, mat_gpu_tmp[g] + width, g, width*sizeof(double), streams[g][0]));
+                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g-1] + (rows_device[g-1]-1)*width + 1, g-1, mat_gpu_tmp[g] + width + 1, g, (width-2)*sizeof(double), streams[g][0]));
                 }
-
-
-
                 // Computes the n-2 row
                 for(int g = 0; g < gpus; g++){
                     cudaErrorHandle(cudaSetDevice(g));
+                    cudaErrorHandle(cudaStreamWaitEvent(streams[g][1], events[g][0]));
                     cudaErrorHandle(cudaLaunchCooperativeKernel((void*)jacobiBot, gridDim, blockDim, kernelCollEdge[g], 0, streams[g][1]));
                     cudaErrorHandle(cudaEventRecord(events[g][1], streams[g][1]));
                 }
 
+
+
+
+
+                // Step 3
                 // Transfers and recieves n-2 row of the matrix
                 for(int g = 0; g < gpus-1; g++){
                     cudaErrorHandle(cudaSetDevice(g));
-                    cudaErrorHandle(cudaStreamWaitEvent(streams[g][0], events[g][1]));
-                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g+1], g+1, mat_gpu_tmp[g] + (rows_device[g]-2)*width, g, width*sizeof(double), streams[g][1]));
+                    cudaErrorHandle(cudaStreamWaitEvent(streams[g][1], events[g][1]));
+                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g+1] + 1, g+1, mat_gpu_tmp[g] + (rows_device[g]-2)*width + 1, g, (width-2)*sizeof(double), streams[g][1]));
                 }
-
-
-
                 // Computes the rest of the rows for the matrix
                 for(int g = 0; g < gpus; g++){
                     cudaErrorHandle(cudaSetDevice(g));
-                    cudaErrorHandle(cudaLaunchCooperativeKernel((void*)jacobiMid, gridDim, blockDim, kernelCollMid[g]));
+                    cudaErrorHandle(cudaStreamWaitEvent(streams[g][0], events[g][1]));
+                    cudaErrorHandle(cudaLaunchCooperativeKernel((void*)jacobiMid, gridDim, blockDim, kernelCollMid[g], 0, streams[g][0]));
+                    cudaErrorHandle(cudaEventRecord(events[g][0], streams[g][0]));
                 }
 
 
 
-
+                // Step 4
                 for(int g = 0; g < gpus; g++){
                     cudaErrorHandle(cudaSetDevice(g));
-                    cudaErrorHandle(cudaDeviceSynchronize());
+                    cudaErrorHandle(cudaEventSynchronize(events[g][0]));
                 }
                 
+                // Step 5
                 for(int g = 0; g < gpus; g++){
                     double *mat_change = mat_gpu[g];
                     mat_gpu[g] = mat_gpu_tmp[g];
@@ -258,37 +269,46 @@ void start(int width, int height, int iter, double eps, double dx, double dy, in
                 }
                 iter--;
             }
+            
         }
     }
     else{
         if(gpus > 1){
             while(iter > 0){
+                // Step 1
                 // Computes all the elements in the matrix
                 for(int g = 0; g < gpus; g++){
                     cudaErrorHandle(cudaSetDevice(g));
-                    cudaErrorHandle(cudaLaunchCooperativeKernel((void*)jacobiMid, gridDim, blockDim, kernelCollMid[g]));
+                    cudaErrorHandle(cudaLaunchCooperativeKernel((void*)jacobiMid, gridDim, blockDim, kernelCollMid[g], 0, streams[g][0]));
+                    cudaErrorHandle(cudaEventRecord(events[g][0], streams[g][0]));
                 }
 
-                // Waits for all GPUs to finish computations
+
+                // Step 2
                 for(int g = 0; g < gpus; g++){
                     cudaErrorHandle(cudaSetDevice(g));
-                    cudaErrorHandle(cudaDeviceSynchronize());
+                    cudaErrorHandle(cudaEventSynchronize(events[g][0]));
                 }
 
-                // Transfer and recieve 2 row of the matrix
+
+                // Step 3
+                // Transfers each GPUs n-2 row
                 for(int g = 1; g < gpus; g++){
                     cudaErrorHandle(cudaSetDevice(g));
-                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g-1] + (rows_device[g-1]-1)*width, g-1, mat_gpu_tmp[g] + width, g, width*sizeof(double)));
-                    cudaErrorHandle(cudaEventCreate(&events[g][0]));
+                    cudaErrorHandle(cudaStreamWaitEvent(streams[g][0], events[g][0]));
+                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g-1] + (rows_device[g-1]-1)*width + 1, g-1, mat_gpu_tmp[g] + width + 1, g, (width-2)*sizeof(double), streams[g][0]));
+                    cudaErrorHandle(cudaEventRecord(events[g][0], streams[g][0]));
                 }
-
-                // Transfers and recieves n-2 row of the matrix
+                // Transfers each GPUs 2 row
                 for(int g = 0; g < gpus-1; g++){
                     cudaErrorHandle(cudaSetDevice(g));
-                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g+1], g+1, mat_gpu_tmp[g] + (rows_device[g]-2)*width, g, width*sizeof(double)));
-                    cudaErrorHandle(cudaEventCreate(&events[g][1]));
+                    cudaErrorHandle(cudaStreamWaitEvent(streams[g][1], events[g][0]));
+                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g+1] + 1, g+1, mat_gpu_tmp[g] + (rows_device[g]-2)*width + 1, g, (width-2)*sizeof(double), streams[g][1]));
+                    cudaErrorHandle(cudaEventRecord(events[g][1], streams[g][1]));
                 }
 
+
+                // Step 4
                 // Waits for transfers to complete
                 for(int g = 0; g < gpus; g++){
                     cudaErrorHandle(cudaSetDevice(g));
@@ -296,6 +316,7 @@ void start(int width, int height, int iter, double eps, double dx, double dy, in
                     cudaErrorHandle(cudaEventSynchronize(events[g][1]));
                 }
                 
+                // Step 5
                 for(int g = 0; g < gpus; g++){
                     double *mat_change = mat_gpu[g];
                     mat_gpu[g] = mat_gpu_tmp[g];
@@ -305,6 +326,7 @@ void start(int width, int height, int iter, double eps, double dx, double dy, in
             }
         }
     }
+    cudaErrorHandle(cudaEventRecord(stopevent));
     
     nvtxRangePop();
 
@@ -315,11 +337,11 @@ void start(int width, int height, int iter, double eps, double dx, double dy, in
     }
     
 
-    printf("Time - %.4f, SolutionFound - %s, IterationsComputed - %i\n",
-            ((double) (clock() - start)) / CLOCKS_PER_SEC, (iter == 0) ? "No" : "Yes", tmp_iter - iter);
-
-    
-
+    cudaErrorHandle(cudaEventSynchronize(stopevent));
+    float milliseconds = 0.0f;
+    cudaErrorHandle(cudaEventElapsedTime(&milliseconds, startevent, stopevent));
+    printf("Time(event) - %.4f, SolutionFound - %s, IterationsComputed - %i\n",
+            milliseconds, (iter == 0) ? "No" : "Yes", tmp_iter - iter);
 
 
 
