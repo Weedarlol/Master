@@ -23,9 +23,6 @@ def extract_info(file_path):
 
     return width, height, gpu, iterationsComputed, overlap, time
 
-# Directory containing the files
-# directory = 'output'  # Replace 'path_to_directory' with your actual directory path
-
 # Initialize dictionaries to store data for different width, height, and iterationsComputed combinations
 data_by_dimensions = {}
 
@@ -39,14 +36,14 @@ for file in files:
         width, height, gpu, iterationsComputed, overlap, time = extract_info(file_path)
         key = (width, height, iterationsComputed)
         if key not in data_by_dimensions:
-            data_by_dimensions[key] = {'gpu': [], 'overlap_0': [], 'overlap_1': []}
+            data_by_dimensions[key] = {'gpu': [], 'overlap_0': [], 'overlap_1': [], 'overlap_2': []}
         if overlap == 0:
             data_by_dimensions[key]['gpu'].append(gpu)
             data_by_dimensions[key]['overlap_0'].append(time)
         elif overlap == 1:
             data_by_dimensions[key]['overlap_1'].append(time)
-
-
+        elif overlap == 2:
+            data_by_dimensions[key]['overlap_2'].append(time)
 
 # Get unique width and height values
 unique_widths = sorted(set(key[0] for key in data_by_dimensions))
@@ -61,30 +58,37 @@ fig, axes = plt.subplots(num_rows, num_cols, sharex='col', sharey='row', figsize
 
 for i, height in enumerate(unique_heights):
     for j, width in enumerate(unique_widths):
-        key = (width, height, iterationsComputed)  # Assuming iterationsComputed is not relevant for subplot arrangement
-        data = data_by_dimensions.get(key, {'gpu': [], 'overlap_0': [], 'overlap_1': []})
+        key = (width, height, iterationsComputed)
+        data = data_by_dimensions.get(key, {'gpu': [], 'overlap_0': [], 'overlap_1': [], 'overlap_2': []})
 
         x = np.array(data['gpu'])
         y_overlap_0 = np.array(data['overlap_0'])
         y_overlap_1 = np.array(data['overlap_1'])
+        y_overlap_2 = np.array(data['overlap_2'])
 
         # Sort based on GPU number
         sort_order = np.argsort(x)
         x = x[sort_order]
         y_overlap_0 = y_overlap_0[sort_order]
         y_overlap_1 = y_overlap_1[sort_order]
+        y_overlap_2 = y_overlap_2[sort_order]
 
-        bar_width = 0.35  # Width of the bars
+        bar_width = 0.25  # Width of the bars
         index = np.arange(len(x))  # Index for the x-axis
 
         # Plot on the corresponding subplot with explicit colors
-        axes[i, j].bar(index, y_overlap_0, bar_width, label='Overlap = False', color='blue')
-        axes[i, j].bar(index + bar_width, y_overlap_1, bar_width, label='Overlap = True', color='orange')
+        axes[i, j].bar(index - bar_width, y_overlap_0, bar_width, label='Overlap = 0', color='blue')
+        axes[i, j].bar(index, y_overlap_1, bar_width, label='Overlap = 1', color='orange')
+        axes[i, j].bar(index + bar_width, y_overlap_2, bar_width, label='Overlap = 2', color='green')
 
         # Set subplot labels
         axes[i, j].set_xlabel('GPU Quantity')
         axes[i, j].set_ylabel('Time(ms)')
         axes[i, j].set_title(f'width {width}, height {height}, iterationsComputed {iterationsComputed}')
+
+        # Set x-axis ticks to show only GPU quantity values
+        axes[i, j].set_xticks(index)
+        axes[i, j].set_xticklabels(x)
 
         # Add legend to each subplot
         axes[i, j].legend()
