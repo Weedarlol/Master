@@ -1,11 +1,11 @@
 
 # Creates a list of values for GPU allocation, max 3 integers when running with nsys nvprof
 # Example  = 2 3 4
-GPU_COUNTS = 2 3
+GPU_COUNTS = 2 3 4
 
 # Define different matrix sizes
-WIDTH = 4096
-HEIGHT = 4096
+WIDTH = 4096 8192
+HEIGHT = 4096 8192
 
 # Number of max iterations to run for the scenario
 ITERATIONS = 10000

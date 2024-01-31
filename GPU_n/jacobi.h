@@ -1,7 +1,4 @@
-__global__ void jacobiTop(double *mat_gpu, double *mat_gpu_tmp, int width, int height, 
-                        int rows_compute, int amountPerThread, int leftover);
-
-__global__ void jacobiBot(double *mat_gpu, double *mat_gpu_tmp, int width, int height, 
+__global__ void jacobiEdge(double *mat_gpu, double *mat_gpu_tmp, int width, int height, 
                         int rows_compute, int amountPerThread, int leftover);
 
 __global__ void jacobiMid(double *mat_gpu, double *mat_gpu_tmp, int width, int height, 

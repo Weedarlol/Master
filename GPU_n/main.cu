@@ -31,49 +31,51 @@ void fillValues(double *mat, double dx, double dy, int width, int height){
     }
 }
 
-void start(int width, int height, int iter, double eps, double dx, double dy, int gpu_nr, int compare, int overlap, dim3 blockDim, dim3 gridDim){
+void start(int width, int height, int iter, double dx, double dy, int gpu_nr, int compare, int overlap, dim3 blockDim, dim3 gridDim){
     /*
-    Variables   | Type  | Description
-    total          | int    | The total number of elements within the matrix
+    Variables            | Type        | Description
+    total                | int         | The total number of elements within the matrix
+    tmp_iter             | int         | Used to remeber how many iterations we want run
+    overlap_calc         | int         | Used to find how many elements less the kernelCollMid has to compute when we have overlap
+    threadSize           | int         | Finds the total amount of threads in use
+    gpus                 | int         | Number of GPUs in use
+    device_nr            | int*        | Allows the GPU to know its GPU index
 
-    print_iter     | int    | Placeholder, used to find the number of iterations which has been run
+    rows_total           | int         | Total number of rows to be computed on
+    rows_per_device      | int         | Number of rows per device, rounded down
+    rows_leftover        | int         | Number of rows leftover when rounded down
 
-    start          | clock_t| The clock when we reach a certain part of the code
-    end            | clock_t| The clock when we are finished with that part of the code
+    rows_device          | int*        | Rows to allocate on the GPU
+    rows_compute_device  | int*        | Rows the GPU will compute on
+    rows_staring_index   | int*        | Index on the CPU matrix that the first element of the GPU matrix belongs
 
-    gpus           | int    | Number of GPUs used when running the program
-    device_nr      |*int    | An array which will allow the GPU to see which GPU number it has
+    threadInformation[0] | int         | Number of computations per thread on GPU 0, rounded down
+    threadInformation[1] | int         | Number of computations left over when rounded down
+    threadInformation[2] | int         | Number of computations per thread on GPU n-1, rounded down, is used as if there are an unequal amount of rows between device, 
+                                         the first and last GPU will certainly be in each group
+    threadInformation[3] | int         | Number of computations left over when rounded down
+    threadInformation[4] | int         | Number of computations per thread for 1 row, rounded down
+    threadInformation[5] | int         | Number of computations left over for 1 row when rounded down
 
-    maxEps         |**double| Used by the GPU to calculate how many elements which exceed the allowed limit of change for an element between two iterations
-    maxEps_print   |*double | Used as a destination for the number of elements which the GPU has calculated exceeding the limit
+    mat                  | double*     | The matrix allocated on the CPU
+    mat_gpu              | double**    | One of the matrices allocated on the GPU
+    mat_gpu_tmp          | double**    | The other matrix allocated on the GPU
 
-    rows_total     | int    | Is the total number of rows which will be computed on by the devices
-    rows_per_device| int    | The number of rows per 
-    rows_leftover  | int    | The number of GPUs which is required to have an additional row when rows_total cannot be split equally between the devices
-    rows_device    | int    | Number of rows each gpus will recieve, including ghostrows
-    rows_starting_index     | int    | Contains the index of the row which will be the first row to be transferred to the designated GPU
-    rows_compute_device   | int    | Will tell the GPU how many rows it will compute on
+    kernelCollEdge       | void***     | The inputfeatures to the jacobiEdge GPU kernel
+    kernelCollMid        | void***     | The inputfeatures to the jacobiMid GPU kernel
 
-    threadSize     | int    | Total number of threads in work in a GPU
-    threadInformatin| int   | Is used to give the GPU information of how many elements each thread has to compute on
+    streams              | cudaStream_t| The streams which is utilized when computing on the GPU
+    events               | cudaEvent_t | The events used to synchronize the streams
+    startevent           | cudaEvent_t | The event used to start the timer for the computation
+    stopevent            | cudaEvent_t | The event used to stop the timer for the computation
 
-    mat            |*double | The matrix which is to be used as base for computations
-    mat_gpu        |**double| The matrix which will be a part of the mat matrix, will be the part which is given to one GPU
-    mat_gpu_tmp    |**double| Is used so that the GPU can change between the two matrixes every iteration
-
-    streams        |cudaStream_t| Contains the streams each GPU will use to allow for asynchronous computing
-
-    kernelCollMid     |***void | Is a collection of all the functions each GPU will use to run the CUDA function on in a kernel
-
-    filename       | char   | The name of the textdocument which will be created to compare resulting matrixes
-    fptr           |*FILE   | Used to create the file
     */
 
 
     int total = width*height;
     int tmp_iter = iter;
-
-    clock_t start;
+    int overlap_calc = (width-2)*overlap;
+    int threadSize = blockDim.x*blockDim.y*blockDim.z*gridDim.x*gridDim.y*gridDim.z;
 
     int gpus;
     int *device_nr;
@@ -87,7 +89,7 @@ void start(int width, int height, int iter, double eps, double dx, double dy, in
     int rows_total = height-2;
     int rows_per_device = rows_total/gpus;
     int rows_leftover = rows_total%gpus;
-    int *rows_device, *rows_starting_index, *rows_compute_device;
+    int *rows_device, *rows_compute_device, *rows_starting_index;
     cudaErrorHandle(cudaMallocHost(&rows_device, gpus*sizeof(int*)));
     cudaErrorHandle(cudaMallocHost(&rows_starting_index, gpus*sizeof(int*)));
     cudaErrorHandle(cudaMallocHost(&rows_compute_device, gpus*sizeof(int*)));
@@ -103,7 +105,6 @@ void start(int width, int height, int iter, double eps, double dx, double dy, in
     }
 
     int *threadInformation;
-    int threadSize = blockDim.x*blockDim.y*blockDim.z*gridDim.x*gridDim.y*gridDim.z;
     cudaErrorHandle(cudaMallocHost(&threadInformation, 6*sizeof(int)));
     threadInformation[0] = ((rows_compute_device[0])     *(width-2))/threadSize; // Find number of elements to compute for each thread, ignoring border elements.
     threadInformation[1] = ((rows_compute_device[0])     *(width-2))%threadSize; // Finding which threads require 1 more element
@@ -145,7 +146,6 @@ void start(int width, int height, int iter, double eps, double dx, double dy, in
     }
 
     void ***kernelCollMid;
-    int overlap_calc = (width-2)*overlap;
     cudaErrorHandle(cudaMallocHost(&kernelCollMid, gpus * sizeof(void**)));
     // Allocates the elements in the kernelCollMid, used for cudaLaunchCooperativeKernel as functon variables.
     for (int g = 0; g < gpus; g++) {
@@ -210,56 +210,44 @@ void start(int width, int height, int iter, double eps, double dx, double dy, in
         if(gpus > 1){
             while(iter > 0){
                 // Step 1
-                // Computes the 2 row
                 for(int g = 0; g < gpus; g++){
                     cudaErrorHandle(cudaSetDevice(g));
-                    cudaErrorHandle(cudaLaunchCooperativeKernel((void*)jacobiTop, gridDim, blockDim, kernelCollEdge[g], 0, streams[g][0]));
-                    cudaErrorHandle(cudaEventRecord(events[g][0], streams[g][0]));
+                    // Computes the 2 rows
+                    cudaErrorHandle(cudaLaunchCooperativeKernel((void*)jacobiEdge, gridDim, blockDim, kernelCollEdge[g], 0, streams[g][1]));
+                    cudaErrorHandle(cudaEventRecord(events[g][0], streams[g][1]));
+                    // Computes the rest of the rows
+                    cudaErrorHandle(cudaLaunchCooperativeKernel((void*)jacobiMid, gridDim, blockDim, kernelCollMid[g], 0, streams[g][0]));
+                    cudaErrorHandle(cudaEventRecord(events[g][1], streams[g][0]));
                 }
 
 
 
                 // Step 2
-                // Transfer and recieve 2 row of the matrix
+                // Transfer 2 row of the matrix
                 for(int g = 1; g < gpus; g++){
                     cudaErrorHandle(cudaSetDevice(g));
-                    cudaErrorHandle(cudaStreamWaitEvent(streams[g][0], events[g][0]));
-                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g-1] + (rows_device[g-1]-1)*width + 1, g-1, mat_gpu_tmp[g] + width + 1, g, (width-2)*sizeof(double), streams[g][0]));
+                    cudaErrorHandle(cudaStreamWaitEvent(streams[g][1], events[g][0]));
+                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g-1] + (rows_device[g-1]-1)*width + 1, g-1, mat_gpu_tmp[g] + width + 1, g, (width-2)*sizeof(double), streams[g][1]));
+                    cudaErrorHandle(cudaEventRecord(events[g][2], streams[g][1]));
                 }
-                // Computes the n-2 row
-                for(int g = 0; g < gpus; g++){
+                // Transfers n-2 row of the matrix
+                for(int g = 0; g < gpus-1; g++){
                     cudaErrorHandle(cudaSetDevice(g));
                     cudaErrorHandle(cudaStreamWaitEvent(streams[g][1], events[g][0]));
-                    cudaErrorHandle(cudaLaunchCooperativeKernel((void*)jacobiBot, gridDim, blockDim, kernelCollEdge[g], 0, streams[g][1]));
-                    cudaErrorHandle(cudaEventRecord(events[g][1], streams[g][1]));
+                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g+1] + 1, g+1, mat_gpu_tmp[g] + (rows_device[g]-2)*width + 1, g, (width-2)*sizeof(double), streams[g][1]));
+                    cudaErrorHandle(cudaEventRecord(events[g][3], streams[g][1]));
                 }
-
 
 
                 // Step 3
-                // Transfers and recieves n-2 row of the matrix
-                for(int g = 0; g < gpus-1; g++){
+                for (int g = 0; g < gpus; g++) {
                     cudaErrorHandle(cudaSetDevice(g));
-                    cudaErrorHandle(cudaStreamWaitEvent(streams[g][1], events[g][1]));
-                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g+1] + 1, g+1, mat_gpu_tmp[g] + (rows_device[g]-2)*width + 1, g, (width-2)*sizeof(double), streams[g][1]));
-                }
-                // Computes the rest of the rows for the matrix
-                for(int g = 0; g < gpus; g++){
-                    cudaErrorHandle(cudaSetDevice(g));
-                    cudaErrorHandle(cudaStreamWaitEvent(streams[g][0], events[g][1]));
-                    cudaErrorHandle(cudaLaunchCooperativeKernel((void*)jacobiMid, gridDim, blockDim, kernelCollMid[g], 0, streams[g][0]));
-                    cudaErrorHandle(cudaEventRecord(events[g][0], streams[g][0]));
-                }
-
-
-
-                // Step 4
-                for(int g = 0; g < gpus; g++){
-                    cudaErrorHandle(cudaSetDevice(g));
-                    cudaErrorHandle(cudaEventSynchronize(events[g][0]));
+                    cudaErrorHandle(cudaEventSynchronize(events[g][1]));
+                    cudaErrorHandle(cudaEventSynchronize(events[g][2]));
+                    cudaErrorHandle(cudaEventSynchronize(events[g][3]));
                 }
                 
-                // Step 5
+                // Step 4
                 for(int g = 0; g < gpus; g++){
                     double *mat_change = mat_gpu[g];
                     mat_gpu[g] = mat_gpu_tmp[g];
@@ -274,7 +262,7 @@ void start(int width, int height, int iter, double eps, double dx, double dy, in
         if(gpus > 1){
             while(iter > 0){
                 // Step 1
-                // Computes all the elements in the matrix
+                // Computes the 2 row
                 for(int g = 0; g < gpus; g++){
                     cudaErrorHandle(cudaSetDevice(g));
                     cudaErrorHandle(cudaLaunchCooperativeKernel((void*)jacobiMid, gridDim, blockDim, kernelCollMid[g], 0, streams[g][0]));
@@ -283,35 +271,28 @@ void start(int width, int height, int iter, double eps, double dx, double dy, in
 
 
                 // Step 2
-                for(int g = 0; g < gpus; g++){
-                    cudaErrorHandle(cudaSetDevice(g));
-                    cudaErrorHandle(cudaEventSynchronize(events[g][0]));
-                }
-
-
-                // Step 3
-                // Transfers each GPUs n-2 row
+                // Transfers 2 row of the matrix
                 for(int g = 1; g < gpus; g++){
                     cudaErrorHandle(cudaSetDevice(g));
-                    cudaErrorHandle(cudaStreamWaitEvent(streams[g][0], events[g][0]));
-                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g-1] + (rows_device[g-1]-1)*width + 1, g-1, mat_gpu_tmp[g] + width + 1, g, (width-2)*sizeof(double), streams[g][0]));
-                    cudaErrorHandle(cudaEventRecord(events[g][0], streams[g][0]));
+                    cudaErrorHandle(cudaStreamWaitEvent(streams[g][1], events[g][0]));
+                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g-1] + (rows_device[g-1]-1)*width + 1, g-1, mat_gpu_tmp[g] + width + 1, g, (width-2)*sizeof(double), streams[g][1]));
+                    cudaErrorHandle(cudaEventRecord(events[g][1], streams[g][1]));
                 }
-                // Transfers each GPUs 2 row
+                // Transfers n-2 row of the matrix
                 for(int g = 0; g < gpus-1; g++){
                     cudaErrorHandle(cudaSetDevice(g));
                     cudaErrorHandle(cudaStreamWaitEvent(streams[g][1], events[g][0]));
                     cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g+1] + 1, g+1, mat_gpu_tmp[g] + (rows_device[g]-2)*width + 1, g, (width-2)*sizeof(double), streams[g][1]));
-                    cudaErrorHandle(cudaEventRecord(events[g][1], streams[g][1]));
+                    cudaErrorHandle(cudaEventRecord(events[g][2], streams[g][1]));
                 }
 
 
-                // Step 4
-                // Waits for transfers to complete
+                // Step 3
                 for(int g = 0; g < gpus; g++){
                     cudaErrorHandle(cudaSetDevice(g));
                     cudaErrorHandle(cudaEventSynchronize(events[g][0]));
                     cudaErrorHandle(cudaEventSynchronize(events[g][1]));
+                    cudaErrorHandle(cudaEventSynchronize(events[g][2]));
                 }
                 
                 // Step 5
@@ -322,6 +303,7 @@ void start(int width, int height, int iter, double eps, double dx, double dy, in
                 }
                 iter--;
             }
+            
         }
     }
     
@@ -411,7 +393,6 @@ void start(int width, int height, int iter, double eps, double dx, double dy, in
 
 
 
-
     // Frees up memory as we are finished with the program
     for(int g = 0; g < gpus; g++){
         cudaErrorHandle(cudaSetDevice(g));
@@ -428,6 +409,7 @@ void start(int width, int height, int iter, double eps, double dx, double dy, in
     cudaErrorHandle(cudaFreeHost(rows_device));
     cudaErrorHandle(cudaFreeHost(rows_starting_index));
     cudaErrorHandle(cudaFreeHost(rows_compute_device));
+    // kernelCollMid and kernelCollEdge?
 }
 
 
@@ -435,31 +417,28 @@ void start(int width, int height, int iter, double eps, double dx, double dy, in
 int main(int argc, char *argv[]) {
     /*
     Functions   | Type           | Input
-    start       | void           | int width, int height, int iter, double eps,
+    start       | void           | int width, int height, int iter,
                                    double dx, double dy, dim3 blockDim,
                                    dim3 gridDim
-
-    fillValues  | void           | double *mat, double dx, double dy, int width,
-                                   int height
-
-    jacobi      |__global__ void | double *mat_gpu, double *mat_tmp, double eps,
-                                   int width, int height, int iter
 
     ____________________________________________________________________________
     Variables   | Type  | Description
     width       | int   | The width of the matrix
     height      | int   | The height of the matrix
-    iter        | int   | Number of max iterations for the jacobian algorithm
+    iter        | int   | Amount of iterations
+    gpu_nr      | int   | Number of GPUs in use
+    compare     | int   | If one wants to compare the output with a previously CPU computed matrix
+    overlap     | int   | If one want to overlap or not
+    dx          | float | Used to give value to the elements of the matrix
+    dy          | float | Used to give value to the elements of the matrix
+    blockDim    | dim3  | Size of the threadblock
+    gridDim     | dim3  | Size of the blockgrid
 
-    eps         | double | The limit for accepting the state of the matrix during jacobian algorithm
-    dx          | double | Distance between each element in the matrix in x direction
-    dy          | double | Distance between each element in the matrix in y direction
-
-    blockDim    | dim3  | Number of threads in 3 directions for each block
-    gridDim     | dim3  | Number of blocks in 3 directions for the whole grid
+    For all true/false integers, 0 = false, 1 = true
     */
+    // Checks if the correct amount of inputs is used
     if (argc != 7) {
-        printf("Usage: %s <Width> <Height> <Iterations>", argv[0]); // Programname
+        printf("Usage: %s <Width> <Height> <Iterations>", argv[0]);
         return 1;
     }
 
@@ -470,14 +449,13 @@ int main(int argc, char *argv[]) {
     int compare = atoi(argv[5]);
     int overlap = atoi(argv[6]);
 
-    double eps = 1.0e-14;
     double dx = 2.0 / (width - 1);
     double dy = 2.0 / (height - 1);
 
     dim3 blockDim(32, 32, 1);
     dim3 gridDim(16, 1, 1);
 
-    start(width, height, iter, eps, dx, dy, gpu_nr, compare, overlap, blockDim, gridDim);
+    start(width, height, iter, dx, dy, gpu_nr, compare, overlap, blockDim, gridDim);
 
     return 0;
 }
