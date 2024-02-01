@@ -213,10 +213,10 @@ void start(int width, int height, int iter, double dx, double dy, int gpu_nr, in
                 for(int g = 0; g < gpus; g++){
                     cudaErrorHandle(cudaSetDevice(g));
                     // Computes the 2 rows
-                    cudaErrorHandle(cudaLaunchCooperativeKernel((void*)jacobiEdge, gridDim, blockDim, kernelCollEdge[g], 0, streams[g][1]));
+                    //cudaErrorHandle(cudaLaunchCooperativeKernel((void*)jacobiEdge, gridDim, blockDim, kernelCollEdge[g], 0, streams[g][1]));
                     cudaErrorHandle(cudaEventRecord(events[g][0], streams[g][1]));
                     // Computes the rest of the rows
-                    cudaErrorHandle(cudaLaunchCooperativeKernel((void*)jacobiMid, gridDim, blockDim, kernelCollMid[g], 0, streams[g][0]));
+                    //cudaErrorHandle(cudaLaunchCooperativeKernel((void*)jacobiMid, gridDim, blockDim, kernelCollMid[g], 0, streams[g][0]));
                     cudaErrorHandle(cudaEventRecord(events[g][1], streams[g][0]));
                 }
 
@@ -227,14 +227,14 @@ void start(int width, int height, int iter, double dx, double dy, int gpu_nr, in
                 for(int g = 1; g < gpus; g++){
                     cudaErrorHandle(cudaSetDevice(g));
                     cudaErrorHandle(cudaStreamWaitEvent(streams[g][1], events[g][0]));
-                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g-1] + (rows_device[g-1]-1)*width + 1, g-1, mat_gpu_tmp[g] + width + 1, g, (width-2)*sizeof(double), streams[g][1]));
+                    //cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g-1] + (rows_device[g-1]-1)*width + 1, g-1, mat_gpu_tmp[g] + width + 1, g, (width-2)*sizeof(double), streams[g][1]));
                     cudaErrorHandle(cudaEventRecord(events[g][2], streams[g][1]));
                 }
                 // Transfers n-2 row of the matrix
                 for(int g = 0; g < gpus-1; g++){
                     cudaErrorHandle(cudaSetDevice(g));
                     cudaErrorHandle(cudaStreamWaitEvent(streams[g][1], events[g][0]));
-                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g+1] + 1, g+1, mat_gpu_tmp[g] + (rows_device[g]-2)*width + 1, g, (width-2)*sizeof(double), streams[g][1]));
+                    //cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g+1] + 1, g+1, mat_gpu_tmp[g] + (rows_device[g]-2)*width + 1, g, (width-2)*sizeof(double), streams[g][1]));
                     cudaErrorHandle(cudaEventRecord(events[g][3], streams[g][1]));
                 }
 
@@ -265,7 +265,7 @@ void start(int width, int height, int iter, double dx, double dy, int gpu_nr, in
                 // Computes the 2 row
                 for(int g = 0; g < gpus; g++){
                     cudaErrorHandle(cudaSetDevice(g));
-                    cudaErrorHandle(cudaLaunchCooperativeKernel((void*)jacobiMid, gridDim, blockDim, kernelCollMid[g], 0, streams[g][0]));
+                    //cudaErrorHandle(cudaLaunchCooperativeKernel((void*)jacobiMid, gridDim, blockDim, kernelCollMid[g], 0, streams[g][0]));
                     cudaErrorHandle(cudaEventRecord(events[g][0], streams[g][0]));
                 }
 
@@ -275,14 +275,14 @@ void start(int width, int height, int iter, double dx, double dy, int gpu_nr, in
                 for(int g = 1; g < gpus; g++){
                     cudaErrorHandle(cudaSetDevice(g));
                     cudaErrorHandle(cudaStreamWaitEvent(streams[g][1], events[g][0]));
-                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g-1] + (rows_device[g-1]-1)*width + 1, g-1, mat_gpu_tmp[g] + width + 1, g, (width-2)*sizeof(double), streams[g][1]));
+                    //cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g-1] + (rows_device[g-1]-1)*width + 1, g-1, mat_gpu_tmp[g] + width + 1, g, (width-2)*sizeof(double), streams[g][1]));
                     cudaErrorHandle(cudaEventRecord(events[g][1], streams[g][1]));
                 }
                 // Transfers n-2 row of the matrix
                 for(int g = 0; g < gpus-1; g++){
                     cudaErrorHandle(cudaSetDevice(g));
                     cudaErrorHandle(cudaStreamWaitEvent(streams[g][1], events[g][0]));
-                    cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g+1] + 1, g+1, mat_gpu_tmp[g] + (rows_device[g]-2)*width + 1, g, (width-2)*sizeof(double), streams[g][1]));
+                    //cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g+1] + 1, g+1, mat_gpu_tmp[g] + (rows_device[g]-2)*width + 1, g, (width-2)*sizeof(double), streams[g][1]));
                     cudaErrorHandle(cudaEventRecord(events[g][2], streams[g][1]));
                 }
 
@@ -295,7 +295,7 @@ void start(int width, int height, int iter, double dx, double dy, int gpu_nr, in
                     cudaErrorHandle(cudaEventSynchronize(events[g][2]));
                 }
                 
-                // Step 5
+                // Step 4
                 for(int g = 0; g < gpus; g++){
                     double *mat_change = mat_gpu[g];
                     mat_gpu[g] = mat_gpu_tmp[g];

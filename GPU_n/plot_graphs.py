@@ -66,6 +66,7 @@ unique_heights = sorted(set(key[1] for key in data_by_dimensions))
 
 # Create separate bar plots for different width, height, and iterationsComputed combinations
 fig, axes = plt.subplots(len(unique_heights), len(unique_widths), sharex='col', figsize=(15, 10))
+fig.subplots_adjust(wspace=0.2, hspace=0.3)
 
 for i, height in enumerate(unique_heights):
     for j, width in enumerate(unique_widths):
