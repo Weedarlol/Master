@@ -4,23 +4,26 @@
 GPU_COUNTS = 2 3 4
 
 # Define different matrix sizes
-WIDTH = 1024 4096 8192
-HEIGHT = 1024 4096 8192
+WIDTH = 16384
+HEIGHT = 16384
 
 # Number of max iterations to run for the scenario
-ITERATIONS = 10000
+ITERATIONS = 1
 
 # Chooses which partition to run at. Only one at a time
 PARTITION = dgx2q
 
 # Enables or disables overlap, 1 = overlap, 0 = no overlap
-OVERLAP = 0 1
+OVERLAP = 0
 
 # If you want to compare the final resulting matrix with the matrix created by the CPU. (CPU has to computed it first and created its own textfile containing its matrix called "CPUMatrix%i_%i.txt" where %i are the width and height)
 COMPARE = 0
 
+# 0 = full calculation, 1 = No kernel, 2 = No communication, 3 = only calculation, 4 = only communication
+TEST = 3 4
+
 # Create a list of run identifiers for all combinations
-RUN_IDENTIFIERS = $(foreach width,$(WIDTH),$(foreach height,$(HEIGHT),$(foreach gpu,$(GPU_COUNTS),$(foreach iter,$(ITERATIONS),$(foreach overlap,$(OVERLAP),width$(width)_height$(height)_gpu$(gpu)_iter$(ITERATIONS)_compare$(COMPARE)_overlap$(overlap))))))
+RUN_IDENTIFIERS = $(foreach width,$(WIDTH),$(foreach height,$(HEIGHT),$(foreach gpu,$(GPU_COUNTS),$(foreach iter,$(ITERATIONS),$(foreach overlap,$(OVERLAP),$(foreach test,$(TEST),width$(width)_height$(height)_gpu$(gpu)_iter$(ITERATIONS)_compare$(COMPARE)_overlap$(overlap)_test$(test)))))))
 
 
 submit:
@@ -29,7 +32,8 @@ submit:
 	)
 
 
-
+babel:
+	sbatch -p $(PARTITION) ./babel.slurm $(PARTITION)
 
 # View rules (On local computer)
 plot:

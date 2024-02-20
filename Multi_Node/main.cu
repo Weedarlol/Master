@@ -181,6 +181,7 @@ void start(int width, int height, int iter, double eps, double dx, double dy, in
 
 
     nvtxRangePushA("Area of Interest");
+    // https://support.brightcomputing.com/manuals/8.2/user-manual.pdf
     start = clock();
     if(overlap == 1){
         while(iter > 0 && maxEps_print[0] != 0){

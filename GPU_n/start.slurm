@@ -8,7 +8,7 @@ NVCCFLAGS="-rdc=true"
 LIBDIR="/../../usr/lib/x86_64-linux-gnu/libnccl.so"
 
 # List of source files
-SOURCES="main.cu jacobi.cu"
+SOURCES="main.cu jacobi.cu scenarios.cu"
 
 # Object files derived from sources
 OBJECTS=$(echo "$SOURCES" | sed 's/\.cu/\.o/g')
@@ -27,7 +27,8 @@ for SCENARIO in "$@"; do
     NUM_GPUS=$(echo $SCENARIO | awk -F'gpu' '{print $2}' | awk -F'_' '{print $1}')
     ITERATIONS=$(echo $SCENARIO | awk -F'iter' '{print $2}' | awk -F'_' '{print $1}')
     COMPARE=$(echo $SCENARIO | awk -F'compare' '{print $2}' | awk -F'_' '{print $1}')
-    OVERLAP=$(echo $SCENARIO | awk -F'overlap' '{print $2}')
+    OVERLAP=$(echo $SCENARIO | awk -F'overlap' '{print $2}' | awk -F'_' '{print $1}')
+    TEST=$(echo $SCENARIO | awk -F'test' '{print $2}')
 
     # Define the variable values
     VAR1=$WIDTH # Width
@@ -36,6 +37,7 @@ for SCENARIO in "$@"; do
     VAR4=$NUM_GPUS    # GPUs
     VAR5=$COMPARE
     VAR6=$OVERLAP
+    VAR7=$TEST
 
     # Create a temporary Slurm script for this scenario
     TEMP_SCRIPT="slurm_script_${SCENARIO}_${PARTITION}.sh"
@@ -64,10 +66,17 @@ module load cuda11.8/nsight/11.8.0
 module load cuda11.8/profiler/11.8.0
 module load cuda11.8/toolkit/11.8.0
 
+module load cmake/gcc/3.27.9
+
+
+
 nvcc $NVCCFLAGS $SOURCES -o out_${SCENARIO}_${PARTITION} -L$LIBDIR -lnccl
 
-#nsys nvprof -o nsight/nsight_${SCENARIO}_${PARTITION} ./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5 $VAR6
-./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5 $VAR6
+#nsys nvprof -o nsight/nsight_${SCENARIO}_${PARTITION} ./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5 $VAR6 $VAR7
+./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5 $VAR6 $VAR7
+
+
+
 
 exit 0
 
@@ -80,5 +89,3 @@ EOF
     rm "${TEMP_SCRIPT}"
 
 done
-
-

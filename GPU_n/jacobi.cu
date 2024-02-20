@@ -11,7 +11,6 @@ __device__ void calc(double *mat_gpu, double *mat_gpu_tmp, int amountPerThread, 
         int x = index % (width-2) + 1;
         int y = index / (width-2) + 1;
         index = x + y*width;
-        /* mat_gpu_tmp[index] = 0.25 * (mat_gpu[index + 1] + mat_gpu[index - 1]); */ // 2 loads, 1 store, 1 write allocates
         mat_gpu_tmp[index] = 0.25 * (
             mat_gpu[index + 1]     + mat_gpu[index - 1] +
             mat_gpu[index + width] + mat_gpu[index - width]);
@@ -19,7 +18,8 @@ __device__ void calc(double *mat_gpu, double *mat_gpu_tmp, int amountPerThread, 
 }
 
 __global__ void jacobiEdge(double *mat_gpu, double *mat_gpu_tmp, int width, int height, 
-                        int rows_compute, int amountPerThread, int leftover){
+                        int rows_compute, int amountPerThread, int leftover,
+                        int warpAmount){
 
     cg::grid_group grid_g = cg::this_grid();
     int thread = grid_g.thread_rank();
@@ -33,11 +33,10 @@ __global__ void jacobiEdge(double *mat_gpu, double *mat_gpu_tmp, int width, int 
             calc(mat_gpu, mat_gpu_tmp, amountPerThread, thread, width, height, thread, grid_g, thread_size);
         }
         // Selects all threads with index between width and width*2
-        else if(thread < leftover*2){
+        else if(thread > leftover && thread < leftover+leftover){
             calc(mat_gpu, mat_gpu_tmp, amountPerThread, thread+rows_compute*(width-2), width, height, thread, grid_g, thread_size);
         }
     }
-    // Thread quantity between 1 and 2 rows
     else if(thread_size > leftover){
         amountPerThread++;
         if(thread < leftover){
@@ -52,6 +51,8 @@ __global__ void jacobiEdge(double *mat_gpu, double *mat_gpu_tmp, int width, int 
         calc(mat_gpu, mat_gpu_tmp, amountPerThread+rows_compute*(width-2), thread, width, height, thread, grid_g, thread_size);
     }
 }
+
+
 
 __global__ void jacobiMid(double *mat_gpu, double *mat_gpu_tmp, int width, int height, 
                         int rows_leftover, int device_nr, int rows_compute, int amountPerThreadExtra, int leftoverExtra,
