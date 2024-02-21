@@ -45,6 +45,7 @@ for SCENARIO in "$@"; do
     cat << EOF > "${TEMP_SCRIPT}"
 #!/bin/bash
 
+#SBATCH --account=ec12
 #SBATCH --job-name=${SCENARIO}_${PARTITION}
 #SBATCH -p ${PARTITION}
 #SBATCH -N ${NUM_NODES}
@@ -52,6 +53,7 @@ for SCENARIO in "$@"; do
 #SBATCH -t 14:00:00
 #SBATCH --ntasks-per-node=${NUM_GPUS}
 #SBATCH --cpus-per-task=1
+#SBATCH --mem-per-cpu=3G
 #SBATCH --gres=gpu:${NUM_GPUS}
 #SBATCH --gpus-per-node=${NUM_GPUS}
 #SBATCH --output=output/${SCENARIO}_${PARTITION}.out
