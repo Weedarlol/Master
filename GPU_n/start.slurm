@@ -10,9 +10,6 @@ LIBDIR="/../../usr/lib/x86_64-linux-gnu/libnccl.so"
 # List of source files
 SOURCES="main.cu jacobi.cu scenarios.cu"
 
-# Object files derived from sources
-OBJECTS=$(echo "$SOURCES" | sed 's/\.cu/\.o/g')
-
 # Gets the first element which indicates the partition type
 PARTITION="$1"
 
