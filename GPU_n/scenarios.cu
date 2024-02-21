@@ -485,6 +485,7 @@ void only_calculation_overlap(double **mat_gpu, double **mat_gpu_tmp, int height
         
         iter--;
     }
+    
 
     cudaErrorHandle(cudaEventRecord(stopevent));
     cudaErrorHandle(cudaEventSynchronize(stopevent));
@@ -550,7 +551,7 @@ void only_calculation_nooverlap(double **mat_gpu, double **mat_gpu_tmp, int heig
 
 
 
-void onyl_communication_overlap(double **mat_gpu, double **mat_gpu_tmp, int height, int width, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollEdge, void*** kernelCollMid){
+void only_communication_overlap(double **mat_gpu, double **mat_gpu_tmp, int height, int width, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollEdge, void*** kernelCollMid){
     cudaStream_t streams[gpus][2];
     cudaEvent_t events[gpus][4], startevent, stopevent;
     initializeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);

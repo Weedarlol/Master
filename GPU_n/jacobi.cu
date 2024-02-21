@@ -5,9 +5,9 @@
 
 namespace cg = cooperative_groups;
 
-__device__ void calc(double *mat_gpu, double *mat_gpu_tmp, int amountPerThread, int index_start, int width, int height, int thread, cg::grid_group grid_g, int thread_size){
-    for(int i = 0; i < amountPerThread; i++){
-        int index = index_start + i*thread_size;
+__device__ void calc(double *mat_gpu, double *mat_gpu_tmp, int elementsPerThread, int index_start, int width, int height, int thread, cg::grid_group grid_g, int threadSize){
+    for(int i = 0; i < elementsPerThread; i++){
+        int index = index_start + i*threadSize;
         int x = index % (width-2) + 1;
         int y = index / (width-2) + 1;
         index = x + y*width;
@@ -18,62 +18,62 @@ __device__ void calc(double *mat_gpu, double *mat_gpu_tmp, int amountPerThread, 
 }
 
 __global__ void jacobiEdge(double *mat_gpu, double *mat_gpu_tmp, int width, int height, 
-                        int rows_compute, int amountPerThread, int leftover,
+                        int rows_compute, int elementsPerThread, int elementsLeftover,
                         int warpAmount){
 
     cg::grid_group grid_g = cg::this_grid();
     int thread = grid_g.thread_rank();
-    int thread_size = grid_g.size();
+    int threadSize = grid_g.size();
 
     // More threads than elements in 2 rows
-    if(thread_size > leftover*2){
-        amountPerThread++;
+    if(threadSize > elementsLeftover*2){
+        elementsPerThread++;
         // Selects all threads with index less than width
-        if(thread < leftover){
-            calc(mat_gpu, mat_gpu_tmp, amountPerThread, thread, width, height, thread, grid_g, thread_size);
+        if(thread < elementsLeftover){
+            calc(mat_gpu, mat_gpu_tmp, elementsPerThread, thread, width, height, thread, grid_g, threadSize);
         }
         // Selects all threads with index between width and width*2
-        else if(thread > leftover && thread < leftover+leftover){
-            calc(mat_gpu, mat_gpu_tmp, amountPerThread, thread+rows_compute*(width-2), width, height, thread, grid_g, thread_size);
+        else if(thread > elementsLeftover && thread < elementsLeftover+elementsLeftover){
+            calc(mat_gpu, mat_gpu_tmp, elementsPerThread, thread+rows_compute*(width-2), width, height, thread, grid_g, threadSize);
         }
     }
-    else if(thread_size > leftover){
-        amountPerThread++;
-        if(thread < leftover){
+    else if(threadSize > elementsLeftover){
+        elementsPerThread++;
+        if(thread < elementsLeftover){
             // The same threads will compute both rows
-            calc(mat_gpu, mat_gpu_tmp, amountPerThread, thread, width, height, thread, grid_g, thread_size);
-            calc(mat_gpu, mat_gpu_tmp, amountPerThread+rows_compute*(width-2), thread, width, height, thread, grid_g, thread_size);
+            calc(mat_gpu, mat_gpu_tmp, elementsPerThread, thread, width, height, thread, grid_g, threadSize);
+            calc(mat_gpu, mat_gpu_tmp, elementsPerThread, thread+rows_compute*(width-2), width, height, thread, grid_g, threadSize);
         }
     }
     // There are less threads than elements in 1 row
     else{
-        calc(mat_gpu, mat_gpu_tmp, amountPerThread, thread, width, height, thread, grid_g, thread_size);
-        calc(mat_gpu, mat_gpu_tmp, amountPerThread+rows_compute*(width-2), thread, width, height, thread, grid_g, thread_size);
+        calc(mat_gpu, mat_gpu_tmp, elementsPerThread, thread, width, height, thread, grid_g, threadSize);
+        calc(mat_gpu, mat_gpu_tmp, elementsPerThread, thread+rows_compute*(width-2), width, height, thread, grid_g, threadSize);
     }
 }
 
 
 
 __global__ void jacobiMid(double *mat_gpu, double *mat_gpu_tmp, int width, int height, 
-                        int rows_leftover, int device_nr, int rows_compute, int amountPerThreadExtra, int leftoverExtra,
-                        int amountPerThread, int leftover, int overlap_calc){
+                        int rows_elementsLeftover, int device_nr, int rows_compute, int elementsPerThreadExtra, int elementsLeftoverExtra,
+                        int elementsPerThread, int elementsLeftover, int overlap_calc){
 
 
     cg::grid_group grid_g = cg::this_grid();
     int thread = grid_g.thread_rank();
-    int thread_size = grid_g.size();
+    int threadSize = grid_g.size();
 
 
-    if(device_nr < rows_leftover){
-        if(thread < leftoverExtra){
-            amountPerThreadExtra++;
+    if(device_nr < rows_elementsLeftover){
+        if(thread < elementsLeftoverExtra){
+            elementsPerThreadExtra++;
         }
-        calc(mat_gpu, mat_gpu_tmp, amountPerThreadExtra, thread+overlap_calc, width, height, thread, grid_g, thread_size);
+        calc(mat_gpu, mat_gpu_tmp, elementsPerThreadExtra, thread+overlap_calc, width, height, thread, grid_g, threadSize);
     }
     else{
-        if(thread < leftover){
-            amountPerThread++;
+        if(thread < elementsLeftover){
+            elementsPerThread++;
         }
-        calc(mat_gpu, mat_gpu_tmp, amountPerThread, thread+overlap_calc, width, height, thread, grid_g, thread_size);
+        calc(mat_gpu, mat_gpu_tmp, elementsPerThread, thread+overlap_calc, width, height, thread, grid_g, threadSize);
     }
 }
