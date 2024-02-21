@@ -16,10 +16,10 @@ for SCENARIO in "$@"; do
     WIDTH=$(echo $SCENARIO | awk -F'width' '{print $2}' | awk -F'_' '{print $1}')
     HEIGHT=$(echo $SCENARIO | awk -F'height' '{print $2}' | awk -F'_' '{print $1}')
     NUM_GPUS=$(echo $SCENARIO | awk -F'gpu' '{print $2}' | awk -F'_' '{print $1}')
-    NUM_NODES=$(echo $SCENARIO | awk -F'nodes' '{print $2}' | awk -F'_' '{print $1}')
     ITERATIONS=$(echo $SCENARIO | awk -F'iter' '{print $2}' | awk -F'_' '{print $1}')
     COMPARE=$(echo $SCENARIO | awk -F'compare' '{print $2}' | awk -F'_' '{print $1}')
-    OVERLAP=$(echo $SCENARIO | awk -F'overlap' '{print $2}')
+    OVERLAP=$(echo $SCENARIO | awk -F'overlap' '{print $2}' | awk -F'_' '{print $1}')
+    TEST=$(echo $SCENARIO | awk -F'test' '{print $2}')
 
     # Define the variable values
     VAR1=$WIDTH # Width
@@ -28,10 +28,10 @@ for SCENARIO in "$@"; do
     VAR4=$NUM_GPUS    # GPUs
     VAR5=$COMPARE
     VAR6=$OVERLAP
+    VAR7=$TEST
 
     # Create a temporary Slurm script for this scenario
     TEMP_SCRIPT="slurm_script_${SCENARIO}_${PARTITION}.sh"
-
 
     cat << EOF > "${TEMP_SCRIPT}"
 #!/bin/bash
