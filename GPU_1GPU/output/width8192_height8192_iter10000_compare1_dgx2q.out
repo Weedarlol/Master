@@ -1,0 +1,6 @@
+The computation did not find a solution after all its iterations, it ran = 10000 iterations (10000 - 0). It completed it in 165.746 seconds.
+Width = 8192, Height = 8192
+threadBlock = (32, 32, 1), gridDim = (16, 1, 1)
+
+Comparing the matrixes
+All elements match!
