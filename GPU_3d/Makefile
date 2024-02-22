@@ -4,9 +4,9 @@
 GPU_COUNTS = 1
 
 # Define different matrix sizes
-WIDTH = 512
-HEIGHT = 512
-DEPTH = 1
+WIDTH = 10
+HEIGHT = 10
+DEPTH = 10
 
 # Number of max iterations to run for the scenario
 ITERATIONS = 1
@@ -24,7 +24,7 @@ COMPARE = 0
 TEST = 0
 
 # Create a list of run identifiers for all combinations
-RUN_IDENTIFIERS = $(foreach width,$(WIDTH),$(foreach height,$(HEIGHT),$(foreach gpu,$(GPU_COUNTS),$(foreach iter,$(ITERATIONS),$(foreach overlap,$(OVERLAP),$(foreach test,$(TEST),width$(width)_height$(height)_depth$(depth)_gpu$(gpu)_iter$(ITERATIONS)_compare$(COMPARE)_overlap$(overlap)_test$(test)))))))
+RUN_IDENTIFIERS = $(foreach width,$(WIDTH),$(foreach height,$(HEIGHT),$(foreach depth,$(DEPTH),$(foreach gpu,$(GPU_COUNTS),$(foreach iter,$(ITERATIONS),$(foreach overlap,$(OVERLAP),$(foreach test,$(TEST),width$(width)_height$(height)_depth$(depth)_gpu$(gpu)_iter$(ITERATIONS)_compare$(COMPARE)_overlap$(overlap)_test$(test))))))))
 
 
 submit:
@@ -44,6 +44,9 @@ plot:
 JobName:
 	sacct --format="JobID,JobName%60"
 
+
+gitpush:
+	git push origin ex3
 
 
 # Clean rules
