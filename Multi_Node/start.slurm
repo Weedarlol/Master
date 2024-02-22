@@ -19,7 +19,8 @@ for SCENARIO in "$@"; do
     ITERATIONS=$(echo $SCENARIO | awk -F'iter' '{print $2}' | awk -F'_' '{print $1}')
     COMPARE=$(echo $SCENARIO | awk -F'compare' '{print $2}' | awk -F'_' '{print $1}')
     OVERLAP=$(echo $SCENARIO | awk -F'overlap' '{print $2}' | awk -F'_' '{print $1}')
-    TEST=$(echo $SCENARIO | awk -F'test' '{print $2}')
+    TEST=$(echo $SCENARIO | awk -F'test' '{print $2}' | awk -F'_' '{print $1}')
+    NODES=$(echo $SCENARIO | awk -F'nodes' '{print $2}')
 
     # Define the variable values
     VAR1=$WIDTH # Width
@@ -29,6 +30,7 @@ for SCENARIO in "$@"; do
     VAR5=$COMPARE
     VAR6=$OVERLAP
     VAR7=$TEST
+    VAR8=$NODES
 
     # Create a temporary Slurm script for this scenario
     TEMP_SCRIPT="slurm_script_${SCENARIO}_${PARTITION}.sh"
@@ -55,7 +57,7 @@ module load NCCL/2.12.12-GCCcore-11.3.0-CUDA-11.7.0
 
 nvcc $SOURCES -o ./out_${SCENARIO}_${PARTITION} -lmpi
 
-mpirun -n 1 ./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5 $VAR6 $VAR7
+mpirun -n ${NODES} ./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5 $VAR6 $VAR7
 
 
 
