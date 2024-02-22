@@ -6,28 +6,32 @@
 #include "scenarios.h"
 #include <nvtx3/nvToolsExt.h>
 
-void fillValues(double *mat, double dx, double dy, int width, int height){
-    double x, y;
+void fillValues3D(double *mat, double dx, double dy, double dz, int width, int height, int depth) {
+    double x, y, z;
 
-    memset(mat, 0, height*width*sizeof(double));
+    // Assuming the data in the matrix is stored contiguously in memory
+    memset(mat, 0, height * width * depth * sizeof(double));
 
-    for(int i = 1; i < height - 1; i++) {
+    for (int i = 1; i < height - 1; i++) {
         y = i * dy; // y coordinate
-        for(int j = 1; j < width - 1; j++) {
+        for (int j = 1; j < width - 1; j++) {
             x = j * dx; // x coordinate
-            mat[j + i*width] = sin(M_PI*y)*sin(M_PI*x);
+            for (int k = 1; k < depth - 1; k++) {
+                z = k * dz; // z coordinate
+                mat[k +  j*depth + i*depth*width] = sin(M_PI * y) * sin(M_PI * x) * sin(M_PI * z);
+            }
         }
     }
 }
 
-void initialization(int width, int height, int depth, int iter, double dx, double dy, int gpu_nr, int compare, int overlap, int test, dim3 blockDim, dim3 gridDim){
+void initialization(int width, int height, int depth, int iter, double dx, double dy, double dz, int gpus, int compare, int overlap, int test, dim3 blockDim, dim3 gridDim){
     /*
     Variables            | Type        | Description
     total            |    | int         | The total number of elements within the matrix
     tmp_iter             | int         | Used to remeber how many iterations we want run
     overlap_calc         | int         | Used to find how many elements less the kernelCollMid has to compute when we have overlap
     threadSize           | int         | Finds the total amount of threads in use
-    gpu_nr                 | int         | Number of gpu_nr in use
+    gpus                 | int         | Number of gpus in use
     device_nr            | int*        | Allows the GPU to know its GPU index
 
     rows_total           | int         | Total number of rows to be computed on
@@ -67,21 +71,21 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     int warp_size = 32;
 
     int *device_nr;
-    cudaErrorHandle(cudaMallocHost(&device_nr, gpu_nr*sizeof(int*)));
-    for(int g = 0; g < gpu_nr; g++){
+    cudaErrorHandle(cudaMallocHost(&device_nr, gpus*sizeof(int*)));
+    for(int g = 0; g < gpus; g++){
         device_nr[g] = g;
     }
 
     // Ignores first and last row
     int rows_total = height-2;
-    int rows_per_device = rows_total/gpu_nr;
-    int rows_leftover = rows_total%gpu_nr;
+    int rows_per_device = rows_total/gpus;
+    int rows_leftover = rows_total%gpus;
     int *rows_device, *rows_compute_device, *rows_starting_index;
-    cudaErrorHandle(cudaMallocHost(&rows_device, gpu_nr*sizeof(int*)));
-    cudaErrorHandle(cudaMallocHost(&rows_starting_index, gpu_nr*sizeof(int*)));
-    cudaErrorHandle(cudaMallocHost(&rows_compute_device, gpu_nr*sizeof(int*)));
+    cudaErrorHandle(cudaMallocHost(&rows_device, gpus*sizeof(int*)));
+    cudaErrorHandle(cudaMallocHost(&rows_starting_index, gpus*sizeof(int*)));
+    cudaErrorHandle(cudaMallocHost(&rows_compute_device, gpus*sizeof(int*)));
     // Calculate the number of rows for each device
-    for (int g = 0; g < gpu_nr; g++) {
+    for (int g = 0; g < gpus; g++) {
         int extra_row = (g < rows_leftover) ? 1 : 0;
   
         rows_device[g] = rows_per_device + extra_row + 2;
@@ -96,33 +100,45 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     // Initialiserer og allokerer Matrise på CPU
     double *mat;
     cudaErrorHandle(cudaMallocHost(&mat, total*sizeof(double)));
-    fillValues(mat, dx, dy, width, height);
+    fillValues3D(mat, dx, dy, dz, width, height, depth);
 
 
 
     // Lager en data type kalt cudaExtend som blir brukt av cudaMalloc3D
-    cudaExtent extent = make_cudaExtent(width*sizeof(double), height, depth);
+    cudaExtent extent = make_cudaExtent(width*sizeof(double), 10, 10);
     // Lager en pointer av typed cudaPitchedPtr som peker på pitched minne i GPUen
     cudaPitchedPtr devPitchedPtr;
     // Allokerer en 3D matrise på GPUen utifra de forje variablene
     cudaErrorHandle(cudaMalloc3D(&devPitchedPtr, extent));
 
 
-    cudaMemcpy3DParams params = {0};
+    cudaMemcpy3DParms params = {0};
 //  params.dstArray
     params.dstPos = make_cudaPos(0,0,0);
-    params.dstPtr = devPitchedPtr;
+    params.dstPtr = make_cudaPitchedPtr(mat, width*sizeof(double), width, height);
     params.extent = extent;
     params.kind   = cudaMemcpyHostToDevice;
 //  params.srcArray
     params.srcPos = make_cudaPos(0,0,0);
-    params.srcPtr = make_cudaPitchedPtr(mat, width*sizeof(double), width, height);
+    params.srcPtr = devPitchedPtr;
+
+    
+
+
+    full_calculation_overlap(devPitchedPtr, width, height, depth, gpus, iter, blockDim, gridDim);
 
     cudaErrorHandle(cudaMemcpy3D(&params));
 
 
-    full_calculation_overlap<<<blockDim, gridDim>>>(devPitchedPtr, width, height, depth);
-
+    for(int i = 0 ; i < depth; i++){
+        for(int j = 0; j < height; j++){
+            for(int k = 0; k < width; k++){
+                printf("%.2f ", mat[k + j*height + i*height*depth]);
+            }
+            printf("\n");
+        }
+    }
+    printf("Dette fungerer fint\n");
 
 }
 
@@ -141,7 +157,7 @@ int main(int argc, char *argv[]) {
     height      | int   | The height of the matrix
 
     iter        | int   | Amount of iterations
-    gpu_nr      | int   | Number of gpu_nr in use
+    gpus      | int   | Number of gpus in use
     compare     | int   | If one wants to compare the output with a previously CPU computed matrix
     overlap     | int   | If one want to overlap or not
 
@@ -155,8 +171,8 @@ int main(int argc, char *argv[]) {
     */
    
     // Checks if the correct amount of inputs is used
-    if (argc != 8) {
-        printf("Wrong amount of inputs: %s <width> <height> <iter> <gpu_nr> <compare> <overlap> <test>", argv[0]);
+    if (argc != 9) {
+        printf("Wrong amount of inputs: %s <width> <height> <iter> <gpus> <compare> <overlap> <test>", argv[0]);
         return 1;
     }
 
@@ -164,7 +180,7 @@ int main(int argc, char *argv[]) {
     int height = atoi(argv[2]);
     int depth = atoi(argv[3]);
     int iter = atoi(argv[4]);
-    int gpu_nr = atoi(argv[5]);
+    int gpus = atoi(argv[5]);
     int compare = atoi(argv[6]);
     int overlap = atoi(argv[7]);
     int test = atoi(argv[8]);
@@ -181,7 +197,7 @@ int main(int argc, char *argv[]) {
     else if(iter < 1){
         printf("To few selected iterations\n");
     }
-    else if(gpu_nr < 1){
+    else if(gpus < 1){
         printf("Selected to few GPUs\n");
     }
     else if(compare > 1 || compare < 0){
@@ -205,11 +221,12 @@ int main(int argc, char *argv[]) {
  
     double dx = 2.0 / (width - 1);
     double dy = 2.0 / (height - 1);
+    double dz = 2.0 / (depth - 1);
 
     dim3 blockDim(32, 32, 1);
     dim3 gridDim(16, 1, 1);
 
-    initialization(width, height, depth, iter, dx, dy, gpu_nr, compare, overlap, test, blockDim, gridDim);
+    initialization(width, height, depth, iter, dx, dy, dz, gpus, compare, overlap, test, blockDim, gridDim);
 
     return 0;
 }

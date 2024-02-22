@@ -1,9 +1,0 @@
-main.cu(107): error: no instance of overloaded function "cudaMallocHost" matches the argument list
-            argument types are: (double *, unsigned long)
-
-main.cu(65): warning #177-D: variable "overlap_calc" was declared but never referenced
-
-main.cu(67): warning #177-D: variable "warp_size" was declared but never referenced
-
-1 error detected in the compilation of "main.cu".
-/cm/local/apps/slurm/var/spool/job133126/slurm_script: line 31: ./out_width16384_height16384_depth_gpu0_iter1_compare0_overlap0_test3_dgx2q: No such file or directory
