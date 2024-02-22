@@ -2,7 +2,7 @@
 set -e
 
 # List of source files
-SOURCES="main.cu"
+SOURCES="main.cu programs/jacobi.cu programs/scenarios.cu"
 
 # Gets the first element which indicates the partition type
 PARTITION="$1"
@@ -55,7 +55,7 @@ module load NCCL/2.12.12-GCCcore-11.3.0-CUDA-11.7.0
 
 nvcc $SOURCES -o ./out_${SCENARIO}_${PARTITION} -lmpi
 
-mpirun -n ${NUM_GPUS} ./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5 $VAR6 $VAR7
+mpirun -n 1 ./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5 $VAR6 $VAR7
 
 
 
