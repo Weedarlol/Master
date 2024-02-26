@@ -1,0 +1,1 @@
+/usr/bin/c++  -DNDEBUG "CMakeFiles/cuda-stream.dir/src/cuda/CUDAStream.cu.o" "CMakeFiles/cuda-stream.dir/src/main.cpp.o" -o cuda-stream  -lcudadevrt -lcudart_static -lrt -lpthread -ldl 
