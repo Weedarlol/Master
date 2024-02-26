@@ -92,13 +92,6 @@ int main(int argc, char *argv[]) {
 
     end = clock();
 
-    /* for(int i = 0; i < 20; i++){
-        for(int j = 0; j < 20; j++){
-            printf("%.5f ", mat[i*width+j]);
-        }
-        printf("\n");
-    } */
-
     // Creates an output which can be used to compare the different resulting matrixes
     FILE *fptr;
     char filename[30];
