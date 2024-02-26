@@ -79,6 +79,8 @@ void initialization(int argc, char *argv[], int width, int height, int iter, dou
 
     int compute_rows_total = height-2;
 
+    printf("Heisann");
+
     // FØRST DEL INN I NODER
     int compute_rows_per_node = compute_rows_total/size;
     // HUSK Å IMPLEMENTER HVIS DET ER ULIKE MENGDER RADER FOR HVER NODE
