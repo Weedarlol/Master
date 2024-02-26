@@ -1,0 +1,90 @@
+[0mNo CMAKE_BUILD_TYPE specified, defaulting to 'Release'[0m
+-- CXX_EXTRA_FLAGS: 
+        Appends to common compile flags. These will be appended at link phase as well.
+        To use separate flags at link phase, set `CXX_EXTRA_LINK_FLAGS`
+-- CXX_EXTRA_LINK_FLAGS: 
+        Appends to link flags which appear *before* the objects.
+        Do not use this for linking libraries, as the link line is order-dependent
+-- CXX_EXTRA_LIBRARIES: 
+        Append to link flags which appear *after* the objects.
+        Use this for linking extra libraries (e.g `-lmylib`, or simply `mylib`)
+-- CXX_EXTRA_LINKER_FLAGS: 
+        Append to linker flags (i.e GCC's `-Wl` or equivalent)
+-- Available models:  omp;ocl;std-data;std-indices;std-ranges;hip;cuda;kokkos;sycl;sycl2020-acc;sycl2020-usm;acc;raja;tbb;thrust;futhark
+-- Selected model  :  cuda
+-- Supported flags:
+
+   CMAKE_CXX_COMPILER (optional, default=c++): Any CXX compiler that is supported by CMake detection, this is used for host compilation
+   MEM (optional, default=DEFAULT): Device memory mode:
+        DEFAULT   - allocate host and device memory pointers.
+        MANAGED   - use CUDA Managed Memory.
+        PAGEFAULT - shared memory, only host pointers allocated.
+   CMAKE_CUDA_COMPILER (required): Path to the CUDA nvcc compiler
+   CUDA_ARCH (required): Nvidia architecture, will be passed in via `-arch=` (e.g `sm_70`) for nvcc
+   CUDA_EXTRA_FLAGS (optional, default=): Additional CUDA flags passed to nvcc, this is appended after `CUDA_ARCH`
+
+-- Model-specific flags for this build:
+
+   CMAKE_CXX_COMPILER = `/usr/bin/c++`
+   MEM = `DEFAULT`
+   CMAKE_CUDA_COMPILER = `/cm/shared/apps/cuda11.8/toolkit/11.8.0/bin/nvcc`
+   CUDA_ARCH = `sm_70`
+   CUDA_EXTRA_FLAGS = ``
+
+[0mCMake Deprecation Warning at src/cuda/model.cmake:28 (cmake_policy):
+  The OLD behavior for policy CMP0104 will be removed from a future version
+  of CMake.
+
+  The cmake-policies(7) manual explains that the OLD behaviors of all
+  policies are deprecated and that a policy should be set to OLD only under
+  specific short-term circumstances.  Projects should be ported to the NEW
+  behavior and not rely on setting a policy to OLD.
+Call Stack (most recent call first):
+  CMakeLists.txt:196 (setup)
+
+[0m
+-- NVCC flags: -forward-unknown-to-host-compiler -arch=sm_70  -DNDEBUG
+-- Default Release flags are `-O3;-march=native`, set RELEASE_FLAGS to override (CXX_EXTRA_* flags are not affected)
+-- CXX vendor  : GNU (/usr/bin/c++)
+-- Platform    : x86_64
+-- Sources     : src/cuda/CUDAStream.cu
+-- Libraries   : 
+-- CXX Flags   :  -DNDEBUG -O3;-march=native 
+    CXX flags derived from (CMake + (Override ? Override : Default) + Extras), where:
+        CMake                    = ` -DNDEBUG`
+        Default                  = `-O3;-march=native`
+        Override (RELEASE_FLAGS) = ``
+        Extras (CXX_EXTRA_FLAGS) = ``
+-- Link Flags  :  
+-- Linker Flags:   
+-- Defs        : CUDA;DEFAULT
+-- Executable  : cuda-stream
+-- Configuring done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/vidaro/D1/Master/Mas/GPU_n/Build-x86_64
+gmake[1]: Entering directory '/global/D1/homes/vidaro/Master/Mas/GPU_n/Build-x86_64'
+gmake[2]: Entering directory '/global/D1/homes/vidaro/Master/Mas/GPU_n/Build-x86_64'
+gmake[3]: Entering directory '/global/D1/homes/vidaro/Master/Mas/GPU_n/Build-x86_64'
+gmake[3]: Leaving directory '/global/D1/homes/vidaro/Master/Mas/GPU_n/Build-x86_64'
+[100%] Built target cuda-stream
+gmake[2]: Leaving directory '/global/D1/homes/vidaro/Master/Mas/GPU_n/Build-x86_64'
+gmake[1]: Leaving directory '/global/D1/homes/vidaro/Master/Mas/GPU_n/Build-x86_64'
+BabelStream
+Version: 5.0
+Implementation: CUDA
+Running kernels 100 times
+Precision: double
+Array size: 268.4 MB (=0.3 GB)
+Total size: 805.3 MB (=0.8 GB)
+Using CUDA device Tesla V100-SXM3-32GB
+Driver: 12000
+Memory: DEFAULT
+Reduction kernel config: 320 groups of (fixed) size 1024
+Init: 0.176779 s (=4555.445327 MBytes/sec)
+Read: 0.000861 s (=935772.739051 MBytes/sec)
+Function    MBytes/sec  Min (sec)   Max         Average     
+Copy        859383.963  0.00062     0.00065     0.00063     
+Mul         854779.737  0.00063     0.00118     0.00064     
+Add         889276.281  0.00091     0.00093     0.00092     
+Triad       887150.431  0.00091     0.00094     0.00092     
+Dot         916861.346  0.00059     0.00061     0.00060     
