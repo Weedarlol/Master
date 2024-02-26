@@ -64,6 +64,7 @@ void start(int width, int height, int iter, double eps, double dx, double dy, in
     int print_iter = iter;
     clock_t start, end;
 
+    printf("%i", total);
 
     double *mat, *mat_gpu, *mat_gpu_tmp;
     cudaErrorHandle(cudaMallocHost(&mat, total*sizeof(double)));
