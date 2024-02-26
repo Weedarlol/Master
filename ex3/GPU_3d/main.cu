@@ -211,5 +211,7 @@ int main(int argc, char *argv[]) {
 
     initialization(width, height, depth, iter, dx, dy, gpu_nr, compare, overlap, test, blockDim, gridDim);
 
+    printf("heisann");
+
     return 0;
 }
