@@ -1,6 +1,6 @@
 # Define different matrix sizes
-WIDTH = 512
-HEIGHT = 512
+WIDTH = 256
+HEIGHT = 256
 DEPTH = 256
 
 # Number of max iterations to run for the scenario
