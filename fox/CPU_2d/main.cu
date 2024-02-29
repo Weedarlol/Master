@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
     // Creates an output which can be used to compare the different resulting matrixes
     FILE *fptr;
     char filename[30];
-    sprintf(filename, "CPUMatrix%i_%i.txt", width, height);
+    sprintf(filename, "matrices/CPUMatrix%i_%i.txt", width, height);
     fptr = fopen(filename, "w");
     for(int i = 0; i < height; i++){
         for(int j = 0; j < width; j++){
