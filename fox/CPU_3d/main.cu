@@ -81,7 +81,6 @@ int main(int argc, char *argv[]) {
             }
         }
         
-
         iter--;
 
         double *mat_tmp_swap = mat_tmp;

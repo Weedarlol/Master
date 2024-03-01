@@ -42,7 +42,6 @@ for SCENARIO in "$@"; do
 #SBATCH -N ${NODES}
 #SBATCH -n ${NODES}
 #SBATCH -t 14:00:00
-#SBATCH --gres=gpu:0
 #SBATCH --output=output/${SCENARIO}_${PARTITION}.out
 #SBATCH --error=error/${SCENARIO}_${PARTITION}.err
 
@@ -50,9 +49,9 @@ module purge
 module load CUDA/11.7.0
 module load OpenMPI/4.1.4-GCC-11.3.0
 
-nvcc $SOURCES -o out_${SCENARIO}_${PARTITION} -lcudart -lmpi -L$LIBDIR -I$INCLUDE
+nvcc $SOURCES -o out_${SCENARIO}_${PARTITION} -lcudart -lmpi
 
-srun ./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4
+mpirun -n 2 ./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4
 
 exit 0
 
