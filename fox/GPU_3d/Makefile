@@ -4,15 +4,15 @@
 GPU_COUNTS = 1
 
 # Define different matrix sizes
-WIDTH = 512
-HEIGHT = 512
-DEPTH = 1
+WIDTH = 256
+HEIGHT = 256
+DEPTH = 256
 
 # Number of max iterations to run for the scenario
-ITERATIONS = 1
+ITERATIONS = 1000
 
 # Chooses which partition to run at. Only one at a time
-PARTITION = dgx2q
+PARTITION = accel
 
 # Enables or disables overlap, 1 = overlap, 0 = no overlap
 OVERLAP = 0
@@ -29,8 +29,9 @@ RUN_IDENTIFIERS = $(foreach width,$(WIDTH),$(foreach height,$(HEIGHT),$(foreach 
 
 submit:
 	$(foreach partition,$(PARTITION), \
-		sbatch -p $(partition) ./start.slurm $(partition) $(RUN_IDENTIFIERS); \
+		sbatch --account=ec12 -p $(partition) --time=00-00:01:00 --mem-per-cpu=3G ./start.slurm $(partition) $(RUN_IDENTIFIERS); \
 	)
+
 
 
 babel:

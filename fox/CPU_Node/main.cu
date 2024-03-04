@@ -117,6 +117,9 @@ int main(int argc, char *argv[]) {
     end = clock();
     double *mat_combined = NULL;
 
+    printf("It computed through the whole %i iteration(%i - %i) in %.3f seconds \nWidth = %i, Height = %i, Depth = %i\n", 
+    print_iter - iter, print_iter, iter, ((double) (end - start)) / CLOCKS_PER_SEC, width, height, depth);
+
     if(rank == 0){
         mat_combined = (double*)malloc(width * height * depth * sizeof(double));
 
@@ -186,12 +189,12 @@ int main(int argc, char *argv[]) {
         } 
     }
 
+    
+
 
     free(mat);
     free(mat_tmp);
 
-    
-    s
 
     MPI_Finalize();
 
