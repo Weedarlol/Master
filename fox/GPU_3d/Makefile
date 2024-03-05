@@ -1,7 +1,7 @@
 
 # Creates a list of values for GPU allocation, max 3 integers when running with nsys nvprof
 # Example  = 2 3 4
-GPU_COUNTS = 1
+GPU_COUNTS = 2
 
 # Define different matrix sizes
 WIDTH = 256
@@ -18,18 +18,18 @@ PARTITION = accel
 OVERLAP = 0
 
 # If you want to compare the final resulting matrix with the matrix created by the CPU. (CPU has to computed it first and created its own textfile containing its matrix called "CPUMatrix%i_%i.txt" where %i are the width and height)
-COMPARE = 0
+COMPARE = 1
 
 # 0 = full calculation, 1 = No kernel, 2 = No communication, 3 = only calculation
 TEST = 0
 
 # Create a list of run identifiers for all combinations
-RUN_IDENTIFIERS = $(foreach width,$(WIDTH),$(foreach height,$(HEIGHT),$(foreach gpu,$(GPU_COUNTS),$(foreach iter,$(ITERATIONS),$(foreach overlap,$(OVERLAP),$(foreach test,$(TEST),width$(width)_height$(height)_depth$(depth)_gpu$(gpu)_iter$(ITERATIONS)_compare$(COMPARE)_overlap$(overlap)_test$(test)))))))
+RUN_IDENTIFIERS = $(foreach width,$(WIDTH),$(foreach height,$(HEIGHT),$(foreach depth,$(DEPTH),$(foreach gpu,$(GPU_COUNTS),$(foreach iter,$(ITERATIONS),$(foreach overlap,$(OVERLAP),$(foreach test,$(TEST),width$(width)_height$(height)_depth$(depth)_gpu$(gpu)_iter$(ITERATIONS)_compare$(COMPARE)_overlap$(overlap)_test$(test))))))))
 
 
 submit:
 	$(foreach partition,$(PARTITION), \
-		sbatch --account=ec12 -p $(partition) --time=00-00:01:00 --mem-per-cpu=3G ./start.slurm $(partition) $(RUN_IDENTIFIERS); \
+		sbatch --account=ec12 -p $(partition) --time=00-00:01:00 --gpus-per-node=$(GPU_COUNTS) --mem-per-gpu=3G ./start.slurm $(partition) $(RUN_IDENTIFIERS); \
 	)
 
 
@@ -52,10 +52,10 @@ clean:
 	rm -rf slurm* out_*
 
 cleannn:
-	rm -rf output/* error/* nsight/*
+	rm -rf slurm* out_* output/* error/* nsight/*
 
 
 
 
 cancel:
-	scancel -u vidaro
+	scancel -u ec-vidarlol

@@ -48,7 +48,9 @@ for SCENARIO in "$@"; do
 #!/bin/bash
 
 #SBATCH --job-name=${SCENARIO}_${PARTITION}_GPU${NUM_GPUS}
+#SBATCH --account=ec12
 #SBATCH -p ${PARTITION}
+#SBATCH --mem-per-cpu=4G
 #SBATCH -N 1                                  # Antall noder, i dgx2q så er det bare 1 node bygd opp av DualProcessor AMD EPYC Milan 7763 64-core w/ 8 qty Nvidia Volta A100/80GB
 #SBATCH -n 1                                  # Antall CPU cores som vil bli allokert
 #SBATCH -t 14:00:00
@@ -61,14 +63,9 @@ for SCENARIO in "$@"; do
 #SBATCH --error=error/${SCENARIO}_${PARTITION}.err
 
 module purge
-module load slurm/21.08.8
-module load cuda11.8/blas/11.8.0
-module load cuda11.8/fft/11.8.0
-module load cuda11.8/nsight/11.8.0
-module load cuda11.8/profiler/11.8.0
-module load cuda11.8/toolkit/11.8.0
-
-module load cmake/gcc/3.27.9
+module load CUDA/11.7.0
+module load OpenMPI/4.1.4-GCC-11.3.0
+module load NCCL/2.12.12-GCCcore-11.3.0-CUDA-11.7.0
 
 
 
