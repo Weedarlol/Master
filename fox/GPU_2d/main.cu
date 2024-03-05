@@ -2,23 +2,9 @@
 #include <math.h>
 #include <time.h>
 
-#include "errorHandle.h"
-#include "scenarios.h"
+#include "programs/scenarios.h"
+#include "../../global_functions.h"
 #include <nvtx3/nvToolsExt.h>
-
-void fillValues(double *mat, double dx, double dy, int width, int height){
-    double x, y;
-
-    memset(mat, 0, height*width*sizeof(double));
-
-    for(int i = 1; i < height - 1; i++) {
-        y = i * dy; // y coordinate
-        for(int j = 1; j < width - 1; j++) {
-            x = j * dx; // x coordinate
-            mat[j + i*width] = sin(M_PI*y)*sin(M_PI*x);
-        }
-    }
-}
 
 void initialization(int width, int height, int iter, double dx, double dy, int gpus, int compare, int overlap, int test, dim3 blockDim, dim3 gridDim){
     /*

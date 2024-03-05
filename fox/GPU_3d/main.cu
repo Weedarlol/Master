@@ -2,27 +2,9 @@
 #include <math.h>
 #include <time.h>
 
-#include "programs/errorHandle.h"
 #include "programs/scenarios.h"
+#include "../../global_functions.h"
 #include <nvtx3/nvToolsExt.h>
-
-void fillValues3D(double *mat, int width, int height, int depth_node, double dx, double dy, double dz) {
-    double x, y, z;
-
-    // Assuming the data in the matrix is stored contiguously in memory
-    memset(mat, 0, height * width * depth_node * sizeof(double));
-
-    for (int i = 1; i < depth_node-1; i++) {
-        z = i * dz; // z coordinate
-        for (int j = 1; j < height - 1; j++) {
-            y = j * dy; // z coordinate
-            for (int k = 1; k < width - 1; k++) {
-                x = k * dx; // x coordinate
-                mat[k +  j*width + i*width*height] = sin(M_PI * x) * sin(M_PI * y) * sin(M_PI * z);
-            }
-        }
-    }
-}
 
 void initialization(int width, int height, int depth, int iter, double dx, double dy, double dz, int gpus, int compare, int overlap, int test, dim3 blockDim, dim3 gridDim){
     /*
