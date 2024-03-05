@@ -2,7 +2,7 @@
 #include <math.h>
 
 
-#include "errorHandle.h"
+#include "../../global_functions.h"
 #include "jacobi.h"
 
 #include <cooperative_groups.h>
@@ -106,8 +106,7 @@ void full_calculation_overlap(double **mat_gpu, double **mat_gpu_tmp, int height
     
     float milliseconds = 0.0f;
     cudaErrorHandle(cudaEventElapsedTime(&milliseconds, startevent, stopevent));
-    printf("Time(event) - %.4f, SolutionFound - %s, IterationsComputed - %i\n",
-            milliseconds, (iter == 0) ? "No" : "Yes", iter - iter);
+    printf("Time(event) - %.5f s\n", milliseconds*1000);
 
     freeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
 }
@@ -176,8 +175,7 @@ void full_calculation_nooverlap(double **mat_gpu, double **mat_gpu_tmp, int heig
     
     float milliseconds = 0.0f;
     cudaErrorHandle(cudaEventElapsedTime(&milliseconds, startevent, stopevent));
-    printf("Time(event) - %.4f, SolutionFound - %s, IterationsComputed - %i\n",
-            milliseconds, (iter == 0) ? "No" : "Yes", iter - iter);
+    printf("Time(event) - %.5f s\n", milliseconds*1000);
 
     freeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
 }
@@ -234,8 +232,7 @@ void no_kernel_overlap(double **mat_gpu, double **mat_gpu_tmp, int height, int w
     
     float milliseconds = 0.0f;
     cudaErrorHandle(cudaEventElapsedTime(&milliseconds, startevent, stopevent));
-    printf("Time(event) - %.4f, SolutionFound - %s, IterationsComputed - %i\n",
-            milliseconds, (iter == 0) ? "No" : "Yes", iter - iter);
+    printf("Time(event) - %.5f s\n", milliseconds*1000);
 
     freeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
 }
@@ -294,8 +291,7 @@ void no_kernel_nooverlap(double **mat_gpu, double **mat_gpu_tmp, int height, int
     
     float milliseconds = 0.0f;
     cudaErrorHandle(cudaEventElapsedTime(&milliseconds, startevent, stopevent));
-    printf("Time(event) - %.4f, SolutionFound - %s, IterationsComputed - %i\n",
-            milliseconds, (iter == 0) ? "No" : "Yes", iter - iter);
+    printf("Time(event) - %.5f s\n", milliseconds*1000);
 
     freeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
 }
@@ -344,8 +340,7 @@ void no_communication_overlap(double **mat_gpu, double **mat_gpu_tmp, int height
     
     float milliseconds = 0.0f;
     cudaErrorHandle(cudaEventElapsedTime(&milliseconds, startevent, stopevent));
-    printf("Time(event) - %.4f, SolutionFound - %s, IterationsComputed - %i\n",
-            milliseconds, (iter == 0) ? "No" : "Yes", iter - iter);
+    printf("Time(event) - %.5f s\n", milliseconds*1000);
 
     freeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
 }
@@ -396,8 +391,7 @@ void no_communication_nooverlap(double **mat_gpu, double **mat_gpu_tmp, int heig
     
     float milliseconds = 0.0f;
     cudaErrorHandle(cudaEventElapsedTime(&milliseconds, startevent, stopevent));
-    printf("Time(event) - %.4f, SolutionFound - %s, IterationsComputed - %i\n",
-            milliseconds, (iter == 0) ? "No" : "Yes", iter - iter);
+    printf("Time(event) - %.5f s\n", milliseconds*1000);
 
     freeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
 }
@@ -445,8 +439,7 @@ void only_events(double **mat_gpu, double **mat_gpu_tmp, int height, int width, 
     
     float milliseconds = 0.0f;
     cudaErrorHandle(cudaEventElapsedTime(&milliseconds, startevent, stopevent));
-    printf("Time(event) - %.4f, SolutionFound - %s, IterationsComputed - %i\n",
-            milliseconds, (iter == 0) ? "No" : "Yes", iter - iter);
+    printf("Time(event) - %.5f s\n", milliseconds*1000);
 
     freeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
 }
@@ -497,8 +490,7 @@ void only_calculation_overlap(double **mat_gpu, double **mat_gpu_tmp, int height
     
     float milliseconds = 0.0f;
     cudaErrorHandle(cudaEventElapsedTime(&milliseconds, startevent, stopevent));
-    printf("Time(event) - %.4f, SolutionFound - %s, IterationsComputed - %i\n",
-            milliseconds, (iter == 0) ? "No" : "Yes", iter - iter);
+    printf("Time(event) - %.5f s\n", milliseconds*1000);
 
     freeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
 }
@@ -543,8 +535,7 @@ void only_calculation_nooverlap(double **mat_gpu, double **mat_gpu_tmp, int heig
     
     float milliseconds = 0.0f;
     cudaErrorHandle(cudaEventElapsedTime(&milliseconds, startevent, stopevent));
-    printf("Time(event) - %.4f, SolutionFound - %s, IterationsComputed - %i\n",
-            milliseconds, (iter == 0) ? "No" : "Yes", iter - iter);
+    printf("Time(event) - %.5f s\n", milliseconds*1000);
 
     freeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
 }
@@ -594,8 +585,7 @@ void only_communication_overlap(double **mat_gpu, double **mat_gpu_tmp, int heig
     
     float milliseconds = 0.0f;
     cudaErrorHandle(cudaEventElapsedTime(&milliseconds, startevent, stopevent));
-    printf("Time(event) - %.4f, SolutionFound - %s, IterationsComputed - %i\n",
-            milliseconds, (iter == 0) ? "No" : "Yes", iter - iter);
+    printf("Time(event) - %.5f s\n", milliseconds*1000);
 
     freeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
 }
@@ -647,8 +637,7 @@ void only_communication_nooverlap(double **mat_gpu, double **mat_gpu_tmp, int he
     
     float milliseconds = 0.0f;
     cudaErrorHandle(cudaEventElapsedTime(&milliseconds, startevent, stopevent));
-    printf("Time(event) - %.4f, SolutionFound - %s, IterationsComputed - %i\n",
-            milliseconds, (iter == 0) ? "No" : "Yes", iter - iter);
+    printf("Time(event) - %.5f s\n", milliseconds*1000);
 
     freeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
 }

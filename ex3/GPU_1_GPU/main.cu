@@ -2,44 +2,16 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
+#include <cooperative_groups.h>
+
 #include <nvtx3/nvToolsExt.h>
 
+
+#include "../../global_functions.h"
 #include "programs/jacobi.h"
-#include <cooperative_groups.h>
 
 using namespace cooperative_groups;
 namespace cg = cooperative_groups;
-
-
-// https://ori-cohen.medium.com/real-life-cuda-programming-part-4-error-checking-e66dcbad6b55
-#define cudaErrorHandle(ans) { gpuAssert((ans), __FILE__, __LINE__); }
-inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort = true) 
-{
-    if (code != cudaSuccess) {
-        fprintf(stderr, "GPUassert: %s %s %d\n", cudaGetErrorString(code), file,
-                line);
-        if (abort)
-            exit(code);
-    }
-}
-
-void fillValues(double *mat, double dx, double dy, int width, int height){
-    double x, y;
-
-    memset(mat, 0, height*width*sizeof(double));
-
-    for(int i = 1; i < height - 1; i++) {
-        y = i * dy; // y coordinate
-        for(int j = 1; j < width - 1; j++) {
-            x = j * dx; // x coordinate
-            mat[j + i*width] = sin(M_PI*y)*sin(M_PI*x);
-        }
-    }
-}
-
-
-
-
 
 
 void start(int width, int height, int iter, double eps, double dx, double dy, int compare, dim3 blockDim, dim3 gridDim){
@@ -63,6 +35,9 @@ void start(int width, int height, int iter, double eps, double dx, double dy, in
     int total = width*height;
     int print_iter = iter;
     clock_t start, end;
+    cudaEvent_t startevent, stopevent;
+    cudaErrorHandle(cudaEventCreate(startevent));
+    cudaErrorHandle(cudaEventCreate(stopevent));
 
 
     double *mat, *mat_gpu, *mat_gpu_tmp;

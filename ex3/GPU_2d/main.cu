@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#include <cooperative_groups.h>
 
-#include "errorHandle.h"
+#include "../../global_functions.h"
 #include "scenarios.h"
 #include <nvtx3/nvToolsExt.h>
 
@@ -59,6 +60,8 @@ void initialization(int width, int height, int iter, double dx, double dy, int g
     int threadSize = blockDim.x*blockDim.y*blockDim.z*gridDim.x*gridDim.y*gridDim.z;
     int warp_size = 32;
 
+    
+
     int *device_nr;
     cudaErrorHandle(cudaMallocHost(&device_nr, gpus*sizeof(int*)));
     for(int g = 0; g < gpus; g++){
@@ -93,10 +96,6 @@ void initialization(int width, int height, int iter, double dx, double dy, int g
     threadInformation[4] = (1                            *(width-2))/threadSize; // Find number of elements for each thread for a row, if 0 it means there are more threads than elements in row
     threadInformation[5] = (1                            *(width-2))%threadSize; // Finding which threads require 1 more element
     threadInformation[6] = (width - 2) % warp_size != 0 ? ((width-2)/warp_size)*warp_size+warp_size : ((width-2)/warp_size)*warp_size;
-
-    for(int g = 0; g < gpus; g++){
-        printf("rows_compute_device = %i, threads per row %i, threads leftover %i\n", rows_compute_device[g], (width-2)/threadSize, (width-2)%threadSize);
-    }
 
     double *mat;
     double **mat_gpu, **mat_gpu_tmp;

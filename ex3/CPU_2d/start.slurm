@@ -55,6 +55,7 @@ module load cuda11.8/nsight/11.8.0
 module load cuda11.8/profiler/11.8.0
 module load cuda11.8/toolkit/11.8.0
 
+
 nvcc $NVCCFLAGS $SOURCES -o out_${SCENARIO}_${PARTITION} -L$LIBDIR -lnccl
 
 ./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3
@@ -68,6 +69,7 @@ EOF
 
     # Remove the temporary script after submission
     rm "${TEMP_SCRIPT}"
+
 
 done
 

@@ -1,15 +1,15 @@
 
 # Creates a list of values for GPU allocation, max 3 integers when running with nsys nvprof
 # Example  = 2 3 4
-GPU_COUNTS = 1
+GPU_COUNTS = 2
 
 # Define different matrix sizes
-WIDTH = 32
-HEIGHT = 32
-DEPTH = 32
+WIDTH = 256
+HEIGHT = 256
+DEPTH = 256
 
 # Number of max iterations to run for the scenario
-ITERATIONS = 1
+ITERATIONS = 1000
 
 # Chooses which partition to run at. Only one at a time
 PARTITION = dgx2q
@@ -18,7 +18,7 @@ PARTITION = dgx2q
 OVERLAP = 0
 
 # If you want to compare the final resulting matrix with the matrix created by the CPU. (CPU has to computed it first and created its own textfile containing its matrix called "CPUMatrix%i_%i.txt" where %i are the width and height)
-COMPARE = 0
+COMPARE = 1
 
 # 0 = full calculation, 1 = No kernel, 2 = No communication, 3 = only calculation
 TEST = 0
@@ -50,8 +50,12 @@ JobName:
 clean:
 	rm -rf slurm* out_*
 
+cleann:
+	rm -rf output/* error/*
+
 cleannn:
-	rm -rf output/* error/* nsight/*
+	rm -rf slurm* out_* output/* error/*
+
 
 
 

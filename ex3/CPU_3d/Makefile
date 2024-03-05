@@ -34,8 +34,12 @@ JobName:
 clean:
 	rm -rf slurm* out_*
 
-cleannn:
+cleann:
 	rm -rf output/* error/*
+
+cleannn:
+	rm -rf slurm* out_* output/* error/*
+
 
 
 
