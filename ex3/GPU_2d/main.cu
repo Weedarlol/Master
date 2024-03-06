@@ -4,38 +4,26 @@
 #include <cooperative_groups.h>
 
 #include "../../global_functions.h"
-#include "scenarios.h"
+#include "programs/scenarios.h"
 #include <nvtx3/nvToolsExt.h>
-
-void fillValues(double *mat, double dx, double dy, int width, int height){
-    double x, y;
-
-    memset(mat, 0, height*width*sizeof(double));
-
-    for(int i = 1; i < height - 1; i++) {
-        y = i * dy; // y coordinate
-        for(int j = 1; j < width - 1; j++) {
-            x = j * dx; // x coordinate
-            mat[j + i*width] = sin(M_PI*y)*sin(M_PI*x);
-        }
-    }
-}
 
 void initialization(int width, int height, int iter, double dx, double dy, int gpus, int compare, int overlap, int test, dim3 blockDim, dim3 gridDim){
     /*
     Variables            | Type        | Description
     total                | int         | The total number of elements within the matrix
-    tmp_iter             | int         | Used to remeber how many iterations we want run
     overlap_calc         | int         | Used to find how many elements less the kernelCollMid has to compute when we have overlap
     threadSize           | int         | Finds the total amount of threads in use
-    gpus                 | int         | Number of gpus in use
+    
     device_nr            | int*        | Allows the GPU to know its GPU index
+
     rows_total           | int         | Total number of rows to be computed on
     rows_per_device      | int         | Number of rows per device, rounded down
     rows_leftover        | int         | Number of rows leftover when rounded down
+
     rows_device          | int*        | Rows to allocate on the GPU
     rows_compute_device  | int*        | Rows the GPU will compute on
     rows_staring_index   | int*        | Index on the CPU matrix that the first element of the GPU matrix belongs
+
     threadInformation[0] | int         | Number of computations per thread on GPU 0, rounded down
     threadInformation[1] | int         | Number of computations left over when rounded down
     threadInformation[2] | int         | Number of computations per thread on GPU n-1, rounded down, is used as if there are an unequal amount of rows between device, 
@@ -43,24 +31,19 @@ void initialization(int width, int height, int iter, double dx, double dy, int g
     threadInformation[3] | int         | Number of computations left over when rounded down
     threadInformation[4] | int         | Number of computations per thread for 1 row, rounded down
     threadInformation[5] | int         | Number of computations left over for 1 row when rounded down
+
     mat                  | double*     | The matrix allocated on the CPU
     mat_gpu              | double**    | One of the matrices allocated on the GPU
     mat_gpu_tmp          | double**    | The other matrix allocated on the GPU
+
     kernelCollEdge       | void***     | The inputfeatures to the jacobiEdge GPU kernel
     kernelCollMid        | void***     | The inputfeatures to the jacobiMid GPU kernel
-    streams              | cudaStream_t| The streams which is utilized when computing on the GPU
-    events               | cudaEvent_t | The events used to synchronize the streams
-    startevent           | cudaEvent_t | The event used to start the timer for the computation
-    stopevent            | cudaEvent_t | The event used to stop the timer for the computation
     */
 
 
     int total = width*height;
     int overlap_calc = (width-2)*overlap;
     int threadSize = blockDim.x*blockDim.y*blockDim.z*gridDim.x*gridDim.y*gridDim.z;
-    int warp_size = 32;
-
-    
 
     int *device_nr;
     cudaErrorHandle(cudaMallocHost(&device_nr, gpus*sizeof(int*)));
@@ -68,10 +51,12 @@ void initialization(int width, int height, int iter, double dx, double dy, int g
         device_nr[g] = g;
     }
 
-    // Ignores first and last row
-    int rows_total = height-2;
+    // Find general information about rows for all the GPUs
+    int rows_total = height-2; // Removes upper and lower layer
     int rows_per_device = rows_total/gpus;
     int rows_leftover = rows_total%gpus;
+
+    // Finds more specific information about rows for each GPU
     int *rows_device, *rows_compute_device, *rows_starting_index;
     cudaErrorHandle(cudaMallocHost(&rows_device, gpus*sizeof(int*)));
     cudaErrorHandle(cudaMallocHost(&rows_starting_index, gpus*sizeof(int*)));
@@ -79,23 +64,22 @@ void initialization(int width, int height, int iter, double dx, double dy, int g
     // Calculate the number of rows for each device
     for (int g = 0; g < gpus; g++) {
         int extra_row = (g < rows_leftover) ? 1 : 0;
-
-        rows_device[g] = rows_per_device + extra_row + 2;
-
-        rows_compute_device[g] = rows_per_device + extra_row - (2*overlap); // -2 as we are computing in 2 parts, 1 with point dependent on ghostpoints,and one without
-
+        rows_device[g] = rows_per_device + extra_row + 2; // Need to add ghost layers
+        rows_compute_device[g] = rows_per_device + extra_row - (2*overlap); // Will compute 2 rows(upper and lower) on their own if overlap is used
         rows_starting_index[g] = g * rows_per_device + min(g, rows_leftover);
     }
 
+    // Estimates elements per thread for 3 scenarios,
+    // Scenario 1(0, 1) and 2(2, 3) are depending on if number of rows are unequal for the GPUs, which will mean that the first and last gpu has different amount of elements
+    // Scenario 3(4, 5) is only used for overlap, where we only want to know the number of elements compared to threads for 1 row
     int *threadInformation;
-    cudaErrorHandle(cudaMallocHost(&threadInformation, 7*sizeof(int)));
-    threadInformation[0] = ((rows_compute_device[0])     *(width-2))/threadSize; // Find number of elements to compute for each thread, ignoring border elements.
-    threadInformation[1] = ((rows_compute_device[0])     *(width-2))%threadSize; // Finding which threads require 1 more element
-    threadInformation[2] = ((rows_compute_device[gpus-1])*(width-2))/threadSize; // Find number of elements to compute for each thread, ignoring border elements.
-    threadInformation[3] = ((rows_compute_device[gpus-1])*(width-2))%threadSize; // Finding which threads require 1 more element
-    threadInformation[4] = (1                            *(width-2))/threadSize; // Find number of elements for each thread for a row, if 0 it means there are more threads than elements in row
-    threadInformation[5] = (1                            *(width-2))%threadSize; // Finding which threads require 1 more element
-    threadInformation[6] = (width - 2) % warp_size != 0 ? ((width-2)/warp_size)*warp_size+warp_size : ((width-2)/warp_size)*warp_size;
+    cudaErrorHandle(cudaMallocHost(&threadInformation, 6*sizeof(int)));
+    threadInformation[0] = ((rows_compute_device[0])     *(width-2))/threadSize;
+    threadInformation[1] = ((rows_compute_device[0])     *(width-2))%threadSize;
+    threadInformation[2] = ((rows_compute_device[gpus-1])*(width-2))/threadSize;
+    threadInformation[3] = ((rows_compute_device[gpus-1])*(width-2))%threadSize;
+    threadInformation[4] = (1                            *(width-2))/threadSize;
+    threadInformation[5] = (1                            *(width-2))%threadSize;
 
     double *mat;
     double **mat_gpu, **mat_gpu_tmp;
@@ -103,6 +87,8 @@ void initialization(int width, int height, int iter, double dx, double dy, int g
     cudaErrorHandle(cudaMallocHost(&mat_gpu,      gpus*sizeof(double*)));
     cudaErrorHandle(cudaMallocHost(&mat_gpu_tmp,  gpus*sizeof(double*)));
 
+    // Fills up the mat matrix with starting values
+    fillValues(mat, dx, dy, width, height);
 
     // Allocates memory on devices based on number of rows for each device
     for(int g = 0; g < gpus; g++){
@@ -115,7 +101,7 @@ void initialization(int width, int height, int iter, double dx, double dy, int g
     cudaErrorHandle(cudaMallocHost(&kernelCollEdge, gpus * sizeof(void**)));
     // Allocates the elements in the kernelCollEdge, used for cudaLaunchCooperativeKernel as functon variables.
     for (int g = 0; g < gpus; g++) {
-        void **kernelArgs = new void*[8];
+        void **kernelArgs = new void*[7];
         kernelArgs[0] = &mat_gpu[g];
         kernelArgs[1] = &mat_gpu_tmp[g];
         kernelArgs[2] = &width;
@@ -123,7 +109,6 @@ void initialization(int width, int height, int iter, double dx, double dy, int g
         kernelArgs[4] = &rows_compute_device[g];
         kernelArgs[5] = &threadInformation[4];
         kernelArgs[6] = &threadInformation[5];
-        kernelArgs[7] = &threadInformation[6];
 
         kernelCollEdge[g] = kernelArgs;
     }
@@ -149,18 +134,13 @@ void initialization(int width, int height, int iter, double dx, double dy, int g
         kernelCollMid[g] = kernelArgs;
     }
 
-
-
-    fillValues(mat, dx, dy, width, height);
-
-
+    // Copies elements from the matrix located on the CPU to mat_gpu[g] matrix located on each GPU g
     for(int g = 0; g < gpus; g++){
         cudaErrorHandle(cudaSetDevice(g));
         cudaErrorHandle(cudaMemcpy(mat_gpu[g], mat+rows_starting_index[g]*width, rows_device[g]*width*sizeof(double), cudaMemcpyHostToDevice));
     }
 
     cudaErrorHandle(cudaDeviceSynchronize());
-
 
     nvtxRangePushA("Area of Interest");
     if(gpus < 2){
@@ -215,6 +195,7 @@ void initialization(int width, int height, int iter, double dx, double dy, int g
         cudaErrorHandle(cudaDeviceSynchronize());
     }
 
+    // Copies each element from mat_gpu[g] located on each GPU g, to the mat matrix located on the CPU.
     for(int g = 0; g < gpus; g++){
         cudaErrorHandle(cudaSetDevice(g));
         cudaErrorHandle(cudaMemcpyAsync(mat + (rows_starting_index[g]+1)*width, mat_gpu[g] + width, (rows_compute_device[g]+2*overlap)*width*sizeof(double), cudaMemcpyDeviceToHost));
@@ -291,7 +272,6 @@ void initialization(int width, int height, int iter, double dx, double dy, int g
     cudaErrorHandle(cudaFreeHost(rows_device));
     cudaErrorHandle(cudaFreeHost(rows_starting_index));
     cudaErrorHandle(cudaFreeHost(rows_compute_device));
-    // kernelCollMid and kernelCollEdge?
 }
 
 

@@ -18,8 +18,7 @@ __device__ void calc(double *mat_gpu, double *mat_gpu_tmp, int elementsPerThread
 }
 
 __global__ void jacobiEdge(double *mat_gpu, double *mat_gpu_tmp, int width, int height, 
-                        int rows_compute, int elementsPerThread, int elementsLeftover,
-                        int warpAmount){
+                        int rows_compute, int elementsPerThread, int elementsLeftover){
 
     cg::grid_group grid_g = cg::this_grid();
     int thread = grid_g.thread_rank();
