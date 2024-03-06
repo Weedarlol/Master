@@ -14,10 +14,10 @@ __device__ void calc(double *mat_gpu, double *mat_gpu_tmp, int amountPerThread, 
         int z = threadID / ((width - 2) * (height - 2)) + 1;
         index = x + y*width + z*width*height;
 
-        mat_gpu_tmp[index] = division * (
+        /* mat_gpu_tmp[index] = division * (
             mat_gpu[index + 1]            + mat_gpu[index - 1] +
             mat_gpu[index + width]        + mat_gpu[index - width] +
-            mat_gpu[index + width*height] + mat_gpu[index - width*height]);
+            mat_gpu[index + width*height] + mat_gpu[index - width*height]); */
     }   
 }
 
@@ -59,7 +59,7 @@ __global__ void jacobiEdge(double *mat_gpu, double *mat_gpu_tmp, int width, int 
 
 __global__ void jacobiMid(double *mat_gpu, double *mat_gpu_tmp, int width, int height, int depth,
                         int slices_elementsLeftover, int device_nr, int slices_compute, int elementsPerThreadExtra, int elementsLeftoverExtra,
-                        int elementsPerThread, int elementsLeftover){
+                        int elementsPerThread, int elementsLeftover, int overlap_calc){
 
 
     cg::grid_group grid_g = cg::this_grid();
@@ -71,12 +71,12 @@ __global__ void jacobiMid(double *mat_gpu, double *mat_gpu_tmp, int width, int h
         if(thread < elementsLeftoverExtra){
             elementsPerThreadExtra++;
         }
-        calc(mat_gpu, mat_gpu_tmp, elementsPerThreadExtra, thread, width, height, depth, thread, grid_g, threadSize);
+        calc(mat_gpu, mat_gpu_tmp, elementsPerThreadExtra, thread+overlap_calc, width, height, depth, thread, grid_g, threadSize);
     }
     else{
         if(thread < elementsLeftover){
             elementsPerThread++;
         }
-        calc(mat_gpu, mat_gpu_tmp, elementsPerThread, thread, width, height, depth, thread, grid_g, threadSize);
+        calc(mat_gpu, mat_gpu_tmp, elementsPerThread, thread+overlap_calc, width, height, depth, thread, grid_g, threadSize);
     }
 }

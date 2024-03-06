@@ -20,19 +20,19 @@ shift
 
 # Creates a scenario for the rest of the elements
 for SCENARIO in "$@"; do
-    # Extract matrix size and GPU count from the run identifier
+    # Extract grid size and GPU count from the run identifier
     WIDTH=$(echo $SCENARIO | awk -F'width' '{print $2}' | awk -F'_' '{print $1}')
     HEIGHT=$(echo $SCENARIO | awk -F'height' '{print $2}' | awk -F'_' '{print $1}')
     DEPTH=$(echo $SCENARIO | awk -F'depth' '{print $2}' | awk -F'_' '{print $1}')
     ITERATIONS=$(echo $SCENARIO | awk -F'iter' '{print $2}' | awk -F'_' '{print $1}')
-    CREATEMATRIX=$(echo $SCENARIO | awk -F'createMatrix' '{print $2}')
+    CREATEGRID=$(echo $SCENARIO | awk -F'createGrid' '{print $2}')
 
     # Define the variable values
     VAR1=$WIDTH
     VAR2=$HEIGHT
     VAR3=$DEPTH
     VAR4=$ITERATIONS
-    VAR5=$CREATEMATRIX
+    VAR5=$CREATEGRID
 
     # Create a temporary Slurm script for this scenario
     TEMP_SCRIPT="slurm_script_${SCENARIO}_${PARTITION}.sh"
