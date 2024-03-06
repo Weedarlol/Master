@@ -38,12 +38,8 @@ vieww:
 clean:
 	rm -rf slurm* out_*
 
-cleann:
-	rm -rf output/* error/*
-
 cleannn:
-	rm -rf slurm* out_* output/* error/*
-
+	rm -rf output/* error/* nsight/*
 
 
 

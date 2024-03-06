@@ -1,0 +1,14 @@
+main.cu(52): warning #177-D: variable "warp_size" was declared but never referenced
+
+programs/jacobi.cu(36): error: identifier "depth" is undefined
+
+programs/jacobi.cu(40): error: identifier "depth" is undefined
+
+programs/jacobi.cu(47): error: identifier "depth" is undefined
+
+programs/jacobi.cu(53): error: too few arguments in function call
+
+programs/jacobi.cu(54): error: too few arguments in function call
+
+5 errors detected in the compilation of "programs/jacobi.cu".
+/var/spool/slurmd/job447795/slurm_script: line 28: ./out_width256_height256_depth256_gpu2_iter1000_compare1_overlap0_test0_accel: No such file or directory
