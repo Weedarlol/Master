@@ -29,7 +29,7 @@ The candidate will learn about advanced parallel programming applicable to both 
 The candidate is expected to be skillful in technical programming (experience with parallel programming is not required but preferred). Importantly, the candidate must be hardworking and eager to learn new skills and knowledge, such as basic mathematical modeling and basic bioinformatics applications.
 
 
-# Content Infomration
+# Content Information
 
 "fox" and "ex3" are two different clusters i worked on which i was allowed to use to test my projects. The folders are therefore quite similar, the biggest difference is that the folders are specialised for scenarios which i was allowed to run in the specified cluster
 
