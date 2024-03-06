@@ -4,7 +4,6 @@
 #include <time.h>
 #include <string.h>
 
-
 #include "../../global_functions.h"
 
 
@@ -24,17 +23,19 @@ void fillValues(double *mat, double dx, double dy, int width, int height){
 
 int main(int argc, char *argv[]) {
     /*
-    width       | int   | The width of the matrix
-    height      | int   | The height of the matrix
-    iter        | int   | Number of max iterations for the jacobian algorithm
+    width        | int    | The width of the matrix
+    height       | int    | The height of the matrix
+    iter         | int    | Number of max iterations for the jacobian algorithm
+    create_matrix| int    | Boolean for if one prints out the output matrix into a file or not. 1 = yes, 0 = no
 
-    eps         | double | The limit for accepting the state of the matrix during jacobian algorithm
-    maxdelta    | double | The largest difference in the matrix between an iteration
-    dx          | double | Distance between each element in the matrix in x direction
-    dy          | double | Distance between each element in the matrix in y direction
+    dx           | double | Distance between each element in the matrix in x direction
+    dy           | double | Distance between each element in the matrix in y direction
 
-    mat         |*double | Pointer to the matrix
-    mat_tmp     |*double | Pointer to the matrix
+    mat          |*double | Pointer to the matrix
+    mat_tmp      |*double | Pointer to the matrix
+
+    start        | clock_t| Starttime for time estimation
+    end          | clock_t| Endtime for time estimation
     */
 
     if (argc != 4) {
@@ -45,6 +46,7 @@ int main(int argc, char *argv[]) {
     int width = atoi(argv[1]);
     int height = atoi(argv[2]);
     int iter = atoi(argv[3]);
+    int create_matrix = atoi(argv[4]);
 
     double dx = 2.0 / (width - 1);
     double dy = 2.0 / (height - 1);
@@ -57,7 +59,7 @@ int main(int argc, char *argv[]) {
     mat = (double*)malloc(width*height*sizeof(double));
     mat_tmp = (double*)malloc(width*height*sizeof(double));
 
-    /* initialization */
+    // Fills up the mat matrix with starting values
     fillValues(mat, dx, dy, width, height);
 
     start = clock();
@@ -77,23 +79,17 @@ int main(int argc, char *argv[]) {
                     mat[i_nr + j + width] + mat[i_nr + j - width]);
             }
         }
-
-        iter--;
-
         /* pointer swapping */
         double *mat_tmp_cha = mat_tmp;
         mat_tmp = mat;
         mat = mat_tmp_cha;
-    }
 
+        iter--;
+    }
     end = clock();
 
     printf("Time(event) - %.5f s\n", ((double) (end - start)) / CLOCKS_PER_SEC);
 
-
-
-
-    int create_matrix = 1;
     // Creates an output which can be used to compare the different resulting matrixes
     if(create_matrix == 1){
         FILE *fptr;
@@ -109,11 +105,8 @@ int main(int argc, char *argv[]) {
         fclose(fptr);
     }
     
-
-
     free(mat);
     free(mat_tmp);
-
 
     return 0;
 }
