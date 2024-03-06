@@ -32,9 +32,9 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     threadInformation[4] | int         | Number of computations per thread for 1 slice, rounded down
     threadInformation[5] | int         | Number of computations left over for 1 slice when rounded down
 
-    mat                  | double*     | The matrix allocated on the CPU
-    mat_gpu              | double**    | One of the matrices allocated on the GPU
-    mat_gpu_tmp          | double**    | The other matrix allocated on the GPU
+    grid                  | double*     | The matrix allocated on the CPU
+    grid_gpu              | double**    | One of the matrices allocated on the GPU
+    grid_gpu_tmp          | double**    | The other matrix allocated on the GPU
 
     kernelCollEdge       | void***     | The inputfeatures to the jacobiEdge GPU kernel
     kernelCollMid        | void***     | The inputfeatures to the jacobiMid GPU kernel
@@ -77,23 +77,23 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     }
 
     // Initialiserer og allokerer Matrise på CPU
-    double *mat;
-    double **mat_gpu, **mat_gpu_tmp;
-    cudaErrorHandle(cudaMallocHost(&mat,          total*sizeof(double)));
-    cudaErrorHandle(cudaMallocHost(&mat_gpu,      gpus*sizeof(double*)));
-    cudaErrorHandle(cudaMallocHost(&mat_gpu_tmp,  gpus*sizeof(double*)));
+    double *grid;
+    double **grid_gpu, **grid_gpu_tmp;
+    cudaErrorHandle(cudaMallocHost(&grid,          total*sizeof(double)));
+    cudaErrorHandle(cudaMallocHost(&grid_gpu,      gpus*sizeof(double*)));
+    cudaErrorHandle(cudaMallocHost(&grid_gpu_tmp,  gpus*sizeof(double*)));
 
-    fillValues3D(mat, width, height, depth, dx, dy, dz);
+    fillValues3D(grid, width, height, depth, dx, dy, dz);
 
     for(int g = 0; g < gpus; g++){
         cudaErrorHandle(cudaSetDevice(g));
-        cudaErrorHandle(cudaMalloc(&mat_gpu[g],     width*height*slices_device[g]*sizeof(double)));
-        cudaErrorHandle(cudaMalloc(&mat_gpu_tmp[g], width*height*slices_device[g]*sizeof(double)));
+        cudaErrorHandle(cudaMalloc(&grid_gpu[g],     width*height*slices_device[g]*sizeof(double)));
+        cudaErrorHandle(cudaMalloc(&grid_gpu_tmp[g], width*height*slices_device[g]*sizeof(double)));
     }
 
     for(int g = 0; g < gpus; g++){
         cudaErrorHandle(cudaSetDevice(g));
-        cudaErrorHandle(cudaMemcpy(mat_gpu[g], mat+slices_starting_index[g]*width*height, slices_device[g]*width*height*sizeof(double), cudaMemcpyHostToDevice));
+        cudaErrorHandle(cudaMemcpy(grid_gpu[g], grid+slices_starting_index[g]*width*height, slices_device[g]*width*height*sizeof(double), cudaMemcpyHostToDevice));
     }
 
     int *threadInformation;
@@ -111,8 +111,8 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     // Allocates the elements in the kernelCollEdge, used for cudaLaunchCooperativeKernel as functon variables.
     for (int g = 0; g < gpus; g++) {
         void **kernelArgs = new void*[8];
-        kernelArgs[0] = &mat_gpu[g];
-        kernelArgs[1] = &mat_gpu_tmp[g];
+        kernelArgs[0] = &grid_gpu[g];
+        kernelArgs[1] = &grid_gpu_tmp[g];
         kernelArgs[2] = &width;
         kernelArgs[3] = &height;
         kernelArgs[4] = &slices_compute_device[g];
@@ -128,8 +128,8 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     // Allocates the elements in the kernelCollMid, used for cudaLaunchCooperativeKernel as functon variables.
     for (int g = 0; g < gpus; g++) {
         void **kernelArgs = new void*[12];
-        kernelArgs[0] = &mat_gpu[g];     
-        kernelArgs[1] = &mat_gpu_tmp[g];
+        kernelArgs[0] = &grid_gpu[g];     
+        kernelArgs[1] = &grid_gpu_tmp[g];
         kernelArgs[2] = &width;
         kernelArgs[3] = &height;
         kernelArgs[4] = &depth;
@@ -149,7 +149,7 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
 
 
 
-    full_calculation_nooverlap(mat_gpu, mat_gpu_tmp, width, height, depth, iter, gpus, slices_device, gridDim, blockDim, kernelCollMid);
+    full_calculation_nooverlap(grid_gpu, grid_gpu_tmp, width, height, depth, iter, gpus, slices_device, gridDim, blockDim, kernelCollMid);
 
 
 
@@ -170,7 +170,7 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
 
     for(int g = 0; g < gpus; g++){
         cudaErrorHandle(cudaSetDevice(g));
-        cudaErrorHandle(cudaMemcpyAsync(mat + (slices_starting_index[g]+1)*width*height, mat_gpu[g] + width*height, (slices_compute_device[g]+2*overlap)*width*height*sizeof(double), cudaMemcpyDeviceToHost));
+        cudaErrorHandle(cudaMemcpyAsync(grid + (slices_starting_index[g]+1)*width*height, grid_gpu[g] + width*height, (slices_compute_device[g]+2*overlap)*width*height*sizeof(double), cudaMemcpyDeviceToHost));
     }
 
     for(int g = 0; g < gpus; g++){
@@ -214,8 +214,8 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
         for(int i = 0; i < depth; i++){
             for (int j = 0; j < height; j++) {
                 for (int k = 0; k < width; k++) {
-                    if (fabs(mat[k + j * width + i * width * height] - mat_compare[k + j * width + i * width * height]) > 1e-15)  {
-                        printf("Mismatch found at position (width = %d, height = %d, depth = %d) (mat = %.16f, mat_compare = %.16f)\n", k, j, i, mat[k + j * width + i * width * height], mat_compare[k + j * width + i * width * height]);
+                    if (fabs(grid[k + j * width + i * width * height] - mat_compare[k + j * width + i * width * height]) > 1e-15)  {
+                        printf("Mismatch found at position (width = %d, height = %d, depth = %d) (grid = %.16f, mat_compare = %.16f)\n", k, j, i, grid[k + j * width + i * width * height], mat_compare[k + j * width + i * width * height]);
                         free(mat_compare);
                         exit(EXIT_FAILURE);
                     }
@@ -236,12 +236,12 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     // Frees up memory as we are finished with the program
     for(int g = 0; g < gpus; g++){
         cudaErrorHandle(cudaSetDevice(g));
-        cudaErrorHandle(cudaFree(mat_gpu[g]));
-        cudaErrorHandle(cudaFree(mat_gpu_tmp[g]));
+        cudaErrorHandle(cudaFree(grid_gpu[g]));
+        cudaErrorHandle(cudaFree(grid_gpu_tmp[g]));
     }
-    cudaErrorHandle(cudaFreeHost(mat));
-    cudaErrorHandle(cudaFreeHost(mat_gpu));
-    cudaErrorHandle(cudaFreeHost(mat_gpu_tmp));
+    cudaErrorHandle(cudaFreeHost(grid));
+    cudaErrorHandle(cudaFreeHost(grid_gpu));
+    cudaErrorHandle(cudaFreeHost(grid_gpu_tmp));
     cudaErrorHandle(cudaFreeHost(threadInformation));
     cudaErrorHandle(cudaFreeHost(device_nr));
     cudaErrorHandle(cudaFreeHost(slices_device));
