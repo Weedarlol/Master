@@ -279,21 +279,25 @@ void initialization(int width, int height, int iter, double dx, double dy, int g
 int main(int argc, char *argv[]) {
     /*
     Functions   | Type           | Input
-    start       | void           | int width, int height, int iter,
-                                   double dx, double dy, dim3 blockDim,
-                                   dim3 gridDim
+    start       | void           | int width, int height, int iter, double dx, double dy, 
+                                    int gpus, int compare, int overlap, int test, 
+                                    dim3 blockDim, dim3 gridDim
     ____________________________________________________________________________
     Variables   | Type  | Description
     width       | int   | The width of the matrix
     height      | int   | The height of the matrix
     iter        | int   | Amount of iterations
-    gpus      | int   | Number of gpus in use
+    gpus        | int   | Number of gpus in use
     compare     | int   | If one wants to compare the output with a previously CPU computed matrix
     overlap     | int   | If one want to overlap or not
+    test        | int   | Select which type of test one wants to run
+
     dx          | float | Used to give value to the elements of the matrix
     dy          | float | Used to give value to the elements of the matrix
+
     blockDim    | dim3  | Size of the threadblock
     gridDim     | dim3  | Size of the blockgrid
+
     For all true/false integers, 0 = false, 1 = true
     */
 
