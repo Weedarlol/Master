@@ -28,3 +28,23 @@ The candidate will learn about advanced parallel programming applicable to both 
 
 The candidate is expected to be skillful in technical programming (experience with parallel programming is not required but preferred). Importantly, the candidate must be hardworking and eager to learn new skills and knowledge, such as basic mathematical modeling and basic bioinformatics applications.
 
+
+# Content Infomration
+
+"fox" and "ex3" are two different clusters i worked on which i was allowed to use to test my projects. The folders are therefore quite similar, the biggest difference is that the folders are specialised for scenarios which i was allowed to run in the specified cluster
+
+## Fox cluster
+The fox cluster was provided to me by UiO through Educloud Research
+
+Fox had 2 partitions i was utilizing, "Normal" and "Accel"
+- Normal was made up
+
+## Ex3 Cluster
+The Ex3 cluster was provided to me by Simula through my project guidance Xing Cai.
+
+Ex3 had 3 partitions i was utilizing, "Dgx2q", "Hgx2q" and "A100q". 
+- Dgx2q was made up of a single node consisting of DualProcessor Intel Xeon Scalable Platinum 8176 with 16 Nvidia Volta V100 connected through PCIe, but which are interconnected by NVLink.
+- Hgx2q was made up of a single node consisting of DualProcessor AMD EPYC Milan 7763 64-core with 8 Nvidia Volta A100/80GB connected through PCIE, but which are interconnected by NVLink.
+- A100q
+
+
