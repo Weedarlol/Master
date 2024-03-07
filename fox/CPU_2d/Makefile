@@ -31,6 +31,10 @@ JobName:
 
 
 
+pythonplot:
+	python3 2d_plot.py
+
+
 # Clean rules
 clean:
 	rm -rf slurm* out_*
