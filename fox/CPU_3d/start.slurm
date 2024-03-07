@@ -18,13 +18,15 @@ for SCENARIO in "$@"; do
     WIDTH=$(echo $SCENARIO | awk -F'width' '{print $2}' | awk -F'_' '{print $1}')
     HEIGHT=$(echo $SCENARIO | awk -F'height' '{print $2}' | awk -F'_' '{print $1}')
     DEPTH=$(echo $SCENARIO | awk -F'depth' '{print $2}' | awk -F'_' '{print $1}')
-    ITERATIONS=$(echo $SCENARIO | awk -F'iter' '{print $2}')
+    ITERATIONS=$(echo $SCENARIO | awk -F'iter' '{print $2}' | awk -F'_' '{print $1}')
+    CREATEMATRIX=$(echo $SCENARIO | awk -F'createMatrix' '{print $2}')
 
     # Define the variable values
     VAR1=$WIDTH # Width
     VAR2=$HEIGHT # Height
     VAR3=$DEPTH
     VAR4=$ITERATIONS  # Iterations
+    VAR5=$CREATEMATRIX
 
     # Create a temporary Slurm script for this scenario
     TEMP_SCRIPT="slurm_script_${SCENARIO}_${PARTITION}.sh"
@@ -50,7 +52,7 @@ module load CUDA/11.8.0
 
 nvcc $SOURCES -o out_${SCENARIO}_${PARTITION}
 
-./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4
+./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5
 
 exit 0
 

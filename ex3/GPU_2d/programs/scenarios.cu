@@ -1,15 +1,15 @@
 #include <stdio.h>
 #include <math.h>
-#include <cooperative_groups.h>
 
-#include "../../global_functions.h"
+#include "../../../global_functions.h"
 #include "jacobi.h"
+
+#include <cooperative_groups.h>
 
 namespace cg = cooperative_groups;
 
 
-
-void full_calculation_overlap(double **mat_gpu, double **mat_gpu_tmp, int height, int width, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollEdge, void*** kernelCollMid){
+void full_calculation_overlap(double **data_gpu, double **data_gpu_tmp, int height, int width, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollEdge, void*** kernelCollMid){
     cudaStream_t streams[gpus][2];
     cudaEvent_t events[gpus][4], startevent, stopevent;
     initializeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
@@ -38,14 +38,14 @@ void full_calculation_overlap(double **mat_gpu, double **mat_gpu_tmp, int height
         for(int g = 1; g < gpus; g++){
             cudaErrorHandle(cudaSetDevice(g));
             cudaErrorHandle(cudaStreamWaitEvent(streams[g][0], events[g][0]));
-            cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g-1] + (rows_device[g-1]-1)*width + 1, g-1, mat_gpu_tmp[g] + width + 1, g, (width-2)*sizeof(double), streams[g][0]));
+            cudaErrorHandle(cudaMemcpyPeerAsync(data_gpu_tmp[g-1] + (rows_device[g-1]-1)*width + 1, g-1, data_gpu_tmp[g] + width + 1, g, (width-2)*sizeof(double), streams[g][0]));
             cudaErrorHandle(cudaEventRecord(events[g][2], streams[g][0]));
         }
         // Transfers n-2 row of the matrix
         for(int g = 0; g < gpus-1; g++){
             cudaErrorHandle(cudaSetDevice(g));
             cudaErrorHandle(cudaStreamWaitEvent(streams[g][0], events[g][0]));
-            cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g+1] + 1, g+1, mat_gpu_tmp[g] + (rows_device[g]-2)*width + 1, g, (width-2)*sizeof(double), streams[g][0]));
+            cudaErrorHandle(cudaMemcpyPeerAsync(data_gpu_tmp[g+1] + 1, g+1, data_gpu_tmp[g] + (rows_device[g]-2)*width + 1, g, (width-2)*sizeof(double), streams[g][0]));
             cudaErrorHandle(cudaEventRecord(events[g][3], streams[g][0]));
         }
 
@@ -60,9 +60,9 @@ void full_calculation_overlap(double **mat_gpu, double **mat_gpu_tmp, int height
         
         // Step 4
         for(int g = 0; g < gpus; g++){
-            double *mat_change = mat_gpu[g];
-            mat_gpu[g] = mat_gpu_tmp[g];
-            mat_gpu_tmp[g] = mat_change;
+            double *data_change = data_gpu[g];
+            data_gpu[g] = data_gpu_tmp[g];
+            data_gpu_tmp[g] = data_change;
         }
         iter--;
     }
@@ -77,14 +77,14 @@ void full_calculation_overlap(double **mat_gpu, double **mat_gpu_tmp, int height
     
     float milliseconds = 0.0f;
     cudaErrorHandle(cudaEventElapsedTime(&milliseconds, startevent, stopevent));
-    printf("Time(event) - %.5f s\n", milliseconds*1000);
+    printf("Time(event) - %.5f s\n", milliseconds/1000);
 
     freeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
 }
 
 
 
-void full_calculation_nooverlap(double **mat_gpu, double **mat_gpu_tmp, int height, int width, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollMid){
+void full_calculation_nooverlap(double **data_gpu, double **data_gpu_tmp, int height, int width, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollMid){
     cudaStream_t streams[gpus][2];
     cudaEvent_t events[gpus][4], startevent, stopevent;
     initializeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
@@ -108,14 +108,14 @@ void full_calculation_nooverlap(double **mat_gpu, double **mat_gpu_tmp, int heig
         for(int g = 1; g < gpus; g++){
             cudaErrorHandle(cudaSetDevice(g));
             cudaErrorHandle(cudaStreamWaitEvent(streams[g][1], events[g][0]));
-            cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g-1] + (rows_device[g-1]-1)*width + 1, g-1, mat_gpu_tmp[g] + width + 1, g, (width-2)*sizeof(double), streams[g][1]));
+            cudaErrorHandle(cudaMemcpyPeerAsync(data_gpu_tmp[g-1] + (rows_device[g-1]-1)*width + 1, g-1, data_gpu_tmp[g] + width + 1, g, (width-2)*sizeof(double), streams[g][1]));
             cudaErrorHandle(cudaEventRecord(events[g][1], streams[g][1]));
         }
         // Transfers n-2 row of the matrix
         for(int g = 0; g < gpus-1; g++){
             cudaErrorHandle(cudaSetDevice(g));
             cudaErrorHandle(cudaStreamWaitEvent(streams[g][1], events[g][0]));
-            cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g+1] + 1, g+1, mat_gpu_tmp[g] + (rows_device[g]-2)*width + 1, g, (width-2)*sizeof(double), streams[g][1]));
+            cudaErrorHandle(cudaMemcpyPeerAsync(data_gpu_tmp[g+1] + 1, g+1, data_gpu_tmp[g] + (rows_device[g]-2)*width + 1, g, (width-2)*sizeof(double), streams[g][1]));
             cudaErrorHandle(cudaEventRecord(events[g][2], streams[g][1]));
         }
 
@@ -129,9 +129,9 @@ void full_calculation_nooverlap(double **mat_gpu, double **mat_gpu_tmp, int heig
         
         // Step 4
         for(int g = 0; g < gpus; g++){
-            double *mat_change = mat_gpu[g];
-            mat_gpu[g] = mat_gpu_tmp[g];
-            mat_gpu_tmp[g] = mat_change;
+            double *data_change = data_gpu[g];
+            data_gpu[g] = data_gpu_tmp[g];
+            data_gpu_tmp[g] = data_change;
         }
         iter--;
     }
@@ -146,14 +146,14 @@ void full_calculation_nooverlap(double **mat_gpu, double **mat_gpu_tmp, int heig
     
     float milliseconds = 0.0f;
     cudaErrorHandle(cudaEventElapsedTime(&milliseconds, startevent, stopevent));
-    printf("Time(event) - %.5f s\n", milliseconds*1000);
+    printf("Time(event) - %.5f s\n", milliseconds/1000);
 
     freeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
 }
 
 
 
-void no_kernel_overlap(double **mat_gpu, double **mat_gpu_tmp, int height, int width, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollEdge, void*** kernelCollMid){
+void no_kernel_overlap(double **data_gpu, double **data_gpu_tmp, int height, int width, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollEdge, void*** kernelCollMid){
     cudaStream_t streams[gpus][2];
     cudaEvent_t events[gpus][4], startevent, stopevent;
     initializeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
@@ -168,13 +168,13 @@ void no_kernel_overlap(double **mat_gpu, double **mat_gpu_tmp, int height, int w
         // Transfer 2 row of the matrix
         for(int g = 1; g < gpus; g++){
             cudaErrorHandle(cudaSetDevice(g));
-            cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g-1] + (rows_device[g-1]-1)*width + 1, g-1, mat_gpu_tmp[g] + width + 1, g, (width-2)*sizeof(double), streams[g][0]));
+            cudaErrorHandle(cudaMemcpyPeerAsync(data_gpu_tmp[g-1] + (rows_device[g-1]-1)*width + 1, g-1, data_gpu_tmp[g] + width + 1, g, (width-2)*sizeof(double), streams[g][0]));
             cudaErrorHandle(cudaEventRecord(events[g][0], streams[g][0]));
         }
         // Transfers n-2 row of the matrix
         for(int g = 0; g < gpus-1; g++){
             cudaErrorHandle(cudaSetDevice(g));
-            cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g+1] + 1, g+1, mat_gpu_tmp[g] + (rows_device[g]-2)*width + 1, g, (width-2)*sizeof(double), streams[g][1]));
+            cudaErrorHandle(cudaMemcpyPeerAsync(data_gpu_tmp[g+1] + 1, g+1, data_gpu_tmp[g] + (rows_device[g]-2)*width + 1, g, (width-2)*sizeof(double), streams[g][1]));
             cudaErrorHandle(cudaEventRecord(events[g][1], streams[g][1]));
         }
 
@@ -187,9 +187,9 @@ void no_kernel_overlap(double **mat_gpu, double **mat_gpu_tmp, int height, int w
         
         // Step 4
         for(int g = 0; g < gpus; g++){
-            double *mat_change = mat_gpu[g];
-            mat_gpu[g] = mat_gpu_tmp[g];
-            mat_gpu_tmp[g] = mat_change;
+            double *data_change = data_gpu[g];
+            data_gpu[g] = data_gpu_tmp[g];
+            data_gpu_tmp[g] = data_change;
         }
         iter--;
     }
@@ -203,14 +203,14 @@ void no_kernel_overlap(double **mat_gpu, double **mat_gpu_tmp, int height, int w
     
     float milliseconds = 0.0f;
     cudaErrorHandle(cudaEventElapsedTime(&milliseconds, startevent, stopevent));
-    printf("Time(event) - %.5f s\n", milliseconds*1000);
+    printf("Time(event) - %.5f s\n", milliseconds/1000);
 
     freeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
 }
 
 
 
-void no_kernel_nooverlap(double **mat_gpu, double **mat_gpu_tmp, int height, int width, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollMid){
+void no_kernel_nooverlap(double **data_gpu, double **data_gpu_tmp, int height, int width, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollMid){
     cudaStream_t streams[gpus][2];
     cudaEvent_t events[gpus][4], startevent, stopevent;
     initializeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
@@ -226,13 +226,13 @@ void no_kernel_nooverlap(double **mat_gpu, double **mat_gpu_tmp, int height, int
         // Transfers 2 row of the matrix
         for(int g = 1; g < gpus; g++){
             cudaErrorHandle(cudaSetDevice(g));
-            cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g-1] + (rows_device[g-1]-1)*width + 1, g-1, mat_gpu_tmp[g] + width + 1, g, (width-2)*sizeof(double), streams[g][0]));
+            cudaErrorHandle(cudaMemcpyPeerAsync(data_gpu_tmp[g-1] + (rows_device[g-1]-1)*width + 1, g-1, data_gpu_tmp[g] + width + 1, g, (width-2)*sizeof(double), streams[g][0]));
             cudaErrorHandle(cudaEventRecord(events[g][0], streams[g][0]));
         }
         // Transfers n-2 row of the matrix
         for(int g = 0; g < gpus-1; g++){
             cudaErrorHandle(cudaSetDevice(g));
-            cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g+1] + 1, g+1, mat_gpu_tmp[g] + (rows_device[g]-2)*width + 1, g, (width-2)*sizeof(double), streams[g][1]));
+            cudaErrorHandle(cudaMemcpyPeerAsync(data_gpu_tmp[g+1] + 1, g+1, data_gpu_tmp[g] + (rows_device[g]-2)*width + 1, g, (width-2)*sizeof(double), streams[g][1]));
             cudaErrorHandle(cudaEventRecord(events[g][1], streams[g][1]));
         }
 
@@ -245,9 +245,9 @@ void no_kernel_nooverlap(double **mat_gpu, double **mat_gpu_tmp, int height, int
         
         // Step 4
         for(int g = 0; g < gpus; g++){
-            double *mat_change = mat_gpu[g];
-            mat_gpu[g] = mat_gpu_tmp[g];
-            mat_gpu_tmp[g] = mat_change;
+            double *data_change = data_gpu[g];
+            data_gpu[g] = data_gpu_tmp[g];
+            data_gpu_tmp[g] = data_change;
         }
         iter--;
     }
@@ -262,14 +262,14 @@ void no_kernel_nooverlap(double **mat_gpu, double **mat_gpu_tmp, int height, int
     
     float milliseconds = 0.0f;
     cudaErrorHandle(cudaEventElapsedTime(&milliseconds, startevent, stopevent));
-    printf("Time(event) - %.5f s\n", milliseconds*1000);
+    printf("Time(event) - %.5f s\n", milliseconds/1000);
 
     freeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
 }
 
 
 
-void no_communication_overlap(double **mat_gpu, double **mat_gpu_tmp, int height, int width, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollEdge, void*** kernelCollMid){
+void no_communication_overlap(double **data_gpu, double **data_gpu_tmp, int height, int width, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollEdge, void*** kernelCollMid){
     cudaStream_t streams[gpus][2];
     cudaEvent_t events[gpus][4], startevent, stopevent;
     initializeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
@@ -295,9 +295,9 @@ void no_communication_overlap(double **mat_gpu, double **mat_gpu_tmp, int height
         }
         
         for(int g = 0; g < gpus; g++){
-            double *mat_change = mat_gpu[g];
-            mat_gpu[g] = mat_gpu_tmp[g];
-            mat_gpu_tmp[g] = mat_change;
+            double *data_change = data_gpu[g];
+            data_gpu[g] = data_gpu_tmp[g];
+            data_gpu_tmp[g] = data_change;
         }
         iter--;
     }
@@ -311,14 +311,14 @@ void no_communication_overlap(double **mat_gpu, double **mat_gpu_tmp, int height
     
     float milliseconds = 0.0f;
     cudaErrorHandle(cudaEventElapsedTime(&milliseconds, startevent, stopevent));
-    printf("Time(event) - %.5f s\n", milliseconds*1000);
+    printf("Time(event) - %.5f s\n", milliseconds/1000);
 
     freeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
 }
 
 
 
-void no_communication_nooverlap(double **mat_gpu, double **mat_gpu_tmp, int height, int width, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollMid){
+void no_communication_nooverlap(double **data_gpu, double **data_gpu_tmp, int height, int width, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollMid){
     cudaStream_t streams[gpus][2];
     cudaEvent_t events[gpus][4], startevent, stopevent;
     initializeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
@@ -345,9 +345,9 @@ void no_communication_nooverlap(double **mat_gpu, double **mat_gpu_tmp, int heig
         
         // Step 4
         for(int g = 0; g < gpus; g++){
-            double *mat_change = mat_gpu[g];
-            mat_gpu[g] = mat_gpu_tmp[g];
-            mat_gpu_tmp[g] = mat_change;
+            double *data_change = data_gpu[g];
+            data_gpu[g] = data_gpu_tmp[g];
+            data_gpu_tmp[g] = data_change;
         }
         iter--;
     }
@@ -362,62 +362,14 @@ void no_communication_nooverlap(double **mat_gpu, double **mat_gpu_tmp, int heig
     
     float milliseconds = 0.0f;
     cudaErrorHandle(cudaEventElapsedTime(&milliseconds, startevent, stopevent));
-    printf("Time(event) - %.5f s\n", milliseconds*1000);
+    printf("Time(event) - %.5f s\n", milliseconds/1000);
 
     freeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
 }
 
 
 
-void only_events(double **mat_gpu, double **mat_gpu_tmp, int height, int width, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollMid){
-
-    cudaStream_t streams[gpus][2];
-    cudaEvent_t events[gpus][4], startevent, stopevent;
-    initializeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
-
-    for(int g = 0; g < gpus; g++){
-        cudaErrorHandle(cudaSetDevice(g));
-        cudaErrorHandle(cudaDeviceSynchronize());
-    }
-    cudaErrorHandle(cudaEventRecord(startevent));
-
-    while(iter > 0){
-         for(int g = 0; g < gpus; g++){
-            cudaErrorHandle(cudaSetDevice(g));
-            cudaErrorHandle(cudaEventRecord(events[g][0], streams[g][0]));
-        }
-
-        for(int g = 0; g < gpus; g++){
-            cudaErrorHandle(cudaSetDevice(g));
-            cudaErrorHandle(cudaEventSynchronize(events[g][0]));
-        }
-
-        for(int g = 0; g < gpus; g++){
-            double *mat_change = mat_gpu[g];
-            mat_gpu[g] = mat_gpu_tmp[g];
-            mat_gpu_tmp[g] = mat_change;
-        }
-        iter--;
-    }
-    cudaErrorHandle(cudaEventRecord(stopevent));
-
-    cudaErrorHandle(cudaEventSynchronize(stopevent));
-
-    for(int g = 0; g < gpus; g++){
-        cudaErrorHandle(cudaSetDevice(g));
-        cudaErrorHandle(cudaDeviceSynchronize());
-    }
-    
-    float milliseconds = 0.0f;
-    cudaErrorHandle(cudaEventElapsedTime(&milliseconds, startevent, stopevent));
-    printf("Time(event) - %.5f s\n", milliseconds*1000);
-
-    freeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
-}
-
-
-
-void only_calculation_overlap(double **mat_gpu, double **mat_gpu_tmp, int height, int width, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollEdge, void*** kernelCollMid){
+void only_calculation_overlap(double **data_gpu, double **data_gpu_tmp, int height, int width, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollEdge, void*** kernelCollMid){
     cudaStream_t streams[gpus][2];
     cudaEvent_t events[gpus][4], startevent, stopevent;
     initializeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
@@ -461,14 +413,14 @@ void only_calculation_overlap(double **mat_gpu, double **mat_gpu_tmp, int height
     
     float milliseconds = 0.0f;
     cudaErrorHandle(cudaEventElapsedTime(&milliseconds, startevent, stopevent));
-    printf("Time(event) - %.5f s\n", milliseconds*1000);
+    printf("Time(event) - %.5f s\n", milliseconds/1000);
 
     freeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
 }
 
 
 
-void only_calculation_nooverlap(double **mat_gpu, double **mat_gpu_tmp, int height, int width, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollMid){
+void only_calculation_nooverlap(double **data_gpu, double **data_gpu_tmp, int height, int width, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollMid){
     cudaStream_t streams[gpus][2];
     cudaEvent_t events[gpus][4], startevent, stopevent;
     initializeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
@@ -506,14 +458,14 @@ void only_calculation_nooverlap(double **mat_gpu, double **mat_gpu_tmp, int heig
     
     float milliseconds = 0.0f;
     cudaErrorHandle(cudaEventElapsedTime(&milliseconds, startevent, stopevent));
-    printf("Time(event) - %.5f s\n", milliseconds*1000);
+    printf("Time(event) - %.5f s\n", milliseconds/1000);
 
     freeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
 }
 
 
 
-void only_communication_overlap(double **mat_gpu, double **mat_gpu_tmp, int height, int width, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollEdge, void*** kernelCollMid){
+void only_communication_overlap(double **data_gpu, double **data_gpu_tmp, int height, int width, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollEdge, void*** kernelCollMid){
     cudaStream_t streams[gpus][2];
     cudaEvent_t events[gpus][4], startevent, stopevent;
     initializeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
@@ -528,13 +480,13 @@ void only_communication_overlap(double **mat_gpu, double **mat_gpu_tmp, int heig
         // Transfer 2 row of the matrix
         for(int g = 1; g < gpus; g++){
             cudaErrorHandle(cudaSetDevice(g));
-            cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g-1] + (rows_device[g-1]-1)*width + 1, g-1, mat_gpu_tmp[g] + width + 1, g, (width-2)*sizeof(double), streams[g][0]));
+            cudaErrorHandle(cudaMemcpyPeerAsync(data_gpu_tmp[g-1] + (rows_device[g-1]-1)*width + 1, g-1, data_gpu_tmp[g] + width + 1, g, (width-2)*sizeof(double), streams[g][0]));
             cudaErrorHandle(cudaEventRecord(events[g][0], streams[g][0]));
         }
         // Transfers n-2 row of the matrix
         for(int g = 0; g < gpus-1; g++){
             cudaErrorHandle(cudaSetDevice(g));
-            cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g+1] + 1, g+1, mat_gpu_tmp[g] + (rows_device[g]-2)*width + 1, g, (width-2)*sizeof(double), streams[g][1]));
+            cudaErrorHandle(cudaMemcpyPeerAsync(data_gpu_tmp[g+1] + 1, g+1, data_gpu_tmp[g] + (rows_device[g]-2)*width + 1, g, (width-2)*sizeof(double), streams[g][1]));
             cudaErrorHandle(cudaEventRecord(events[g][1], streams[g][1]));
         }
 
@@ -556,14 +508,14 @@ void only_communication_overlap(double **mat_gpu, double **mat_gpu_tmp, int heig
     
     float milliseconds = 0.0f;
     cudaErrorHandle(cudaEventElapsedTime(&milliseconds, startevent, stopevent));
-    printf("Time(event) - %.5f s\n", milliseconds*1000);
+    printf("Time(event) - %.5f s\n", milliseconds/1000);
 
     freeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
 }
 
 
 
-void only_communication_nooverlap(double **mat_gpu, double **mat_gpu_tmp, int height, int width, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollMid){
+void only_communication_nooverlap(double **data_gpu, double **data_gpu_tmp, int height, int width, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollMid){
     cudaStream_t streams[gpus][2];
     cudaEvent_t events[gpus][4], startevent, stopevent;
     initializeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
@@ -579,13 +531,13 @@ void only_communication_nooverlap(double **mat_gpu, double **mat_gpu_tmp, int he
         // Transfers 2 row of the matrix
         for(int g = 1; g < gpus; g++){
             cudaErrorHandle(cudaSetDevice(g));
-            cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g-1] + (rows_device[g-1]-1)*width + 1, g-1, mat_gpu_tmp[g] + width + 1, g, (width-2)*sizeof(double), streams[g][0]));
+            cudaErrorHandle(cudaMemcpyPeerAsync(data_gpu_tmp[g-1] + (rows_device[g-1]-1)*width + 1, g-1, data_gpu_tmp[g] + width + 1, g, (width-2)*sizeof(double), streams[g][0]));
             cudaErrorHandle(cudaEventRecord(events[g][0], streams[g][0]));
         }
         // Transfers n-2 row of the matrix
         for(int g = 0; g < gpus-1; g++){
             cudaErrorHandle(cudaSetDevice(g));
-            cudaErrorHandle(cudaMemcpyPeerAsync(mat_gpu_tmp[g+1] + 1, g+1, mat_gpu_tmp[g] + (rows_device[g]-2)*width + 1, g, (width-2)*sizeof(double), streams[g][1]));
+            cudaErrorHandle(cudaMemcpyPeerAsync(data_gpu_tmp[g+1] + 1, g+1, data_gpu_tmp[g] + (rows_device[g]-2)*width + 1, g, (width-2)*sizeof(double), streams[g][1]));
             cudaErrorHandle(cudaEventRecord(events[g][1], streams[g][1]));
         }
 
@@ -608,7 +560,7 @@ void only_communication_nooverlap(double **mat_gpu, double **mat_gpu_tmp, int he
     
     float milliseconds = 0.0f;
     cudaErrorHandle(cudaEventElapsedTime(&milliseconds, startevent, stopevent));
-    printf("Time(event) - %.5f s\n", milliseconds*1000);
+    printf("Time(event) - %.5f s\n", milliseconds/1000);
 
     freeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
 }

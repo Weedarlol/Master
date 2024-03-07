@@ -1,3 +1,0 @@
-main.cu(71): warning #177-D: variable "warp_size" was declared but never referenced
-
-/cm/local/apps/slurm/var/spool/job138514/slurm_script: line 31: 3588445 Segmentation fault      (core dumped) ./out_width32_height32_depth_gpu1_iter1_compare0_overlap0_test0_dgx2q 32 32 1 1 0 0 0

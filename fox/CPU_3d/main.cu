@@ -29,6 +29,7 @@ int main(int argc, char *argv[]) {
     int height = atoi(argv[2]);
     int depth = atoi(argv[3]);
     int iter = atoi(argv[4]);
+    int createGrid = atoi(argv[5]);
 
     double dx = 2.0 / (width - 1);
     double dy = 2.0 / (height - 1);
@@ -76,19 +77,22 @@ int main(int argc, char *argv[]) {
 
 
     // Creates an output which can be used to compare the different resulting grides
-    FILE *fptr;
-    char filename[30];
-    sprintf(filename, "grids/CPUGrid%i_%i_%i.txt", width, height, depth);
-    fptr = fopen(filename, "w");
-    for(int i = 0; i < depth; i++){
-        for(int j = 0; j < height; j++){
-            for(int k = 0; k < width; k++){
-                fprintf(fptr, "%.16f ", data[k + j*width + i*width*height]);
+    if(createGrid == 1){
+        FILE *fptr;
+        char filename[30];
+        sprintf(filename, "grids/CPUGrid%i_%i_%i.txt", width, height, depth);
+        fptr = fopen(filename, "w");
+        for(int i = 0; i < depth; i++){
+            for(int j = 0; j < height; j++){
+                for(int k = 0; k < width; k++){
+                    fprintf(fptr, "%.16f ", data[k + j*width + i*width*height]);
+                }
+            fprintf(fptr, "\n");
             }
-        fprintf(fptr, "\n");
         }
+        fclose(fptr);
     }
-    fclose(fptr);
+    
 
 
     free(data);

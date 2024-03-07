@@ -53,6 +53,7 @@ for SCENARIO in "$@"; do
 #SBATCH --gpus=${NUM_GPUS}                    # Antall GPUer en allokerer per node, så totale antall GPU delt på antall noder
 #SBATCH --output=output/${SCENARIO}_${PARTITION}.out
 #SBATCH --error=error/${SCENARIO}_${PARTITION}.err
+
 module purge
 module load slurm/21.08.8
 module load cuda11.8/blas/11.8.0
@@ -61,9 +62,12 @@ module load cuda11.8/nsight/11.8.0
 module load cuda11.8/profiler/11.8.0
 module load cuda11.8/toolkit/11.8.0
 module load cmake/gcc/3.27.9
+
 nvcc $NVCCFLAGS $SOURCES -o out_${SCENARIO}_${PARTITION} -L$LIBDIR -lnccl
+
 #nsys nvprof -o nsight/nsight_${SCENARIO}_${PARTITION} ./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5 $VAR6 $VAR7
 ./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5 $VAR6 $VAR7
+
 exit 0
 EOF
 

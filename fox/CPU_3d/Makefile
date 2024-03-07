@@ -1,4 +1,4 @@
-# Define different matrix sizes
+# Define different grid sizes
 WIDTH = 512
 HEIGHT = 512
 DEPTH = 512
@@ -10,8 +10,11 @@ ITERATIONS = 10000
 # Example = hgx2q, dgx2q, a100q
 PARTITION = normal
 
+
+CREATEGRID = 1
+
 # Create a list of run identifiers for all combinations
-RUN_IDENTIFIERS = $(foreach width,$(WIDTH),$(foreach height,$(HEIGHT),$(foreach depth,$(DEPTH),$(foreach iter,$(ITERATIONS),width$(width)_height$(height)_depth$(depth)_iter$(ITERATIONS)))))
+RUN_IDENTIFIERS = $(foreach width,$(WIDTH),$(foreach height,$(HEIGHT),$(foreach depth,$(DEPTH),$(foreach iter,$(ITERATIONS),width$(width)_height$(height)_depth$(depth)_iter$(ITERATIONS)_createGrid$(CREATEGRID)))))
 
 
 submit:
