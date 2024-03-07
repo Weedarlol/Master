@@ -1,5 +1,3 @@
-// cuda_utils.cu
-
 #include "global_functions.h"
 
 void fillValues(double *mat, double dx, double dy, int width, int height) {

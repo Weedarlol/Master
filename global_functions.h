@@ -1,7 +1,5 @@
-// cuda_utils.h
-
-#ifndef CUDA_UTILS_H
-#define CUDA_UTILS_H
+#ifndef GLOBAL_FUNCTIONS_H
+#define GLOBAL_FUNCTIONS_H
 
 #include <cuda_runtime.h>
 #include <cstdio>

@@ -20,8 +20,8 @@ int main(int argc, char *argv[]) {
     data_tmp     |*double | Pointer to the grid
     */
 
-    if (argc != 5) {
-        printf("Usage: %s <Width> <Height> <Depth> <Iterations>", argv[0]); // Programname
+    if (argc != 6) {
+        printf("Usage: %s <Width> <Height> <Depth> <Iterations> <CreateGrid>", argv[0]); // Programname
         return 1;
     }
 

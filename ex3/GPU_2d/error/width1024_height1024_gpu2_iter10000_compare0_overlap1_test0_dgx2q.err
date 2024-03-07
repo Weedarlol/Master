@@ -1,3 +1,0 @@
-cc1plus: fatal error: jacobi.cu: No such file or directory
-compilation terminated.
-/cm/local/apps/slurm/var/spool/job145186/slurm_script: line 24: ./out_width1024_height1024_gpu2_iter10000_compare0_overlap1_test0_dgx2q: No such file or directory
