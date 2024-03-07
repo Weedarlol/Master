@@ -1,0 +1,32 @@
+Starting job 449621 on c1-[14-15] at Thu Mar 7 18:05:54 CET 2024
+
+Time(event) - 128.02659 s
+Time(event) - 127.98661 s
+Comparing the grids
+Mismatch found at position (width = 1, height = 1, depth = 1) (data_combined = 0.0000000053213478, data_compare = 0.0000000005826213)
+
+Task and CPU usage stats:
+JobID           JobName  AllocCPUS   NTasks     MinCPU MinCPUTask     AveCPU    Elapsed ExitCode 
+------------ ---------- ---------- -------- ---------- ---------- ---------- ---------- -------- 
+449621       width128_+          2                                             00:02:16      0:0 
+449621.batch      batch          1        1   00:02:11          0   00:02:11   00:02:16      0:0 
+449621.exte+     extern          2        2   00:00:00          0   00:00:00   00:02:16      0:0 
+449621.0          orted          2        1                                    00:02:16      0:0 
+
+Memory usage stats:
+JobID            MaxRSS MaxRSSTask     AveRSS MaxPages   MaxPagesTask   AvePages 
+------------ ---------- ---------- ---------- -------- -------------- ---------- 
+449621                                                                           
+449621.batch    168356K          0    168356K        7              0          7 
+449621.exte+       200K          1       100K        0              1          0 
+449621.0                                                                         
+
+Disk usage stats:
+JobID         MaxDiskRead MaxDiskReadTask    AveDiskRead MaxDiskWrite MaxDiskWriteTask   AveDiskWrite 
+------------ ------------ --------------- -------------- ------------ ---------------- -------------- 
+449621                                                                                                
+449621.batch       46.29M               0         46.29M       11.96M                0         11.96M 
+449621.exte+        0.01M               1          0.01M        0.00M                1          0.00M 
+449621.0                                                                                              
+
+Job 449621 completed at Thu Mar 7 18:08:11 CET 2024

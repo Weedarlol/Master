@@ -3,8 +3,6 @@
 #include <time.h>
 
 #include "mpi.h"
-
-
 #include "../../global_functions.h"
 
 int main(int argc, char *argv[]) {
@@ -27,8 +25,8 @@ int main(int argc, char *argv[]) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    if (argc != 5) {
-        printf("Wrong number of inputs\n Required inputs: %s <Width> <Height> <Depth> <Iterations> <Node>", argv[0]); // Programname
+    if (argc != 6) {
+        printf("Wrong number of inputs\n Required inputs: %s <Width> <Height> <Depth> <Iterations> <Node> <Compare>", argv[0]); // Programname
         return 1;
     }
 
@@ -36,7 +34,7 @@ int main(int argc, char *argv[]) {
     int height = atoi(argv[2]);
     int depth = atoi(argv[3]);
     int iter = atoi(argv[4]);
-    int print_iter = iter;
+    int compare = atoi(argv[5]);
     int depth_node = depth/size + 1;
 
     double dx = 2.0 / (width - 1);
