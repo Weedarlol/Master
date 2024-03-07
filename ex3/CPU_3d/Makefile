@@ -1,7 +1,7 @@
 # Define different grid sizes
 WIDTH = 512
 HEIGHT = 512
-DEPTH = 512
+DEPTH = 256
 
 # Number of max iterations to run for the scenario
 ITERATIONS = 10000
@@ -26,6 +26,9 @@ submit:
 	)
 
 
+
+pythonplot:
+	python3 3d_plot.py
 
 
 

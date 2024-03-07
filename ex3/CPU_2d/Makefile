@@ -22,7 +22,8 @@ submit:
 
 
 
-
+pythonplot:
+	python3 2d_plot.py
 
 
 # View rules

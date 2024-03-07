@@ -213,7 +213,7 @@ void initialization(int width, int height, int iter, double dx, double dy, int g
         double* data_compare = (double*)malloc(width * height * sizeof(double));
         FILE *fptr;
         char filename[30];
-        sprintf(filename, "../CPU_2d/matrices/CPUMatrix%i_%i.txt", width, height);
+        sprintf(filename, "../CPU_2d/matrices/CPUMatrix%d_%d.txt", width, height);
 
         printf("Comparing the matrixes\n");
 

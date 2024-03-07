@@ -3,7 +3,7 @@
 #include <time.h>
 
 #include <mpi.h>
-#include "programs/errorHandle.h"
+#include "../../errorHandle.h"
 #include "programs/scenarios.h"
 
 void fillValues(double *mat, double dx, double dy, int width, int height){

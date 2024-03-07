@@ -80,7 +80,7 @@ int main(int argc, char *argv[]) {
     if(createGrid == 1){
         FILE *fptr;
         char filename[30];
-        sprintf(filename, "grids/CPUGrid%i_%i_%i.txt", width, height, depth);
+        sprintf(filename, "grids/CPUGrid%d_%d_%d.txt", width, height, depth);
         fptr = fopen(filename, "w");
         for(int i = 0; i < depth; i++){
             for(int j = 0; j < height; j++){

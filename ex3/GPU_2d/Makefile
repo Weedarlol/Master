@@ -3,8 +3,8 @@
 GPU_COUNTS = 2
 
 # Define different matrix sizes
-WIDTH = 4096
-HEIGHT = 4096
+WIDTH = 512
+HEIGHT = 512
 
 # Number of max iterations to run for the scenario
 ITERATIONS = 10000
@@ -13,7 +13,7 @@ ITERATIONS = 10000
 PARTITION = hgx2q
 
 # Enables or disables overlap, 1 = overlap, 0 = no overlap
-OVERLAP = 0
+OVERLAP = 1
 
 # If you want to compare the final resulting matrix with the matrix created by the CPU. (CPU has to computed it first and created its own textfile containing its matrix called "CPUMatrix%i_%i.txt" where %i are the width and height)
 COMPARE = 1

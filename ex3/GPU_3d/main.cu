@@ -175,8 +175,8 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     if(compare == 1){
         double* data_compare = (double*)malloc(width * height * depth* sizeof(double));
         FILE *fptr;
-        char filename[30];
-        sprintf(filename, "../CPU_3d/grids/CPUGrid%i_%i_%i.txt", width, height, depth);
+        char filename[100];
+        sprintf(filename, "../CPU_3d/grids/CPUGrid%d_%d_%d.txt", width, height, depth);
 
         printf("Comparing the grids\n");
 
