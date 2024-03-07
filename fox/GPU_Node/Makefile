@@ -4,7 +4,7 @@ HEIGHT = 256
 DEPTH = 256
 
 # Number of max iterations to run for the scenario
-ITERATIONS = 1000
+ITERATIONS = 10000
 
 NODES = 2
 

@@ -13,8 +13,6 @@ int main(int argc, char *argv[]) {
     height      | int   | The height of the grid
     iter        | int   | Number of max iterations for the jacobian algorithm
 
-    eps         | double | The limit for accepting the state of the grid during jacobian algorithm
-    maxdelta    | double | The largest difference in the grid between an iteration
     dx          | double | Distance between each element in the grid in x direction
     dy          | double | Distance between each element in the grid in y direction
 
@@ -36,7 +34,6 @@ int main(int argc, char *argv[]) {
     int height = atoi(argv[2]);
     int depth = atoi(argv[3]);
     int iter = atoi(argv[4]);
-    int print_iter = iter;
     int depth_node = depth/size + 1;
 
     double dx = 2.0 / (width - 1);
@@ -90,11 +87,11 @@ int main(int argc, char *argv[]) {
             MPI_Send(&data_tmp[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD);
         }
 
-        iter--;
-
         double *data_tmp_swap = data_tmp;
         data_tmp = data;
         data = data_tmp_swap;
+
+        iter--;
     }
 
 
