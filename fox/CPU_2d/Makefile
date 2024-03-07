@@ -9,8 +9,10 @@ ITERATIONS = 10000
 # Example = hgx2q, dgx2q, a100q
 PARTITION = normal
 
+CREATEMATRIX = 0
+
 # Create a list of run identifiers for all combinations
-RUN_IDENTIFIERS = $(foreach width,$(WIDTH),$(foreach height,$(HEIGHT),$(foreach iter,$(ITERATIONS),width$(width)_height$(height)_iter$(ITERATIONS))))
+RUN_IDENTIFIERS = $(foreach width,$(WIDTH),$(foreach height,$(HEIGHT),$(foreach iter,$(ITERATIONS),width$(width)_height$(height)_iter$(ITERATIONS)_createMatrix$(CREATEMATRIX))))
 
 
 submit:
@@ -33,8 +35,11 @@ JobName:
 clean:
 	rm -rf slurm* out_*
 
-cleannn:
+cleann:
 	rm -rf output/* error/*
+
+cleannn:
+	rm -rf slurm* out_* output/* error/*
 
 
 

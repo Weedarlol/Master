@@ -1,0 +1,51 @@
+Starting job 448924 on c1-28 at Thu Mar 7 10:30:27 CET 2024
+
+Usage: ./out_width4096_height4096_iter10000_createMatrix0_normal <Width> <Height> <Iterations>
+Task and CPU usage stats:
+JobID           JobName  AllocCPUS   NTasks     MinCPU MinCPUTask     AveCPU    Elapsed ExitCode 
+------------ ---------- ---------- -------- ---------- ---------- ---------- ---------- -------- 
+448924       width4096+          1                                             00:00:02      0:0 
+448924.batch      batch          1        1   00:00:01          0   00:00:01   00:00:02      0:0 
+448924.exte+     extern          1        1   00:00:00          0   00:00:00   00:00:02      0:0 
+
+Memory usage stats:
+JobID            MaxRSS MaxRSSTask     AveRSS MaxPages   MaxPagesTask   AvePages 
+------------ ---------- ---------- ---------- -------- -------------- ---------- 
+448924                                                                           
+448924.batch     22428K          0     22428K        0              0          0 
+448924.exte+       196K          0       196K        0              0          0 
+
+Disk usage stats:
+JobID         MaxDiskRead MaxDiskReadTask    AveDiskRead MaxDiskWrite MaxDiskWriteTask   AveDiskWrite 
+------------ ------------ --------------- -------------- ------------ ---------------- -------------- 
+448924                                                                                                
+448924.batch            0               0              0        0.00M                0          0.00M 
+448924.exte+        0.01M               0          0.01M        0.00M                0          0.00M 
+
+Job 448924 completed at Thu Mar 7 10:30:30 CET 2024
+Starting job 448929 on c1-28 at Thu Mar 7 10:33:19 CET 2024
+
+Time(event) - 780.15069 s
+
+Task and CPU usage stats:
+JobID           JobName  AllocCPUS   NTasks     MinCPU MinCPUTask     AveCPU    Elapsed ExitCode 
+------------ ---------- ---------- -------- ---------- ---------- ---------- ---------- -------- 
+448929       width4096+          1                                             00:13:07      0:0 
+448929.batch      batch          1        1   00:13:02          0   00:13:02   00:13:07      0:0 
+448929.exte+     extern          1        1   00:00:00          0   00:00:00   00:13:07      0:0 
+
+Memory usage stats:
+JobID            MaxRSS MaxRSSTask     AveRSS MaxPages   MaxPagesTask   AvePages 
+------------ ---------- ---------- ---------- -------- -------------- ---------- 
+448929                                                                           
+448929.batch    263504K          0    263504K        0              0          0 
+448929.exte+       200K          0       200K        0              0          0 
+
+Disk usage stats:
+JobID         MaxDiskRead MaxDiskReadTask    AveDiskRead MaxDiskWrite MaxDiskWriteTask   AveDiskWrite 
+------------ ------------ --------------- -------------- ------------ ---------------- -------------- 
+448929                                                                                                
+448929.batch       34.54M               0         34.54M        8.06M                0          8.06M 
+448929.exte+        0.01M               0          0.01M        0.00M                0          0.00M 
+
+Job 448929 completed at Thu Mar 7 10:46:27 CET 2024

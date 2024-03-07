@@ -1,0 +1,26 @@
+Starting job 448935 on c1-28 at Thu Mar 7 10:33:49 CET 2024
+
+Time(event) - 12.09728 s
+
+Task and CPU usage stats:
+JobID           JobName  AllocCPUS   NTasks     MinCPU MinCPUTask     AveCPU    Elapsed ExitCode 
+------------ ---------- ---------- -------- ---------- ---------- ---------- ---------- -------- 
+448935       width512_+          1                                             00:00:14      0:0 
+448935.batch      batch          1        1   00:00:14          0   00:00:14   00:00:14      0:0 
+448935.exte+     extern          1        1   00:00:00          0   00:00:00   00:00:14      0:0 
+
+Memory usage stats:
+JobID            MaxRSS MaxRSSTask     AveRSS MaxPages   MaxPagesTask   AvePages 
+------------ ---------- ---------- ---------- -------- -------------- ---------- 
+448935                                                                           
+448935.batch       100K          0       100K        0              0          0 
+448935.exte+       200K          0       200K        0              0          0 
+
+Disk usage stats:
+JobID         MaxDiskRead MaxDiskReadTask    AveDiskRead MaxDiskWrite MaxDiskWriteTask   AveDiskWrite 
+------------ ------------ --------------- -------------- ------------ ---------------- -------------- 
+448935                                                                                                
+448935.batch            0               0              0        0.00M                0          0.00M 
+448935.exte+        0.01M               0          0.01M        0.00M                0          0.00M 
+
+Job 448935 completed at Thu Mar 7 10:34:04 CET 2024

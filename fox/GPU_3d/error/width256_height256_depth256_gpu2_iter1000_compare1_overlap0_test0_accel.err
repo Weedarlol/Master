@@ -12,3 +12,10 @@ programs/jacobi.cu(54): error: too few arguments in function call
 
 5 errors detected in the compilation of "programs/jacobi.cu".
 /var/spool/slurmd/job447795/slurm_script: line 28: ./out_width256_height256_depth256_gpu2_iter1000_compare1_overlap0_test0_accel: No such file or directory
+main.cu(52): warning #177-D: variable "warp_size" was declared but never referenced
+
+programs/scenarios.cu:5:10: fatal error: ../../global_functions.h: No such file or directory
+    5 | #include "../../global_functions.h"
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~
+compilation terminated.
+/var/spool/slurmd/job448212/slurm_script: line 28: ./out_width256_height256_depth256_gpu2_iter1000_compare1_overlap0_test0_accel: No such file or directory

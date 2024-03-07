@@ -9,7 +9,7 @@
 void initialization(int width, int height, int depth, int iter, double dx, double dy, double dz, int gpus, int compare, int overlap, int test, dim3 blockDim, dim3 gridDim){
     /*
     Variables            | Type        | Description
-    total            |    | int         | The total number of elements within the matrix
+    total            |    | int         | The total number of elements within the grid
     tmp_iter             | int         | Used to remeber how many iterations we want run
     overlap_calc         | int         | Used to find how many elements less the kernelCollMid has to compute when we have overlap
     threadSize           | int         | Finds the total amount of threads in use
@@ -22,7 +22,7 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
 
     slices_device          | int*        | slices to allocate on the GPU
     slices_compute_device  | int*        | slices the GPU will compute on
-    slices_staring_index   | int*        | Index on the CPU matrix that the first element of the GPU matrix belongs
+    slices_staring_index   | int*        | Index on the CPU grid that the first element of the GPU grid belongs
 
     threadInformation[0] | int         | Number of computations per thread on GPU 0, rounded down
     threadInformation[1] | int         | Number of computations left over when rounded down
@@ -32,9 +32,9 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     threadInformation[4] | int         | Number of computations per thread for 1 slice, rounded down
     threadInformation[5] | int         | Number of computations left over for 1 slice when rounded down
 
-    grid                  | double*     | The matrix allocated on the CPU
-    grid_gpu              | double**    | One of the matrices allocated on the GPU
-    grid_gpu_tmp          | double**    | The other matrix allocated on the GPU
+    data                  | double*     | The grid allocated on the CPU
+    data_gpu              | double**    | One of the matrices allocated on the GPU
+    data_gpu_tmp          | double**    | The other grid allocated on the GPU
 
     kernelCollEdge       | void***     | The inputfeatures to the jacobiEdge GPU kernel
     kernelCollMid        | void***     | The inputfeatures to the jacobiMid GPU kernel
@@ -49,7 +49,6 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
 
     int total = width*height*depth;
     int threadSize = blockDim.x*blockDim.y*blockDim.z*gridDim.x*gridDim.y*gridDim.z;
-    int warp_size = 32;
 
     int *device_nr;
     cudaErrorHandle(cudaMallocHost(&device_nr, gpus*sizeof(int*)));
@@ -77,23 +76,23 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     }
 
     // Initialiserer og allokerer Matrise på CPU
-    double *grid;
-    double **grid_gpu, **grid_gpu_tmp;
-    cudaErrorHandle(cudaMallocHost(&grid,          total*sizeof(double)));
-    cudaErrorHandle(cudaMallocHost(&grid_gpu,      gpus*sizeof(double*)));
-    cudaErrorHandle(cudaMallocHost(&grid_gpu_tmp,  gpus*sizeof(double*)));
+    double *data;
+    double **data_gpu, **data_gpu_tmp;
+    cudaErrorHandle(cudaMallocHost(&data,          total*sizeof(double)));
+    cudaErrorHandle(cudaMallocHost(&data_gpu,      gpus*sizeof(double*)));
+    cudaErrorHandle(cudaMallocHost(&data_gpu_tmp,  gpus*sizeof(double*)));
 
-    fillValues3D(grid, width, height, depth, dx, dy, dz);
+    fillValues3D(data, width, height, depth, dx, dy, dz, 1);
 
     for(int g = 0; g < gpus; g++){
         cudaErrorHandle(cudaSetDevice(g));
-        cudaErrorHandle(cudaMalloc(&grid_gpu[g],     width*height*slices_device[g]*sizeof(double)));
-        cudaErrorHandle(cudaMalloc(&grid_gpu_tmp[g], width*height*slices_device[g]*sizeof(double)));
+        cudaErrorHandle(cudaMalloc(&data_gpu[g],     width*height*slices_device[g]*sizeof(double)));
+        cudaErrorHandle(cudaMalloc(&data_gpu_tmp[g], width*height*slices_device[g]*sizeof(double)));
     }
 
     for(int g = 0; g < gpus; g++){
         cudaErrorHandle(cudaSetDevice(g));
-        cudaErrorHandle(cudaMemcpy(grid_gpu[g], grid+slices_starting_index[g]*width*height, slices_device[g]*width*height*sizeof(double), cudaMemcpyHostToDevice));
+        cudaErrorHandle(cudaMemcpy(data_gpu[g], data+slices_starting_index[g]*width*height, slices_device[g]*width*height*sizeof(double), cudaMemcpyHostToDevice));
     }
 
     int *threadInformation;
@@ -111,8 +110,8 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     // Allocates the elements in the kernelCollEdge, used for cudaLaunchCooperativeKernel as functon variables.
     for (int g = 0; g < gpus; g++) {
         void **kernelArgs = new void*[8];
-        kernelArgs[0] = &grid_gpu[g];
-        kernelArgs[1] = &grid_gpu_tmp[g];
+        kernelArgs[0] = &data_gpu[g];
+        kernelArgs[1] = &data_gpu_tmp[g];
         kernelArgs[2] = &width;
         kernelArgs[3] = &height;
         kernelArgs[4] = &slices_compute_device[g];
@@ -128,11 +127,10 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     // Allocates the elements in the kernelCollMid, used for cudaLaunchCooperativeKernel as functon variables.
     for (int g = 0; g < gpus; g++) {
         void **kernelArgs = new void*[12];
-        kernelArgs[0] = &grid_gpu[g];     
-        kernelArgs[1] = &grid_gpu_tmp[g];
+        kernelArgs[0] = &data_gpu[g];     
+        kernelArgs[1] = &data_gpu_tmp[g];
         kernelArgs[2] = &width;
         kernelArgs[3] = &height;
-        kernelArgs[4] = &depth;
         kernelArgs[5] = &slices_leftover;
         kernelArgs[6] = &device_nr[g];
         kernelArgs[7] = &slices_compute_device[g];
@@ -149,13 +147,7 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
 
 
 
-    full_calculation_nooverlap(grid_gpu, grid_gpu_tmp, width, height, depth, iter, gpus, slices_device, gridDim, blockDim, kernelCollMid);
-
-
-
-
-
-    printf("HEISANN\n");
+    full_calculation_nooverlap(data_gpu, data_gpu_tmp, width, height, depth, iter, gpus, slices_device, gridDim, blockDim, kernelCollMid);
 
 
 
@@ -170,7 +162,7 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
 
     for(int g = 0; g < gpus; g++){
         cudaErrorHandle(cudaSetDevice(g));
-        cudaErrorHandle(cudaMemcpyAsync(grid + (slices_starting_index[g]+1)*width*height, grid_gpu[g] + width*height, (slices_compute_device[g]+2*overlap)*width*height*sizeof(double), cudaMemcpyDeviceToHost));
+        cudaErrorHandle(cudaMemcpyAsync(data + (slices_starting_index[g]+1)*width*height, data_gpu[g] + width*height, (slices_compute_device[g]+2*overlap)*width*height*sizeof(double), cudaMemcpyDeviceToHost));
     }
 
     for(int g = 0; g < gpus; g++){
@@ -179,14 +171,14 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     }
 
 
-    // Used to compare the matrix to the matrix which only the CPU created
+    // Used to compare the grid to the grid which only the CPU created
     if(compare == 1){
-        double* mat_compare = (double*)malloc(width * height * depth* sizeof(double));
+        double* data_compare = (double*)malloc(width * height * depth* sizeof(double));
         FILE *fptr;
         char filename[30];
-        sprintf(filename, "../CPU_3d/matrices/CPUMatrix%i_%i_%i.txt", width, height, depth);
+        sprintf(filename, "../CPU_3d/grids/CPUGrid%i_%i_%i.txt", width, height, depth);
 
-        printf("Comparing the matrixes\n");
+        printf("Comparing the grids\n");
 
         fptr = fopen(filename, "r");
         if (fptr == NULL) {
@@ -194,14 +186,14 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
             exit(EXIT_FAILURE);
         }
 
-        // Read matrix values from the file
+        // Read grid values from the file
         for(int i = 0; i < depth; i++){
             for (int j = 0; j < height; j++) {
                 for (int k = 0; k < width; k++) {
-                    if (fscanf(fptr, "%lf", &mat_compare[k + j * width + i * width * height]) != 1) {
+                    if (fscanf(fptr, "%lf", &data_compare[k + j * width + i * width * height]) != 1) {
                         printf("Error reading from file.\n");
                         fclose(fptr);
-                        free(mat_compare);
+                        free(data_compare);
                         exit(EXIT_FAILURE);
                     }
                 }
@@ -214,9 +206,9 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
         for(int i = 0; i < depth; i++){
             for (int j = 0; j < height; j++) {
                 for (int k = 0; k < width; k++) {
-                    if (fabs(grid[k + j * width + i * width * height] - mat_compare[k + j * width + i * width * height]) > 1e-15)  {
-                        printf("Mismatch found at position (width = %d, height = %d, depth = %d) (grid = %.16f, mat_compare = %.16f)\n", k, j, i, grid[k + j * width + i * width * height], mat_compare[k + j * width + i * width * height]);
-                        free(mat_compare);
+                    if (fabs(data[k + j * width + i * width * height] - data_compare[k + j * width + i * width * height]) > 1e-15)  {
+                        printf("Mismatch found at position (width = %d, height = %d, depth = %d) (data = %.16f, data_compare = %.16f)\n", k, j, i, data[k + j * width + i * width * height], data_compare[k + j * width + i * width * height]);
+                        free(data_compare);
                         exit(EXIT_FAILURE);
                     }
                 }
@@ -228,7 +220,7 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
         
 
         // Free allocated memory
-        free(mat_compare);
+        free(data_compare);
     }
 
 
@@ -236,12 +228,12 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     // Frees up memory as we are finished with the program
     for(int g = 0; g < gpus; g++){
         cudaErrorHandle(cudaSetDevice(g));
-        cudaErrorHandle(cudaFree(grid_gpu[g]));
-        cudaErrorHandle(cudaFree(grid_gpu_tmp[g]));
+        cudaErrorHandle(cudaFree(data_gpu[g]));
+        cudaErrorHandle(cudaFree(data_gpu_tmp[g]));
     }
-    cudaErrorHandle(cudaFreeHost(grid));
-    cudaErrorHandle(cudaFreeHost(grid_gpu));
-    cudaErrorHandle(cudaFreeHost(grid_gpu_tmp));
+    cudaErrorHandle(cudaFreeHost(data));
+    cudaErrorHandle(cudaFreeHost(data_gpu));
+    cudaErrorHandle(cudaFreeHost(data_gpu_tmp));
     cudaErrorHandle(cudaFreeHost(threadInformation));
     cudaErrorHandle(cudaFreeHost(device_nr));
     cudaErrorHandle(cudaFreeHost(slices_device));
@@ -261,16 +253,16 @@ int main(int argc, char *argv[]) {
 
     ____________________________________________________________________________
     Variables   | Type  | Description
-    width       | int   | The width of the matrix
-    height      | int   | The height of the matrix
+    width       | int   | The width of the grid
+    height      | int   | The height of the grid
 
     iter        | int   | Amount of iterations
     gpus      | int   | Number of gpus in use
-    compare     | int   | If one wants to compare the output with a previously CPU computed matrix
+    compare     | int   | If one wants to compare the output with a previously CPU computed grid
     overlap     | int   | If one want to overlap or not
 
-    dx          | float | Used to give value to the elements of the matrix
-    dy          | float | Used to give value to the elements of the matrix
+    dx          | float | Used to give value to the elements of the grid
+    dy          | float | Used to give value to the elements of the grid
 
     blockDim    | dim3  | Size of the threadblock
     gridDim     | dim3  | Size of the blockgrid
@@ -310,8 +302,8 @@ int main(int argc, char *argv[]) {
     }
     else if(compare > 1 || compare < 0){
         printf("Compare variable can only be\n"
-                "0 - Do not compare the output matrix with previously created matrix\n"
-                "1 - Compare with previously created matrix\n");
+                "0 - Do not compare the output grid with previously created grid\n"
+                "1 - Compare with previously created grid\n");
     }
     else if(overlap > 1 || overlap < 0){
         printf("You can only select the values\n"

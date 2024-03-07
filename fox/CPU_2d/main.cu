@@ -11,48 +11,42 @@ int main(int argc, char *argv[]) {
     height      | int   | The height of the matrix
     iter        | int   | Number of max iterations for the jacobian algorithm
 
-    eps         | double | The limit for accepting the state of the matrix during jacobian algorithm
-    maxdelta    | double | The largest difference in the matrix between an iteration
     dx          | double | Distance between each element in the matrix in x direction
     dy          | double | Distance between each element in the matrix in y direction
 
-    mat         |*double | Pointer to the matrix
-    mat_tmp     |*double | Pointer to the matrix
+    data         |*double | Pointer to the matrix
+    data_tmp     |*double | Pointer to the matrix
     */
 
-    if (argc != 4) {
-        printf("Usage: %s <Width> <Height> <Iterations>", argv[0]); // Programname
+    if (argc != 5) {
+        printf("Usage: %s <Width> <Height> <Iterations> <CreateMatrix>", argv[0]); // Programname
         return 1;
     }
 
     int width = atoi(argv[1]);
     int height = atoi(argv[2]);
     int iter = atoi(argv[3]);
-    int print_iter = iter;
+    int createMatrix = atoi(argv[4]);
 
     double dx = 2.0 / (width - 1);
     double dy = 2.0 / (height - 1);
-    double maxdelta = 1.0;
-    double eps = 1.0e-14;
 
-    double *mat;
-    double *mat_tmp;
+    double *data;
+    double *data_tmp;
 
     clock_t start, end;
 
-    mat = (double*)malloc(width*height*sizeof(double));
-    mat_tmp = (double*)malloc(width*height*sizeof(double));
+    data = (double*)malloc(width*height*sizeof(double));
+    data_tmp = (double*)malloc(width*height*sizeof(double));
 
     /* initialization */
-    fillValues(mat, dx, dy, width, height);
+    fillValues(data, dx, dy, width, height);
 
     start = clock();
 
     /* Performing Jacobian Matrix Calculation */
     // Performing a number of iterations while statement is not satisfied
-    while (iter > 0 && maxdelta > eps) {
-        // Maxdelta is the highest delta value found in the matrix
-        maxdelta = 0.0;
+    while (iter > 0) {
         // Loops through the matrix from element 1 to -2
         for(int i = 1; i < height - 1; i++){
             // Calculates the element value from row
@@ -60,51 +54,41 @@ int main(int argc, char *argv[]) {
             // Loops through the matrix from element 1 to -2
             for(int j = 1; j < width - 1; j++) {
                 // Calculates each element in the matrix from itself and neightbor values.
-                mat_tmp[i_nr + j] = 0.25 * (
-                    mat[i_nr + j + 1]     + mat[i_nr + j - 1] +
-                    mat[i_nr + j + width] + mat[i_nr + j - width]);
-
-                // Finds the highest difference for an element over two iterations.
-                maxdelta = max(maxdelta, abs(*(mat + j + i*width)
-                                            - *(mat_tmp + j + i*width)));
+                data_tmp[i_nr + j] = 0.25 * (
+                    data[i_nr + j + 1]     + data[i_nr + j - 1] +
+                    data[i_nr + j + width] + data[i_nr + j - width]);
             }
         }
 
-        iter--;
-
         /* pointer swapping */
-        double *mat_tmp_cha = mat_tmp;
-        mat_tmp = mat;
-        mat = mat_tmp_cha;
-    }
+        double *data_tmp_cha = data_tmp;
+        data_tmp = data;
+        data = data_tmp_cha;
 
+        iter--;
+    }
     end = clock();
 
-    // Creates an output which can be used to compare the different resulting matrixes
-    FILE *fptr;
-    char filename[30];
-    sprintf(filename, "matrices/CPUMatrix%i_%i.txt", width, height);
-    fptr = fopen(filename, "w");
-    for(int i = 0; i < height; i++){
-        for(int j = 0; j < width; j++){
-            fprintf(fptr, "%.16f ", mat[j + i*width]);
+    printf("Time(event) - %.5f s\n", ((double) (end - start)) / CLOCKS_PER_SEC);
+
+    if(createMatrix == 1){
+        // Creates an output which can be used to compare the different resulting matrixes
+        FILE *fptr;
+        char filename[30];
+        sprintf(filename, "matrices/CPUMatrix%i_%i.txt", width, height);
+        fptr = fopen(filename, "w");
+        for(int i = 0; i < height; i++){
+            for(int j = 0; j < width; j++){
+                fprintf(fptr, "%.16f ", data[j + i*width]);
+            }
+            fprintf(fptr, "\n");
         }
-        fprintf(fptr, "\n");
+        fclose(fptr);
     }
-    fclose(fptr);
+    
 
-
-    free(mat);
-    free(mat_tmp);
-
-    if(maxdelta <= eps){
-        printf("The computation found a solution. It computed it within %i iterations(%i - %i) in %.3f seconds.\nWidth = %i, Height = %i\n", 
-        print_iter - iter, print_iter, iter, ((double) (end - start)) / CLOCKS_PER_SEC, width, height);
-    }
-    else{
-        printf("The computation did not find a solution. It computed through the whole %i iteration(%i - %i) in %.3f seconds \nWidth = %i, Height = %i\n", 
-        print_iter - iter, print_iter, iter, ((double) (end - start)) / CLOCKS_PER_SEC, width, height);
-    } 
+    free(data);
+    free(data_tmp);
 
     return 0;
 }

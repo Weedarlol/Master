@@ -9,7 +9,7 @@ HEIGHT = 256
 DEPTH = 256
 
 # Number of max iterations to run for the scenario
-ITERATIONS = 1000
+ITERATIONS = 10000
 
 # Chooses which partition to run at. Only one at a time
 PARTITION = accel
@@ -29,7 +29,7 @@ RUN_IDENTIFIERS = $(foreach width,$(WIDTH),$(foreach height,$(HEIGHT),$(foreach 
 
 submit:
 	$(foreach partition,$(PARTITION), \
-		sbatch --account=ec12 -p $(partition) --time=00-00:01:00 --gpus-per-node=$(GPU_COUNTS) --mem-per-gpu=3G ./start.slurm $(partition) $(RUN_IDENTIFIERS); \
+		sbatch --account=ec12 -p $(partition) --time=00-00:01:00 --gpus-per-node=1 --mem-per-gpu=3G ./start.slurm $(partition) $(RUN_IDENTIFIERS); \
 	)
 
 

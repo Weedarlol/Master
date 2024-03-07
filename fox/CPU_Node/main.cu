@@ -9,17 +9,17 @@
 
 int main(int argc, char *argv[]) {
     /*
-    width       | int   | The width of the matrix
-    height      | int   | The height of the matrix
+    width       | int   | The width of the grid
+    height      | int   | The height of the grid
     iter        | int   | Number of max iterations for the jacobian algorithm
 
-    eps         | double | The limit for accepting the state of the matrix during jacobian algorithm
-    maxdelta    | double | The largest difference in the matrix between an iteration
-    dx          | double | Distance between each element in the matrix in x direction
-    dy          | double | Distance between each element in the matrix in y direction
+    eps         | double | The limit for accepting the state of the grid during jacobian algorithm
+    maxdelta    | double | The largest difference in the grid between an iteration
+    dx          | double | Distance between each element in the grid in x direction
+    dy          | double | Distance between each element in the grid in y direction
 
-    mat         |*double | Pointer to the matrix
-    mat_tmp     |*double | Pointer to the matrix
+    data         |*double | Pointer to the grid
+    data_tmp     |*double | Pointer to the grid
     */
 
     int rank, size;
@@ -43,88 +43,86 @@ int main(int argc, char *argv[]) {
     double dy = 2.0 / (height - 1);
     double dz = 2.0 / (depth - 1);
 
-    double *mat;
-    double *mat_tmp;
+    double *data;
+    double *data_tmp;
 
     clock_t start, end;
 
-    mat = (double*)malloc(width*height*depth_node*sizeof(double));
-    mat_tmp = (double*)malloc(width*height*depth_node*sizeof(double));
+    data = (double*)malloc(width*height*depth_node*sizeof(double));
+    data_tmp = (double*)malloc(width*height*depth_node*sizeof(double));
 
     /* initialization */
-    fillValues3D(mat, width, height, depth_node, dx, dy, dz, rank);
+    fillValues3D(data, width, height, depth_node, dx, dy, dz, rank);
 
     start = clock();
     double division = 1/6.0;
 
     if(rank == 0){
-        MPI_Send(&mat[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD);
-        MPI_Recv(&mat[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Send(&data[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD);
+        MPI_Recv(&data[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     }
     else{
-        MPI_Recv(&mat[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        MPI_Send(&mat[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD);
+        MPI_Recv(&data[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Send(&data[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD);
     }
 
-    /* Performing Jacobian Matrix Calculation */
+    /* Performing Jacobian grid Calculation */
     // Performing a number of iterations while statement is not satisfied
     while (iter > 0) {
         for(int i = 1; i < depth_node - 1; i++){
             for(int j = 1; j < height - 1; j++){
                 for(int k = 1; k < width - 1; k++) {
                     int index = k + j * width + i * width * height;
-                    mat_tmp[index] = division * (
-                    mat[index + 1]            + mat[index - 1] +
-                    mat[index + width]        + mat[index - width] +
-                    mat[index + width*height] + mat[index - width*height]);
+                    data_tmp[index] = division * (
+                    data[index + 1]            + data[index - 1] +
+                    data[index + width]        + data[index - width] +
+                    data[index + width*height] + data[index - width*height]);
                 }
             }
         }
 
         if(rank == 0){
-            MPI_Send(&mat_tmp[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD);
-            MPI_Recv(&mat_tmp[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            MPI_Send(&data_tmp[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD);
+            MPI_Recv(&data_tmp[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         }
         else{
-            MPI_Recv(&mat_tmp[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            MPI_Send(&mat_tmp[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD);
+            MPI_Recv(&data_tmp[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            MPI_Send(&data_tmp[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD);
         }
 
         iter--;
 
-        double *mat_tmp_swap = mat_tmp;
-        mat_tmp = mat;
-        mat = mat_tmp_swap;
+        double *data_tmp_swap = data_tmp;
+        data_tmp = data;
+        data = data_tmp_swap;
     }
 
 
     end = clock();
-    double *mat_combined = NULL;
+    printf("Time(event) - %.5f s\n", ((double) (end - start)) / CLOCKS_PER_SEC);
 
-    printf("It computed through the whole %i iteration(%i - %i) in %.3f seconds \nWidth = %i, Height = %i, Depth = %i\n", 
-    print_iter - iter, print_iter, iter, ((double) (end - start)) / CLOCKS_PER_SEC, width, height, depth);
 
+    double *data_combined = NULL;
     if(rank == 0){
-        mat_combined = (double*)malloc(width * height * depth * sizeof(double));
+        data_combined = (double*)malloc(width * height * depth * sizeof(double));
 
-        MPI_Gather(&mat[0], width*height*(depth_node-1), MPI_DOUBLE, mat_combined, width*height*(depth_node-1), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Gather(&data[0], width*height*(depth_node-1), MPI_DOUBLE, data_combined, width*height*(depth_node-1), MPI_DOUBLE, 0, MPI_COMM_WORLD);
     }
     else{
 
-        MPI_Gather(&mat[width*height], width*height*(depth_node-1), MPI_DOUBLE, mat_combined, width*height*(depth_node-1), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Gather(&data[width*height], width*height*(depth_node-1), MPI_DOUBLE, data_combined, width*height*(depth_node-1), MPI_DOUBLE, 0, MPI_COMM_WORLD);
     }
 
 
 
-    int compare = 1;
     if(compare == 1){
         if(rank == 0){
-            double* mat_compare = (double*)malloc(width * height * depth* sizeof(double));
+            double* data_compare = (double*)malloc(width * height * depth* sizeof(double));
             FILE *fptr;
             char filename[30];
-            sprintf(filename, "../CPU_3d/matrices/CPUMatrix%i_%i_%i.txt", width, height, depth);
+            sprintf(filename, "../CPU_3d/grids/CPUGrid%i_%i_%i.txt", width, height, depth);
 
-            printf("Comparing the matrixes\n");
+            printf("Comparing the grids\n");
 
             fptr = fopen(filename, "r");
             if (fptr == NULL) {
@@ -133,14 +131,14 @@ int main(int argc, char *argv[]) {
                 exit(EXIT_FAILURE);
             }
 
-            // Read matrix values from the file
+            // Read grid values from the file
             for(int i = 0; i < depth; i++){
                 for (int j = 0; j < height; j++) {
                     for (int k = 0; k < width; k++) {
-                        if (fscanf(fptr, "%lf", &mat_compare[k + j * width + i * width * height]) != 1) {
+                        if (fscanf(fptr, "%lf", &data_compare[k + j * width + i * width * height]) != 1) {
                             printf("Error reading from file.\n");
                             fclose(fptr);
-                            free(mat_compare);
+                            free(data_compare);
                             MPI_Finalize();
                             exit(EXIT_FAILURE);
                         }
@@ -154,9 +152,9 @@ int main(int argc, char *argv[]) {
             for(int i = 0; i < depth; i++){
                 for (int j = 0; j < height; j++) {
                     for (int k = 0; k < width; k++) {
-                        if (fabs(mat_combined[k + j * width + i * width * height] - mat_compare[k + j * width + i * width * height]) > 1e-15)  {
-                            printf("Mismatch found at position (width = %d, height = %d, depth = %d) (mat_combined = %.16f, mat_compare = %.16f)\n", k, j, i, mat_combined[k + j * width + i * width * height], mat_compare[k + j * width + i * width * height]);
-                            free(mat_compare);
+                        if (fabs(data_combined[k + j * width + i * width * height] - data_compare[k + j * width + i * width * height]) > 1e-15)  {
+                            printf("Mismatch found at position (width = %d, height = %d, depth = %d) (data_combined = %.16f, data_compare = %.16f)\n", k, j, i, data_combined[k + j * width + i * width * height], data_compare[k + j * width + i * width * height]);
+                            free(data_compare);
                             MPI_Finalize();
                             exit(EXIT_FAILURE);
                         }
@@ -169,15 +167,15 @@ int main(int argc, char *argv[]) {
             
 
             // Free allocated memory
-            free(mat_compare);
+            free(data_compare);
         } 
     }
 
     
 
 
-    free(mat);
-    free(mat_tmp);
+    free(data);
+    free(data_tmp);
 
 
     MPI_Finalize();

@@ -2,7 +2,7 @@
 set -e
 
 # List of source files
-SOURCES="main.cu"
+SOURCES="main.cu ../../global_functions.cu"
 
 # Object files derived from sources
 OBJECTS=$(echo "$SOURCES" | sed 's/\.cu/\.o/g')

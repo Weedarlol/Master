@@ -2,7 +2,7 @@
 set -e
 
 # List of source files
-SOURCES="main.cu"
+SOURCES="main.cu ../../global_functions.cu"
 
 # Object files derived from sources
 OBJECTS=$(echo "$SOURCES" | sed 's/\.cu/\.o/g')
@@ -17,12 +17,14 @@ for SCENARIO in "$@"; do
     # Extract matrix size and GPU count from the run identifier
     WIDTH=$(echo $SCENARIO | awk -F'width' '{print $2}' | awk -F'_' '{print $1}')
     HEIGHT=$(echo $SCENARIO | awk -F'height' '{print $2}' | awk -F'_' '{print $1}')
-    ITERATIONS=$(echo $SCENARIO | awk -F'iter' '{print $2}')
+    ITERATIONS=$(echo $SCENARIO | awk -F'iter' '{print $2}' | awk -F'_' '{print $1}')
+    CREATEMATRIX=$(echo $SCENARIO | awk -F'createMatrix' '{print $2}')
 
     # Define the variable values
     VAR1=$WIDTH # Width
     VAR2=$HEIGHT # Height
     VAR3=$ITERATIONS  # Iterations
+    VAR4=$CREATEMATRIX
 
     # Create a temporary Slurm script for this scenario
     TEMP_SCRIPT="slurm_script_${SCENARIO}_${PARTITION}.sh"
@@ -48,7 +50,7 @@ module load CUDA/11.8.0
 
 nvcc $SOURCES -o out_${SCENARIO}_${PARTITION}
 
-./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3
+./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4
 
 exit 0
 
