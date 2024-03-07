@@ -1,6 +1,6 @@
 // cuda_utils.cu
 
-#include "cuda_utils.h"
+#include "global_functions.h"
 
 void fillValues(double *mat, double dx, double dy, int width, int height) {
     double x, y;
@@ -16,7 +16,7 @@ void fillValues(double *mat, double dx, double dy, int width, int height) {
     }
 }
 
-void fillValues3D(double *mat, int width, int height, int depth_node, double dx, double dy, double dz) {
+void fillValues3D(double *mat, int width, int height, int depth_node, double dx, double dy, double dz, int rank) {
     double x, y, z;
 
     // Assuming the data in the matrix is stored contiguously in memory
