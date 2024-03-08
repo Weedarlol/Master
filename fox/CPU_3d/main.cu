@@ -20,8 +20,8 @@ int main(int argc, char *argv[]) {
     data_tmp     |*double | Pointer to the grid
     */
 
-    if (argc != 5) {
-        printf("Usage: %s <Width> <Height> <Depth> <Iterations>", argv[0]); // Programname
+    if (argc != 6) {
+        printf("Wrong number of inputs, requires: %s <Width> <Height> <Depth> <Iterations> <createGrid>", argv[0]); // Programname
         return 1;
     }
 
@@ -35,6 +35,7 @@ int main(int argc, char *argv[]) {
     double dy = 2.0 / (height - 1);
     double dz = 2.0 / (depth - 1);
 
+    
     double *data;
     double *data_tmp;
 
@@ -43,13 +44,11 @@ int main(int argc, char *argv[]) {
     data = (double*)malloc(width*height*depth*sizeof(double));
     data_tmp = (double*)malloc(width*height*depth*sizeof(double));
 
-    /* initialization */
     fillValues3D(data, width, height, depth, dx, dy, dz, 1);
 
     start = clock();
     double division = 1/6.0;
 
-    /* Performing Jacobian grid Calculation */
     // Performing a number of iterations while statement is not satisfied
     while (iter > 0) {
         for(int i = 1; i < depth - 1; i++){
