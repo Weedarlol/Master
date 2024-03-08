@@ -1,26 +1,26 @@
-Starting job 450809 on c1-28 at Fri Mar 8 15:35:57 CET 2024
+Starting job 451607 on c1-28 at Fri Mar 8 17:29:45 CET 2024
 
-Time(event) - 356.01425 s
+Time(event) - 269.03590 s
 
 Task and CPU usage stats:
 JobID           JobName  AllocCPUS   NTasks     MinCPU MinCPUTask     AveCPU    Elapsed ExitCode 
 ------------ ---------- ---------- -------- ---------- ---------- ---------- ---------- -------- 
-450809       width256_+          1                                             00:06:02      0:0 
-450809.batch      batch          1        1   00:05:59          0   00:05:59   00:06:02      0:0 
-450809.exte+     extern          1        1   00:00:00          0   00:00:00   00:06:02      0:0 
+451607       width256_+          1                                             00:04:33      0:0 
+451607.batch      batch          1        1   00:04:32          0   00:04:32   00:04:33      0:0 
+451607.exte+     extern          1        1   00:00:00          0   00:00:00   00:04:34      0:0 
 
 Memory usage stats:
 JobID            MaxRSS MaxRSSTask     AveRSS MaxPages   MaxPagesTask   AvePages 
 ------------ ---------- ---------- ---------- -------- -------------- ---------- 
-450809                                                                           
-450809.batch    128.50M          0    128.50M        0              0          0 
-450809.exte+       200K          0       200K        0              0          0 
+451607                                                                           
+451607.batch    131564K          0    131564K        0              0          0 
+451607.exte+       200K          0       200K        0              0          0 
 
 Disk usage stats:
 JobID         MaxDiskRead MaxDiskReadTask    AveDiskRead MaxDiskWrite MaxDiskWriteTask   AveDiskWrite 
 ------------ ------------ --------------- -------------- ------------ ---------------- -------------- 
-450809                                                                                                
-450809.batch        5.70M               0          5.70M       36.80M                0         36.80M 
-450809.exte+        0.01M               0          0.01M        0.00M                0          0.00M 
+451607                                                                                                
+451607.batch        5.70M               0          5.70M        0.05M                0          0.05M 
+451607.exte+        0.01M               0          0.01M        0.00M                0          0.00M 
 
-Job 450809 completed at Fri Mar 8 15:41:59 CET 2024
+Job 451607 completed at Fri Mar 8 17:34:19 CET 2024

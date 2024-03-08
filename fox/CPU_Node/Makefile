@@ -1,10 +1,10 @@
 # Define different matrix sizes
-WIDTH = 100
-HEIGHT = 100
-DEPTH = 100
+WIDTH = 128
+HEIGHT = 128
+DEPTH = 128
 
 # Number of max iterations to run for the scenario
-ITERATIONS = 10
+ITERATIONS = 10000
 
 NODES = 2
 

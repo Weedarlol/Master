@@ -1,32 +1,32 @@
-Starting job 451336 on c1-[9-10] at Fri Mar 8 16:41:39 CET 2024
+Starting job 451619 on c1-[9-10] at Fri Mar 8 17:34:00 CET 2024
 
-Time(event) - 8.81556 s
-Time(event) - 8.82073 s
+Time(event) - 9.35870 s
+Time(event) - 9.33209 s
 Comparing the grids
-Mismatch found at position (width = 1, height = 1, depth = 1) (data_combined = 0.0000000005826232, data_compare = 0.0000000005826213)
+Mismatch found at position (width = 1, height = 1, depth = 1) (data_Node = 0.0000000005826232, data_compare = 0.0000000005826213)
 
 Task and CPU usage stats:
 JobID           JobName  AllocCPUS   NTasks     MinCPU MinCPUTask     AveCPU    Elapsed ExitCode 
 ------------ ---------- ---------- -------- ---------- ---------- ---------- ---------- -------- 
-451336       width128_+          2                                             00:00:14      0:0 
-451336.batch      batch          1        1   00:00:10          0   00:00:10   00:00:14      0:0 
-451336.exte+     extern          2        2   00:00:00          0   00:00:00   00:00:14      0:0 
-451336.0          orted          2        1                                    00:00:14      0:0 
+451619       width128_+          2                                             00:00:14      0:0 
+451619.batch      batch          1        1   00:00:10          0   00:00:10   00:00:14      0:0 
+451619.exte+     extern          2        2   00:00:00          0   00:00:00   00:00:14      0:0 
+451619.0          orted          2        1                                    00:00:14      0:0 
 
 Memory usage stats:
 JobID            MaxRSS MaxRSSTask     AveRSS MaxPages   MaxPagesTask   AvePages 
 ------------ ---------- ---------- ---------- -------- -------------- ---------- 
-451336                                                                           
-451336.batch      5356K          0      5356K        7              0          7 
-451336.exte+       204K          0       202K        0              1          0 
-451336.0                                                                         
+451619                                                                           
+451619.batch      5096K          0      5096K        7              0          7 
+451619.exte+       200K          0       200K        0              0          0 
+451619.0                                                                         
 
 Disk usage stats:
 JobID         MaxDiskRead MaxDiskReadTask    AveDiskRead MaxDiskWrite MaxDiskWriteTask   AveDiskWrite 
 ------------ ------------ --------------- -------------- ------------ ---------------- -------------- 
-451336                                                                                                
-451336.batch            0               0              0        0.00M                0          0.00M 
-451336.exte+        0.01M               1          0.01M        0.00M                1          0.00M 
-451336.0                                                                                              
+451619                                                                                                
+451619.batch            0               0              0        0.00M                0          0.00M 
+451619.exte+        0.01M               0          0.01M        0.00M                0          0.00M 
+451619.0                                                                                              
 
-Job 451336 completed at Fri Mar 8 16:41:54 CET 2024
+Job 451619 completed at Fri Mar 8 17:34:14 CET 2024

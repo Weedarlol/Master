@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
     data = (double*)malloc(width*height*depth*sizeof(double));
     data_tmp = (double*)malloc(width*height*depth*sizeof(double));
 
-    fillValues3D(data, width, height, depth, dx, dy, dz, 1);
+    fillValues3D(data, width, height, depth, dx, dy, dz, 0);
 
     start = clock();
     double division = 1/6.0;

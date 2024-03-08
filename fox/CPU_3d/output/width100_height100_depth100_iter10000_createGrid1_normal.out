@@ -1,78 +1,26 @@
-Starting job 450988 on c1-28 at Fri Mar 8 16:05:28 CET 2024
-
-Time(event) - 8.10675 s
-
-Task and CPU usage stats:
-JobID           JobName  AllocCPUS   NTasks     MinCPU MinCPUTask     AveCPU    Elapsed ExitCode 
------------- ---------- ---------- -------- ---------- ---------- ---------- ---------- -------- 
-450988       width100_+          1                                             00:00:09      0:0 
-450988.batch      batch          1        1   00:00:08          0   00:00:08   00:00:09      0:0 
-450988.exte+     extern          1        1   00:00:00          0   00:00:00   00:00:09      0:0 
-
-Memory usage stats:
-JobID            MaxRSS MaxRSSTask     AveRSS MaxPages   MaxPagesTask   AvePages 
------------- ---------- ---------- ---------- -------- -------------- ---------- 
-450988                                                                           
-450988.batch     15096K          0     15096K        0              0          0 
-450988.exte+       196K          0       196K        0              0          0 
-
-Disk usage stats:
-JobID         MaxDiskRead MaxDiskReadTask    AveDiskRead MaxDiskWrite MaxDiskWriteTask   AveDiskWrite 
------------- ------------ --------------- -------------- ------------ ---------------- -------------- 
-450988                                                                                                
-450988.batch            0               0              0        0.00M                0          0.00M 
-450988.exte+        0.01M               0          0.01M        0.00M                0          0.00M 
-
-Job 450988 completed at Fri Mar 8 16:05:37 CET 2024
-Starting job 450990 on c1-28 at Fri Mar 8 16:06:00 CET 2024
+Starting job 451594 on c1-28 at Fri Mar 8 17:25:12 CET 2024
 
 Time(event) - 0.00000 s
 
 Task and CPU usage stats:
 JobID           JobName  AllocCPUS   NTasks     MinCPU MinCPUTask     AveCPU    Elapsed ExitCode 
 ------------ ---------- ---------- -------- ---------- ---------- ---------- ---------- -------- 
-450990       width100_+          1                                             00:00:00      0:0 
-450990.batch      batch          1        1   00:00:00          0   00:00:00   00:00:00      0:0 
-450990.exte+     extern          1        1   00:00:00          0   00:00:00   00:00:00      0:0 
+451594       width100_+          1                                             00:01:52      0:0 
+451594.batch      batch          1        1   00:00:00          0   00:00:00   00:01:52      0:0 
+451594.exte+     extern          1        1   00:00:00          0   00:00:00   00:01:52      0:0 
 
 Memory usage stats:
 JobID            MaxRSS MaxRSSTask     AveRSS MaxPages   MaxPagesTask   AvePages 
 ------------ ---------- ---------- ---------- -------- -------------- ---------- 
-450990                                                                           
-450990.batch        56K          0        56K        0              0          0 
-450990.exte+       200K          0       200K        0              0          0 
+451594                                                                           
+451594.batch      1108K          0      1108K        0              0          0 
+451594.exte+       204K          0       204K        0              0          0 
 
 Disk usage stats:
 JobID         MaxDiskRead MaxDiskReadTask    AveDiskRead MaxDiskWrite MaxDiskWriteTask   AveDiskWrite 
 ------------ ------------ --------------- -------------- ------------ ---------------- -------------- 
-450990                                                                                                
-450990.batch            0               0              0        0.00M                0          0.00M 
-450990.exte+        0.01M               0          0.01M        0.00M                0          0.00M 
+451594                                                                                                
+451594.batch        4.27M               0          4.27M        0.03M                0          0.03M 
+451594.exte+        0.01M               0          0.01M        0.00M                0          0.00M 
 
-Job 450990 completed at Fri Mar 8 16:06:01 CET 2024
-Starting job 450996 on c1-28 at Fri Mar 8 16:07:15 CET 2024
-
-Time(event) - 0.00000 s
-
-Task and CPU usage stats:
-JobID           JobName  AllocCPUS   NTasks     MinCPU MinCPUTask     AveCPU    Elapsed ExitCode 
------------- ---------- ---------- -------- ---------- ---------- ---------- ---------- -------- 
-450996       width100_+          1                                             00:00:00      0:0 
-450996.batch      batch          1        1   00:00:00          0   00:00:00   00:00:00      0:0 
-450996.exte+     extern          1        1   00:00:00          0   00:00:00   00:00:00      0:0 
-
-Memory usage stats:
-JobID            MaxRSS MaxRSSTask     AveRSS MaxPages   MaxPagesTask   AvePages 
------------- ---------- ---------- ---------- -------- -------------- ---------- 
-450996                                                                           
-450996.batch        72K          0        72K        0              0          0 
-450996.exte+          0          0          0        0              0          0 
-
-Disk usage stats:
-JobID         MaxDiskRead MaxDiskReadTask    AveDiskRead MaxDiskWrite MaxDiskWriteTask   AveDiskWrite 
------------- ------------ --------------- -------------- ------------ ---------------- -------------- 
-450996                                                                                                
-450996.batch            0               0              0        0.00M                0          0.00M 
-450996.exte+        0.01M               0          0.01M        0.00M                0          0.00M 
-
-Job 450996 completed at Fri Mar 8 16:07:16 CET 2024
+Job 451594 completed at Fri Mar 8 17:27:04 CET 2024

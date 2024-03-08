@@ -35,6 +35,7 @@ int main(int argc, char *argv[]) {
     int depth = atoi(argv[3]);
     int iter = atoi(argv[4]);
     int compare = atoi(argv[5]);
+
     int depth_node = depth/size + 1;
 
     double dx = 2.0 / (width - 1);
@@ -58,7 +59,7 @@ int main(int argc, char *argv[]) {
     /* Performing Jacobian grid Calculation */
     // Performing a number of iterations while statement is not satisfied
     while(iter > 0){
-        for(int i = 1; i < depth - 1; i++){
+        for(int i = 1; i < depth_node - 1; i++){
             for(int j = 1; j < height - 1; j++){
                 for(int k = 1; k < width - 1; k++) {
                     int index = k + j * width + i * width * height;
@@ -142,7 +143,7 @@ int main(int argc, char *argv[]) {
                 for (int j = 0; j < height; j++) {
                     for (int k = 0; k < width; k++) {
                         if (fabs(data_combined[k + j * width + i * width * height] - data_compare[k + j * width + i * width * height]) > 1e-15)  {
-                            printf("Mismatch found at position (width = %d, height = %d, depth = %d) (data_combined = %.16f, data_compare = %.16f)\n", k, j, i, data_combined[k + j * width + i * width * height], data_compare[k + j * width + i * width * height]);
+                            printf("Mismatch found at position (width = %d, height = %d, depth = %d) (data_Node = %.16f, data_compare = %.16f)\n", k, j, i, data_combined[k + j * width + i * width * height], data_compare[k + j * width + i * width * height]);
                             free(data_compare);
                             MPI_Finalize();
                             exit(EXIT_FAILURE);
