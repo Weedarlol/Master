@@ -1,2 +1,32 @@
 Starting job 449615 on c1-[14-15] at Thu Mar 7 18:05:20 CET 2024
 
+Time(event) - 6008.04439 s
+Time(event) - 5999.80485 s
+Comparing the grids
+Mismatch found at position (width = 1, height = 1, depth = 1) (data_combined = 0.0000008728618942, data_compare = 0.0000008728402527)
+
+Task and CPU usage stats:
+JobID           JobName  AllocCPUS   NTasks     MinCPU MinCPUTask     AveCPU    Elapsed ExitCode 
+------------ ---------- ---------- -------- ---------- ---------- ---------- ---------- -------- 
+449615       width512_+          2                                             01:41:15      0:0 
+449615.batch      batch          1        1   01:40:44          0   01:40:44   01:41:15      0:0 
+449615.exte+     extern          2        2   00:00:00          0   00:00:00   01:41:15      0:0 
+449615.0          orted          2        1   01:40:04          0   01:40:04   01:41:15      0:0 
+
+Memory usage stats:
+JobID            MaxRSS MaxRSSTask     AveRSS MaxPages   MaxPagesTask   AvePages 
+------------ ---------- ---------- ---------- -------- -------------- ---------- 
+449615                                                                           
+449615.batch   2870708K          0   2870708K        7              0          7 
+449615.exte+       200K          1       198K        0              1          0 
+449615.0       1191260K          0   1191260K        7              0          7 
+
+Disk usage stats:
+JobID         MaxDiskRead MaxDiskReadTask    AveDiskRead MaxDiskWrite MaxDiskWriteTask   AveDiskWrite 
+------------ ------------ --------------- -------------- ------------ ---------------- -------------- 
+449615                                                                                                
+449615.batch     1500.64M               0       1500.64M       11.96M                0         11.96M 
+449615.exte+        0.01M               1          0.01M        0.00M                1          0.00M 
+449615.0           11.12M               0         11.12M        4.11M                0          4.11M 
+
+Job 449615 completed at Thu Mar 7 19:46:35 CET 2024
