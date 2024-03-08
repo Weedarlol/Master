@@ -60,11 +60,6 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        /* pointer swapping */
-        double *data_tmp_cha = data_tmp;
-        data_tmp = data;
-        data = data_tmp_cha;
-
         iter--;
     }
     end = clock();

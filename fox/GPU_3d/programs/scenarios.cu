@@ -149,7 +149,7 @@ void full_calculation_nooverlap(double **data_gpu, double **data_gpu_tmp, int wi
     
     float milliseconds = 0.0f;
     cudaErrorHandle(cudaEventElapsedTime(&milliseconds, startevent, stopevent));
-    printf("Time(event) - %.5f s\n", milliseconds);
+    printf("Time(event) - %.5f s\n", milliseconds/1000);
 
     freeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
 }
