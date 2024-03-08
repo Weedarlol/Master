@@ -7,7 +7,7 @@ from adjustText import adjust_text
 def extract_info(file_path):
     # Extracting data from filename
     filename = os.path.basename(file_path)
-    match = re.match(r'../output/.*width(\d+)_height(\d+)_gpu(\d+)_iter(\d+)_compare(\d+)_overlap(\d+)_test(\d+)_.*', filename)
+    match = re.match(r'.*width(\d+)_height(\d+)_gpu(\d+)_iter(\d+)_compare(\d+)_overlap(\d+)_test(\d+)_.*', filename)
     if match:
         width = int(match.group(1))
         height = int(match.group(2))
@@ -30,13 +30,13 @@ data_by_dimensions = {}
 
 # List all files in the directory
 def extract_numerical_values(filename):
-    match = re.match(r'../output/.*width(\d+)_height(\d+)_gpu(\d+)_iter(\d+)_compare(\d+)_overlap(\d+)_test(\d+)_.*', filename)
+    match = re.match(r'.*width(\d+)_height(\d+)_gpu(\d+)_iter(\d+)_compare(\d+)_overlap(\d+)_test(\d+)_.*', filename)
     if match:
         return [int(match.group(i)) for i in range(1, 8)]
     return []
 
 # Directory containing the files
-directory = 'output'
+directory = '../output'
 unsorted_files = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
 
 # Custom sorting function

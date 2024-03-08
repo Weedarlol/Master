@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
     double division = 1/6.0;
 
     // Performing a number of iterations while statement is not satisfied
-    while (iter > 0) {
+    while(iter > 0){
         for(int i = 1; i < depth - 1; i++){
             for(int j = 1; j < height - 1; j++){
                 for(int k = 1; k < width - 1; k++) {

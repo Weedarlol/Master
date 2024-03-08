@@ -89,9 +89,9 @@ depths = [info[2] for info in info_list]
 elements = [a * b * c for a, b, c in zip(widths, heights, depths)]
 memory_operations = [2, 3, 4, 5]
 y_values_1 = [(memory_operations[0] * w * h * d * 8 * iterations) / bandwidth for w, h, d in zip(widths, heights, depths)]
-y_values_2 = [(memory_operations[1] * w * h * d* 8 * iterations) / bandwidth for w, h, d in zip(widths, heights, depths)]
-y_values_3 = [(memory_operations[2] * w * h * d* 8 * iterations) / bandwidth for w, h, d in zip(widths, heights, depths)]
-y_values_4 = [(memory_operations[3] * w * h * d* 8 * iterations) / bandwidth for w, h, d in zip(widths, heights, depths)]
+y_values_2 = [(memory_operations[1] * w * h * d * 8 * iterations) / bandwidth for w, h, d in zip(widths, heights, depths)]
+y_values_3 = [(memory_operations[2] * w * h * d * 8 * iterations) / bandwidth for w, h, d in zip(widths, heights, depths)]
+y_values_4 = [(memory_operations[3] * w * h * d * 8 * iterations) / bandwidth for w, h, d in zip(widths, heights, depths)]
 y_values_time = [info[5] for info in info_list]
 y_values_time_compare = [info[5] for info in info_list_compare]
 
@@ -107,8 +107,8 @@ line4 = ax1.plot(elements, y_values_4, label='Memory Operations = 5', color='blu
 area = ax1.fill_between(elements, y_values_1, y_values_4, color='lightgray', alpha=0.5)
 
 # Plot the third line on the right y-axis
-line5 = ax1.plot(elements, y_values_time, label='Computational Time', color='red', marker='^')
-line6 = ax1.plot(elements, y_values_time_compare, label='CPU Time', color='orange', marker='^')
+line5 = ax1.plot(elements, y_values_time, label='CPU - CPU Time', color='red', marker='^')
+line6 = ax1.plot(elements, y_values_time_compare, label='1 CPU Time', color='orange', marker='^')
 
 # Set labels and title for the left y-axis
 ax1.set_xlabel('Bytes')
@@ -133,7 +133,7 @@ ax1.set_xscale('log', base=2)
 percentage_difference = [((t - m) / m) * 100 for t, m in zip(y_values_time, y_values_time_compare)]
 
 
-line6 = ax2.plot(elements, percentage_difference, color='black', linestyle='--', marker='o', label='Percentage difference')
+line = ax2.plot(elements, percentage_difference, color='black', linestyle='--', marker='o', label='Percentage difference')
 
 # Add legend for twinx axis
 ax2.legend(loc='upper right')
