@@ -51,7 +51,7 @@ for SCENARIO in "$@"; do
 #SBATCH --account=ec12
 #SBATCH -p ${PARTITION}
 #SBATCH --mem-per-cpu=4G
-#SBATCH -N 1                                  # Antall noder, i dgx2q så er det bare 1 node bygd opp av DualProcessor AMD EPYC Milan 7763 64-core w/ 8 qty Nvidia Volta A100/80GB
+#SBATCH -N 1                                  # Antall noder
 #SBATCH -n 1                                  # Antall CPU cores som vil bli allokert
 #SBATCH -t 14:00:00
 #SBATCH --ntasks-per-node=1                   # Antall ganger en vil kjøre programmet på hver node

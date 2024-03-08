@@ -48,6 +48,7 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
 
 
     int total = width*height*depth;
+    int overlap_calc = overlap*width*height;
     int threadSize = blockDim.x*blockDim.y*blockDim.z*gridDim.x*gridDim.y*gridDim.z;
 
     int *device_nr;
@@ -131,13 +132,14 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
         kernelArgs[1] = &data_gpu_tmp[g];
         kernelArgs[2] = &width;
         kernelArgs[3] = &height;
-        kernelArgs[5] = &slices_leftover;
-        kernelArgs[6] = &device_nr[g];
-        kernelArgs[7] = &slices_compute_device[g];
-        kernelArgs[8] = &threadInformation[0];
-        kernelArgs[9] = &threadInformation[1];
-        kernelArgs[10] = &threadInformation[2];
-        kernelArgs[11] = &threadInformation[3];
+        kernelArgs[4] = &slices_leftover;
+        kernelArgs[5] = &device_nr[g];
+        kernelArgs[6] = &slices_compute_device[g];
+        kernelArgs[7] = &threadInformation[0];
+        kernelArgs[8] = &threadInformation[1];
+        kernelArgs[9] = &threadInformation[2];
+        kernelArgs[10] = &threadInformation[3];
+        kernelArgs[11] = &overlap_calc;
 
         kernelCollMid[g] = kernelArgs;
     }
@@ -175,8 +177,8 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     if(compare == 1){
         double* data_compare = (double*)malloc(width * height * depth* sizeof(double));
         FILE *fptr;
-        char filename[30];
-        sprintf(filename, "../CPU_3d/grids/CPUGrid%i_%i_%i.txt", width, height, depth);
+        char filename[100];
+        sprintf(filename, "../CPU_3d/grids/CPUGrid%d_%d_%d.txt", width, height, depth);
 
         printf("Comparing the grids\n");
 

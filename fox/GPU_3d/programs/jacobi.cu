@@ -24,9 +24,9 @@ __device__ void calc(double *data_gpu, double *data_gpu_tmp, int amountPerThread
 __global__ void jacobiEdge(double *data_gpu, double *data_gpu_tmp, int width, int height, 
                         int slices_compute, int amountPerThread, int leftover){
 
-    cg::grid_group thread_grid = cg::this_grid();
-    int thread = thread_grid.thread_rank();
-    int thread_size = thread_grid.size();
+    cg::grid_group grid_g = cg::this_grid();
+    int thread = grid_g.thread_rank();
+    int thread_size = grid_g.size();
 
     // More threads than elements in 2 slices
     if(thread_size > leftover*2){
@@ -37,7 +37,7 @@ __global__ void jacobiEdge(double *data_gpu, double *data_gpu_tmp, int width, in
         }
         // Selects all threads with index between width and width*2
         else if(thread > leftover && thread < leftover+leftover){
-            calc(data_gpu, data_gpu_tmp, amountPerThread, thread+slices_compute*(width-2), width, height, thread, thread_size);
+            calc(data_gpu, data_gpu_tmp, amountPerThread, thread + slices_compute*(width-2), width, height, thread, thread_size);
         }
     }
     else if(thread_size > leftover){
@@ -45,38 +45,38 @@ __global__ void jacobiEdge(double *data_gpu, double *data_gpu_tmp, int width, in
         if(thread < leftover){
             // The same threads will compute both slices
             calc(data_gpu, data_gpu_tmp, amountPerThread, thread, width, height, thread, thread_size);
-            calc(data_gpu, data_gpu_tmp, amountPerThread+slices_compute*(width-2), thread, width, height, thread, thread_size);
+            calc(data_gpu, data_gpu_tmp, amountPerThread + slices_compute*(width-2), thread, width, height, thread, thread_size);
         }
     }
     // There are less threads than elements in 1 slice
     else{
         calc(data_gpu, data_gpu_tmp, amountPerThread, thread, width, height, thread, thread_size);
-        calc(data_gpu, data_gpu_tmp, amountPerThread+slices_compute*(width-2), thread, width, height, thread, thread_size);
+        calc(data_gpu, data_gpu_tmp, amountPerThread + slices_compute*(width-2), thread, width, height, thread, thread_size);
     }
 }
 
 
 
-__global__ void jacobiMid(double *data_gpu, double *data_gpu_tmp, int width, int height, 
+__global__ void jacobiMid(double *data_gpu, double *data_gpu_tmp, int width, int height,
                         int slices_elementsLeftover, int device_nr, int slices_compute, int elementsPerThreadExtra, int elementsLeftoverExtra,
-                        int elementsPerThread, int elementsLeftover){
+                        int elementsPerThread, int elementsLeftover, int overlap_calc){
 
 
-    cg::grid_group thread_grid = cg::this_grid();
-    int thread = thread_grid.thread_rank(); 
-    int threadSize = thread_grid.size();
+    cg::grid_group grid_g = cg::this_grid();
+    int thread = grid_g.thread_rank(); 
+    int threadSize = grid_g.size();
 
 
     if(device_nr < slices_elementsLeftover){
         if(thread < elementsLeftoverExtra){
             elementsPerThreadExtra++;
         }
-        calc(data_gpu, data_gpu_tmp, elementsPerThreadExtra, thread, width, height, thread, threadSize);
+        calc(data_gpu, data_gpu_tmp, elementsPerThreadExtra, thread+overlap_calc, width, height, thread, threadSize);
     }
     else{
         if(thread < elementsLeftover){
             elementsPerThread++;
         }
-        calc(data_gpu, data_gpu_tmp, elementsPerThread, thread, width, height, thread, threadSize);
+        calc(data_gpu, data_gpu_tmp, elementsPerThread, thread+overlap_calc, width, height, thread, threadSize);
     }
 }

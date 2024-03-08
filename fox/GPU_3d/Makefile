@@ -4,15 +4,15 @@
 GPU_COUNTS = 2
 
 # Define different matrix sizes
-WIDTH = 256
-HEIGHT = 256
-DEPTH = 256
+WIDTH = 128
+HEIGHT = 128
+DEPTH = 128
 
 # Number of max iterations to run for the scenario
 ITERATIONS = 10000
 
 # Chooses which partition to run at. Only one at a time
-PARTITION = dgx2q
+PARTITION = accel
 
 # Enables or disables overlap, 1 = overlap, 0 = no overlap
 OVERLAP = 0
