@@ -60,6 +60,10 @@ int main(int argc, char *argv[]) {
             }
         }
 
+        double *data_tmp_swap = data_tmp;
+        data_tmp = data;
+        data = data_tmp_swap;
+
         iter--;
     }
     end = clock();

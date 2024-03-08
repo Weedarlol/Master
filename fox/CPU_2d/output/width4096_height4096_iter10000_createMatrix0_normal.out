@@ -1,52 +1,26 @@
-Starting job 448929 on c1-28 at Thu Mar 7 10:33:19 CET 2024
+Starting job 450790 on c1-28 at Fri Mar 8 15:31:42 CET 2024
 
-Time(event) - 780.15069 s
-
-Task and CPU usage stats:
-JobID           JobName  AllocCPUS   NTasks     MinCPU MinCPUTask     AveCPU    Elapsed ExitCode 
------------- ---------- ---------- -------- ---------- ---------- ---------- ---------- -------- 
-448929       width4096+          1                                             00:13:07      0:0 
-448929.batch      batch          1        1   00:13:02          0   00:13:02   00:13:07      0:0 
-448929.exte+     extern          1        1   00:00:00          0   00:00:00   00:13:07      0:0 
-
-Memory usage stats:
-JobID            MaxRSS MaxRSSTask     AveRSS MaxPages   MaxPagesTask   AvePages 
------------- ---------- ---------- ---------- -------- -------------- ---------- 
-448929                                                                           
-448929.batch    263504K          0    263504K        0              0          0 
-448929.exte+       200K          0       200K        0              0          0 
-
-Disk usage stats:
-JobID         MaxDiskRead MaxDiskReadTask    AveDiskRead MaxDiskWrite MaxDiskWriteTask   AveDiskWrite 
------------- ------------ --------------- -------------- ------------ ---------------- -------------- 
-448929                                                                                                
-448929.batch       34.54M               0         34.54M        8.06M                0          8.06M 
-448929.exte+        0.01M               0          0.01M        0.00M                0          0.00M 
-
-Job 448929 completed at Thu Mar 7 10:46:27 CET 2024
-Starting job 450171 on c1-28 at Fri Mar 8 12:19:18 CET 2024
-
-Time(event) - 840.17598 s
+Time(event) - 252.77032 s
 
 Task and CPU usage stats:
 JobID           JobName  AllocCPUS   NTasks     MinCPU MinCPUTask     AveCPU    Elapsed ExitCode 
 ------------ ---------- ---------- -------- ---------- ---------- ---------- ---------- -------- 
-450171       width4096+          1                                             00:14:05      0:0 
-450171.batch      batch          1        1   00:14:02          0   00:14:02   00:14:05      0:0 
-450171.exte+     extern          1        1   00:00:00          0   00:00:00   00:14:05      0:0 
+450790       width4096+          1                                             00:04:16      0:0 
+450790.batch      batch          1        1   00:04:13          0   00:04:13   00:04:16      0:0 
+450790.exte+     extern          1        1   00:00:00          0   00:00:00   00:04:16      0:0 
 
 Memory usage stats:
 JobID            MaxRSS MaxRSSTask     AveRSS MaxPages   MaxPagesTask   AvePages 
 ------------ ---------- ---------- ---------- -------- -------------- ---------- 
-450171                                                                           
-450171.batch    263540K          0    263540K        0              0          0 
-450171.exte+       204K          0       204K        0              0          0 
+450790                                                                           
+450790.batch    263376K          0    263376K        0              0          0 
+450790.exte+       200K          0       200K        0              0          0 
 
 Disk usage stats:
 JobID         MaxDiskRead MaxDiskReadTask    AveDiskRead MaxDiskWrite MaxDiskWriteTask   AveDiskWrite 
 ------------ ------------ --------------- -------------- ------------ ---------------- -------------- 
-450171                                                                                                
-450171.batch       34.54M               0         34.54M        8.06M                0          8.06M 
-450171.exte+        0.01M               0          0.01M        0.00M                0          0.00M 
+450790                                                                                                
+450790.batch        5.69M               0          5.69M        0.05M                0          0.05M 
+450790.exte+        0.01M               0          0.01M        0.00M                0          0.00M 
 
-Job 450171 completed at Fri Mar 8 12:33:23 CET 2024
+Job 450790 completed at Fri Mar 8 15:35:58 CET 2024

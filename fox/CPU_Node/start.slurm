@@ -2,10 +2,7 @@
 set -e
 
 # List of source files
-SOURCES="main.cu ../../global_functions.cu"
-
-LIBDIR="/cluster/software/EL9/easybuild/software/OpenMPI/4.1.4-GCC-11.3.0/lib"
-INCLUDE="/cluster/software/EL9/easybuild/software/OpenMPI/4.1.4-GCC-11.3.0/include"
+SOURCES="main.c ../../global_functions.c"
 
 
 
@@ -48,10 +45,10 @@ for SCENARIO in "$@"; do
 #SBATCH --error=error/${SCENARIO}_${PARTITION}.err
 
 module purge
-module load CUDA/11.7.0
+module load GCC/11.3.0
 module load OpenMPI/4.1.4-GCC-11.3.0
 
-nvcc $SOURCES -o out_${SCENARIO}_${PARTITION} -lcudart -lmpi
+mpicc $SOURCES -o out_${SCENARIO}_${PARTITION} -lm -O3
 
 mpirun -n 2 ./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5
 

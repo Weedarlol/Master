@@ -1,10 +1,10 @@
 # Define different grid sizes
-WIDTH = 512
-HEIGHT = 512
-DEPTH = 256
+WIDTH = 100
+HEIGHT = 100
+DEPTH = 100
 
 # Number of max iterations to run for the scenario
-ITERATIONS = 10000
+ITERATIONS = 10
 
 # Chooses which partition to run at. (hgx2q and dgx2q for more than 1 GPU, a100q and a40q for more than 1 cluster)
 # Example = hgx2q, dgx2q, a100q
@@ -37,9 +37,11 @@ JobName:
 clean:
 	rm -rf slurm* out_*
 
-cleannn:
+cleann:
 	rm -rf output/* error/*
 
+cleannn:
+	rm -rf slurm* out_* output/* error/*
 
 
 

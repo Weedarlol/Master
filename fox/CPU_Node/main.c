@@ -55,19 +55,10 @@ int main(int argc, char *argv[]) {
     start = clock();
     double division = 1/6.0;
 
-    if(rank == 0){
-        MPI_Send(&data[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD);
-        MPI_Recv(&data[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    }
-    else{
-        MPI_Recv(&data[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        MPI_Send(&data[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD);
-    }
-
     /* Performing Jacobian grid Calculation */
     // Performing a number of iterations while statement is not satisfied
-    while (iter > 0) {
-        for(int i = 1; i < depth_node - 1; i++){
+    while(iter > 0){
+        for(int i = 1; i < depth - 1; i++){
             for(int j = 1; j < height - 1; j++){
                 for(int k = 1; k < width - 1; k++) {
                     int index = k + j * width + i * width * height;
@@ -88,11 +79,11 @@ int main(int argc, char *argv[]) {
             MPI_Send(&data_tmp[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD);
         }
 
-        iter--;
-
         double *data_tmp_swap = data_tmp;
         data_tmp = data;
         data = data_tmp_swap;
+
+        iter--;
     }
 
 

@@ -2,10 +2,8 @@
 set -e
 
 # List of source files
-SOURCES="main.cu ../../global_functions.cu"
+SOURCES="main.c ../../global_functions.c"
 
-# Object files derived from sources
-OBJECTS=$(echo "$SOURCES" | sed 's/\.cu/\.o/g')
 
 # Gets the first element which indicates the partition type
 PARTITION="$1"
@@ -48,9 +46,9 @@ for SCENARIO in "$@"; do
 #SBATCH --error=error/${SCENARIO}_${PARTITION}.err
 
 module purge
-module load CUDA/11.8.0
+module load GCC/12.3.0
 
-nvcc $SOURCES -o out_${SCENARIO}_${PARTITION}
+gcc $SOURCES -o out_${SCENARIO}_${PARTITION} -lm -O3
 
 ./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5
 

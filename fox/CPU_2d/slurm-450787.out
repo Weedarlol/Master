@@ -1,0 +1,26 @@
+Starting job 450787 on c1-28 at Fri Mar 8 15:31:27 CET 2024
+
+Submitted batch job 450788
+
+Task and CPU usage stats:
+JobID           JobName  AllocCPUS   NTasks     MinCPU MinCPUTask     AveCPU    Elapsed ExitCode 
+------------ ---------- ---------- -------- ---------- ---------- ---------- ---------- -------- 
+450787       start.slu+          1                                             00:00:00      0:0 
+450787.batch      batch          1        1   00:00:00          0   00:00:00   00:00:00      0:0 
+450787.exte+     extern          1        1   00:00:00          0   00:00:00   00:00:00      0:0 
+
+Memory usage stats:
+JobID            MaxRSS MaxRSSTask     AveRSS MaxPages   MaxPagesTask   AvePages 
+------------ ---------- ---------- ---------- -------- -------------- ---------- 
+450787                                                                           
+450787.batch       312K          0       312K        0              0          0 
+450787.exte+       200K          0       200K        0              0          0 
+
+Disk usage stats:
+JobID         MaxDiskRead MaxDiskReadTask    AveDiskRead MaxDiskWrite MaxDiskWriteTask   AveDiskWrite 
+------------ ------------ --------------- -------------- ------------ ---------------- -------------- 
+450787                                                                                                
+450787.batch            0               0              0        0.00M                0          0.00M 
+450787.exte+        0.01M               0          0.01M        0.00M                0          0.00M 
+
+Job 450787 completed at Fri Mar 8 15:31:27 CET 2024
