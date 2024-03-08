@@ -10,8 +10,8 @@ __device__ void calc(double *mat_gpu, double *mat_gpu_tmp, int amountPerThread, 
     for(int i = 0; i < amountPerThread; i++){
         int index = index_start + i*thread_size;
         int x = index % (width - 2) + 1;
-        int y = (threadID / (width - 2)) % (height - 2) + 1;
-        int z = threadID / ((width - 2) * (height - 2)) + 1;
+        int y = (index / (width - 2)) % (height - 2) + 1;
+        int z = index / ((width - 2) * (height - 2)) + 1;
         index = x + y*width + z*width*height;
 
         mat_gpu_tmp[index] = division * (

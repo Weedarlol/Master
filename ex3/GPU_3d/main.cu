@@ -48,6 +48,7 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
 
 
     int total = width*height*depth;
+    int overlap_calc = overlap*2*width*height;
     int threadSize = blockDim.x*blockDim.y*blockDim.z*gridDim.x*gridDim.y*gridDim.z;
 
     int *device_nr;
