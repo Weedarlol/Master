@@ -1,8 +1,6 @@
 Starting job 450150 on gpu-5 at Fri Mar 8 12:14:10 CET 2024
 
 Time(event) - 5.50574 s
-Comparing the grids
-Mismatch found at position (width = 43, height = 4, depth = 1) (data = 0.0000094794221734, data_compare = 0.0000094794221744)
 
 Task and CPU usage stats:
 JobID           JobName  AllocCPUS   NTasks     MinCPU MinCPUTask     AveCPU    Elapsed ExitCode 

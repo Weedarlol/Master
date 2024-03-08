@@ -2,8 +2,6 @@ Starting job 449615 on c1-[14-15] at Thu Mar 7 18:05:20 CET 2024
 
 Time(event) - 6008.04439 s
 Time(event) - 5999.80485 s
-Comparing the grids
-Mismatch found at position (width = 1, height = 1, depth = 1) (data_combined = 0.0000008728618942, data_compare = 0.0000008728402527)
 
 Task and CPU usage stats:
 JobID           JobName  AllocCPUS   NTasks     MinCPU MinCPUTask     AveCPU    Elapsed ExitCode 
