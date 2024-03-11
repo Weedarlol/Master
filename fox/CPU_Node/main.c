@@ -56,6 +56,15 @@ int main(int argc, char *argv[]) {
     start = clock();
     double division = 1/6.0;
 
+    if(rank == 0){
+        MPI_Send(&data[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD);                    // Sender den nest siste slicen
+        MPI_Recv(&data[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE); // Mottar slice på den siste slicen
+    }
+    else{
+        MPI_Recv(&data[0],            width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE); // Mottar slice på den første slicen
+        MPI_Send(&data[width*height], width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD);                    // Sender den andre slicen
+    }
+
     /* Performing Jacobian grid Calculation */
     // Performing a number of iterations while statement is not satisfied
     while(iter > 0){
@@ -72,12 +81,12 @@ int main(int argc, char *argv[]) {
         }
 
         if(rank == 0){
-            MPI_Send(&data_tmp[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD);
-            MPI_Recv(&data_tmp[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            MPI_Send(&data_tmp[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD);                    // Sender den nest siste slicen
+            MPI_Recv(&data_tmp[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE); // Mottar slice på den siste slicen
         }
         else{
-            MPI_Recv(&data_tmp[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            MPI_Send(&data_tmp[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD);
+            MPI_Recv(&data_tmp[0],            width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE); // Mottar slice på den første slicen
+            MPI_Send(&data_tmp[width*height], width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD);                    // Sender den andre slicen
         }
 
         double *data_tmp_swap = data_tmp;
@@ -96,11 +105,10 @@ int main(int argc, char *argv[]) {
     if(rank == 0){
         data_combined = (double*)malloc(width * height * depth * sizeof(double));
 
-        MPI_Gather(&data[0], width*height*(depth_node-1), MPI_DOUBLE, data_combined, width*height*(depth_node-1), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Gather(&data[0],            width*height*(depth_node-1), MPI_DOUBLE, data_combined, width*height*(depth_node-1), MPI_DOUBLE, 0, MPI_COMM_WORLD);
     }
     else{
-
-        MPI_Gather(&data[width*height], width*height*(depth_node-1), MPI_DOUBLE, data_combined, width*height*(depth_node-1), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Gather(&data[width*height], width*height*(depth_node-1), MPI_DOUBLE, NULL,          0,                           MPI_DOUBLE, 0, MPI_COMM_WORLD);
     }
 
 
@@ -139,11 +147,11 @@ int main(int argc, char *argv[]) {
 
             fclose(fptr);
 
-            for(int i = 0; i < depth; i++){
+            for(int i = 0; i < depth_node; i++){
                 for (int j = 0; j < height; j++) {
                     for (int k = 0; k < width; k++) {
-                        if (fabs(data_combined[k + j * width + i * width * height] - data_compare[k + j * width + i * width * height]) > 1e-15)  {
-                            printf("Mismatch found at position (width = %d, height = %d, depth = %d) (data_Node = %.16f, data_compare = %.16f)\n", k, j, i, data_combined[k + j * width + i * width * height], data_compare[k + j * width + i * width * height]);
+                        if (fabs(data[k + j * width + i * width * height] - data_compare[k + j * width + i * width * height]) > 1e-15)  {
+                            printf("Mismatch found at position (width = %d, height = %d, depth = %d) (data_Node = %.16f, data_compare = %.16f)\n", k, j, i, data[k + j * width + i * width * height], data_compare[k + j * width + i * width * height]);
                             free(data_compare);
                             MPI_Finalize();
                             exit(EXIT_FAILURE);

@@ -1,0 +1,32 @@
+Starting job 453280 on c1-[17-18] at Mon Mar 11 13:10:01 CET 2024
+
+Time(event) - 1838.89352 s
+Time(event) - 1839.47897 s
+Comparing the grids
+All elements match!
+
+Task and CPU usage stats:
+JobID           JobName  AllocCPUS   NTasks     MinCPU MinCPUTask     AveCPU    Elapsed ExitCode 
+------------ ---------- ---------- -------- ---------- ---------- ---------- ---------- -------- 
+453280       width512_+          2                                             00:31:50      0:0 
+453280.batch      batch          1        1   00:31:29          0   00:31:29   00:31:50      0:0 
+453280.exte+     extern          2        2   00:00:00          0   00:00:00   00:31:50      0:0 
+453280.0          orted          2        1                                    00:31:50      0:0 
+
+Memory usage stats:
+JobID            MaxRSS MaxRSSTask     AveRSS MaxPages   MaxPagesTask   AvePages 
+------------ ---------- ---------- ---------- -------- -------------- ---------- 
+453280                                                                           
+453280.batch   2907496K          0   2907496K        7              0          7 
+453280.exte+       200K          1       100K        0              1          0 
+453280.0                                                                         
+
+Disk usage stats:
+JobID         MaxDiskRead MaxDiskReadTask    AveDiskRead MaxDiskWrite MaxDiskWriteTask   AveDiskWrite 
+------------ ------------ --------------- -------------- ------------ ---------------- -------------- 
+453280                                                                                                
+453280.batch     1564.01M               0       1564.01M        4.19M                0          4.19M 
+453280.exte+        0.01M               1          0.01M        0.00M                1          0.00M 
+453280.0                                                                                              
+
+Job 453280 completed at Mon Mar 11 13:41:51 CET 2024

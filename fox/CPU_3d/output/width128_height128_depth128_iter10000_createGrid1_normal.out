@@ -1,26 +1,26 @@
-Starting job 451603 on c1-28 at Fri Mar 8 17:29:31 CET 2024
+Starting job 452991 on c1-28 at Mon Mar 11 10:36:10 CET 2024
 
-Time(event) - 41.32301 s
+Time(event) - 33.08254 s
 
 Task and CPU usage stats:
 JobID           JobName  AllocCPUS   NTasks     MinCPU MinCPUTask     AveCPU    Elapsed ExitCode 
 ------------ ---------- ---------- -------- ---------- ---------- ---------- ---------- -------- 
-451603       width128_+          1                                             00:00:43      0:0 
-451603.batch      batch          1        1   00:00:42          0   00:00:42   00:00:43      0:0 
-451603.exte+     extern          1        1   00:00:00          0   00:00:00   00:00:43      0:0 
+452991       width128_+          1                                             00:00:35      0:0 
+452991.batch      batch          1        1   00:00:34          0   00:00:34   00:00:35      0:0 
+452991.exte+     extern          1        1   00:00:00          0   00:00:00   00:00:35      0:0 
 
 Memory usage stats:
 JobID            MaxRSS MaxRSSTask     AveRSS MaxPages   MaxPagesTask   AvePages 
 ------------ ---------- ---------- ---------- -------- -------------- ---------- 
-451603                                                                           
-451603.batch     34196K          0     34196K        0              0          0 
-451603.exte+       204K          0       204K        0              0          0 
+452991                                                                           
+452991.batch     35136K          0     35136K        0              0          0 
+452991.exte+       208K          0       208K        0              0          0 
 
 Disk usage stats:
 JobID         MaxDiskRead MaxDiskReadTask    AveDiskRead MaxDiskWrite MaxDiskWriteTask   AveDiskWrite 
 ------------ ------------ --------------- -------------- ------------ ---------------- -------------- 
-451603                                                                                                
-451603.batch        5.70M               0          5.70M        0.05M                0          0.05M 
-451603.exte+        0.01M               0          0.01M        0.00M                0          0.00M 
+452991                                                                                                
+452991.batch        5.69M               0          5.69M        0.05M                0          0.05M 
+452991.exte+        0.01M               0          0.01M        0.00M                0          0.00M 
 
-Job 451603 completed at Fri Mar 8 17:30:14 CET 2024
+Job 452991 completed at Mon Mar 11 10:36:45 CET 2024

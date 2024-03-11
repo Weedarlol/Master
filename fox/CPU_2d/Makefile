@@ -39,10 +39,10 @@ pythonplot:
 clean:
 	rm -rf slurm* out_*
 
-cleann:
+clean_results:
 	rm -rf output/* error/*
 
-cleannn:
+clean_all:
 	rm -rf slurm* out_* output/* error/*
 
 

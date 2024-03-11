@@ -4,8 +4,8 @@
 GPU_COUNTS = 2 3 4
 
 # Define different matrix sizes
-WIDTH = 1024
-HEIGHT = 1024
+WIDTH = 8192
+HEIGHT = 8192
 
 # Number of max iterations to run for the scenario
 ITERATIONS = 10000
@@ -49,10 +49,10 @@ JobName:
 clean:
 	rm -rf slurm* out_*
 
-cleann:
+clean_output:
 	rm -rf output/* error/* nsight/*
 
-cleannn:
+clean_all:
 	rm -rf slurm* out_* output/* error/* nsight/*
 
 
