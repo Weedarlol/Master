@@ -1,9 +1,0 @@
-main.cu: In function ‘void initialization(int, int, int, double, double, int, int, int, int, dim3, dim3)’:
-main.cu:216:19: warning: ‘%d’ directive writing between 1 and 11 bytes into a region of size 0 [-Wformat-overflow=]
-  216 |         sprintf(filename, "../CPU_2d/matrices/CPUMatrix%d_%d.txt", width, height);
-      |                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-main.cu:216:8: note: ‘sprintf’ output between 36 and 56 bytes into a destination of size 30
-  216 |         sprintf(filename, "../CPU_2d/matrices/CPUMatrix%d_%d.txt", width, height);
-      |        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*** stack smashing detected ***: terminated
-/cm/local/apps/slurm/var/spool/job146976/slurm_script: line 27: 2742486 Aborted                 (core dumped) ./out_width2048_height2048_gpu2_iter10000_compare1_overlap0_test0_hgx2q 2048 2048 10000 2 1 0 0

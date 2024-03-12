@@ -4,6 +4,7 @@
 
 #include "programs/scenarios.h"
 #include "../../global_functions.h"
+#include "../../cuda_functions.h"
 #include <nvtx3/nvToolsExt.h>
 
 void initialization(int width, int height, int iter, double dx, double dy, int gpus, int compare, int overlap, int test, dim3 blockDim, dim3 gridDim){

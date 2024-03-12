@@ -10,7 +10,7 @@ HEIGHT = 512
 ITERATIONS = 10000
 
 # Chooses which partition to run at. Only one at a time
-PARTITION = hgx2q
+PARTITION = dgx2q
 
 # Enables or disables overlap, 1 = overlap, 0 = no overlap
 OVERLAP = 1

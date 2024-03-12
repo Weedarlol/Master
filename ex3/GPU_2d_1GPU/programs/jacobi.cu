@@ -8,20 +8,13 @@ namespace cg = cooperative_groups;
 
 __device__ int shared_var = 0;
 
-__device__ void calc(double *mat_gpu, double *mat_gpu_tmp, int thread, int iter,
+__device__ void calc(double *data_gpu, double *data_gpu_tmp, int thread, int iter,
     int amountPerThread, int index_start, int jacobiSize, int width, int height,
-    double eps, cg::grid_group grid_g, int *maxEps){
-    /*
-    Variables  | Type | Description
-    local_var  | int  | Calculates how many elements a thread has that is accepted between two iterations
-    shared_var | int  | Is a while condition that decides when the jacobian iteration is complete or not.
-    */
+    cg::grid_group grid_g){
+
 
     // Calculating Jacobian Matrix
-    while(iter > 0 && shared_var == 0){
-        // Resets the local_var value
-        int local_var = 0;
-
+    while(iter > 0){
         // Calculates each element except the border
         for(int i = 0; i < amountPerThread; i++){
             int index = index_start + i;
@@ -30,50 +23,24 @@ __device__ void calc(double *mat_gpu, double *mat_gpu_tmp, int thread, int iter,
                 int y = index / (height - 2) + 1;
                 int ind = x + y * width;
 
-                mat_gpu_tmp[ind] = 0.25 * (
-                    mat_gpu[ind + 1]     + mat_gpu[ind - 1] +
-                    mat_gpu[ind + width] + mat_gpu[ind - width]);
-
-
-                if(abs(mat_gpu[ind] - mat_gpu_tmp[ind]) > eps){
-                    local_var++;
-                }
-            }
-        }
-
-        // https://developer.nvidia.com/blog/cooperative-groups/
-        for (int i = grid_g.num_threads() / 2; i > 0; i /= 2){
-            maxEps[thread] = local_var;
-            grid_g.sync(); // wait for all threads to store
-            if(thread<i) local_var += maxEps[thread + i];
-            grid_g.sync(); // wait for all threads to load
-        }
-
-        // If the combined value is larger than 0, it means that there is at least one element which could be reduced further.
-        if(thread == 0){
-            if(maxEps[0] == 0){
-                shared_var = iter;
+                data_gpu_tmp[ind] = 0.25 * (
+                    data_gpu[ind + 1]     + data_gpu[ind - 1] +
+                    data_gpu[ind + width] + data_gpu[ind - width]);
             }
         }
 
         // Changes pointers
-        double *mat_tmp_cha = mat_gpu_tmp;
-        mat_gpu_tmp = mat_gpu;
-        mat_gpu = mat_tmp_cha;
+        double *data_tmp_cha = data_gpu_tmp;
+        data_gpu_tmp = data_gpu;
+        data_gpu = data_tmp_cha;
 
         iter--;
 
         grid_g.sync();
     }
-
-    // Sets the maxEps value to be equal to the iter value, which will be 0 if all the iterations are run and a solution was not found.
-    if(thread == 0){
-        maxEps[0] = iter;
-    }
-
 }
 
-__global__ void jacobi(double *mat_gpu, double *mat_gpu_tmp, double eps, int width, int height, int iter, int *maxEps){
+__global__ void jacobi(double *data_gpu, double *data_gpu_tmp, int width, int height, int iter){
     /*
     Variables      | Type      | Description
     grid_g         | grid_group| Creates a group compromising of all the threads
@@ -99,6 +66,6 @@ __global__ void jacobi(double *mat_gpu, double *mat_gpu_tmp, double eps, int wid
         amountPerThread++;
     }
 
-    calc(mat_gpu, mat_gpu_tmp, thread, iter, amountPerThread, index_start, jacobiSize,
-        width, height, eps, grid_g, maxEps);
+    calc(data_gpu, data_gpu_tmp, thread, iter, amountPerThread, index_start, jacobiSize,
+        width, height, grid_g);
 }

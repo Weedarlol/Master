@@ -8,13 +8,7 @@ NVCCFLAGS="-rdc=true"
 LIBDIR="/../../usr/lib/x86_64-linux-gnu/libnccl.so"
 
 # List of source files
-SOURCES="main.cu programs/jacobi.cu ../../cuda_functions.cu"
-C_SOURCES="../../global_functions.c"
-
-
-# Object files derived from sources
-OBJECTS=$(echo "$SOURCES" | sed 's/\.cu/\.o/g')
-C_OBJECTS=$(echo "$C_SOURCES" | sed 's/\.c/\.o/g')
+SOURCES="main.cu programs/jacobi.cu ../../global_functions.c ../../cuda_functions.cu"
 
 # Gets the first element which indicates the partition type
 PARTITION="$1"
@@ -23,17 +17,19 @@ shift
 
 # Creates a scenario for the rest of the elements
 for SCENARIO in "$@"; do
-    # Extract matrix size and GPU count from the run identifier
+    # Extract grid size and GPU count from the run identifier
     WIDTH=$(echo $SCENARIO | awk -F'width' '{print $2}' | awk -F'_' '{print $1}')
     HEIGHT=$(echo $SCENARIO | awk -F'height' '{print $2}' | awk -F'_' '{print $1}')
+    DEPTH=$(echo $SCENARIO | awk -F'depth' '{print $2}' | awk -F'_' '{print $1}')
     ITERATIONS=$(echo $SCENARIO | awk -F'iter' '{print $2}' | awk -F'_' '{print $1}')
     COMPARE=$(echo $SCENARIO | awk -F'compare' '{print $2}')
 
     # Define the variable values
-    VAR1=$WIDTH # Width
-    VAR2=$HEIGHT # Height
-    VAR3=$ITERATIONS  # Iterations
-    VAR4=$COMPARE
+    VAR1=$WIDTH
+    VAR2=$HEIGHT
+    VAR3=$DEPTH
+    VAR4=$ITERATIONS
+    VAR5=$COMPARE
 
     # Create a temporary Slurm script for this scenario
     TEMP_SCRIPT="slurm_script_${SCENARIO}_${PARTITION}.sh"
@@ -48,7 +44,7 @@ for SCENARIO in "$@"; do
 #SBATCH -t 14:00:00
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=1
-#SBATCH --gres=gpu:1
+#SBATCH --gres=gpu:0
 #SBATCH --output=output/${SCENARIO}_${PARTITION}.out
 #SBATCH --error=error/${SCENARIO}_${PARTITION}.err
 
@@ -60,18 +56,9 @@ module load cuda11.8/nsight/11.8.0
 module load cuda11.8/profiler/11.8.0
 module load cuda11.8/toolkit/11.8.0
 
-# Compile CUDA source files to object files
-nvcc -c main.cu -o main.o
-nvcc -c programs/jacobi.cu -o jacobi.o
-nvcc -c ../../cuda_functions.cu -o cuda_functions.o
+nvcc $NVCCFLAGS $SOURCES ../global_functionc.c -o out_${SCENARIO}_${PARTITION} -L$LIBDIR -lnccl
 
-# Compile C source files to object files
-gcc -c ../../global_functions.c -o global_functions.o
-
-
-#nvcc $NVCCFLAGS -o out_${SCENARIO}_${PARTITION} $OBJECTS $C_OBJECTS -L$LIBDIR -lnccl -lm
-
-#./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4
+./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5
 
 exit 0
 
@@ -84,3 +71,5 @@ EOF
     rm "${TEMP_SCRIPT}"
 
 done
+
+

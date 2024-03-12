@@ -1,18 +1,20 @@
-# Define different matrix sizes
+# Define different grid sizes
 WIDTH = 512
 HEIGHT = 512
+DEPTH = 512
 
 # Number of max iterations to run for the scenario
 ITERATIONS = 10000
 
 # Chooses which partition to run at. (hgx2q and dgx2q for more than 1 GPU, a100q and a40q for more than 1 cluster)
 # Example = hgx2q, dgx2q, a100q
-PARTITION = dgx2q
+PARTITION = hgx2q
+
 
 COMPARE = 1
 
 # Create a list of run identifiers for all combinations
-RUN_IDENTIFIERS = $(foreach width,$(WIDTH),$(foreach height,$(HEIGHT),$(foreach iter,$(ITERATIONS),width$(width)_height$(height)_iter$(ITERATIONS)_compare${COMPARE})))
+RUN_IDENTIFIERS = $(foreach width,$(WIDTH),$(foreach height,$(HEIGHT),$(foreach depth,$(DEPTH),$(foreach iter,$(ITERATIONS),width$(width)_height$(height)_depth$(depth)_iter$(ITERATIONS)_compare$(COMPARE)))))
 
 
 submit:
@@ -22,15 +24,15 @@ submit:
 
 
 
+pythonplot:
+	python3 3d_plot.py
+
 
 
 
 # View rules
-view:
-	cat output/output.out
-
-vieww:
-	cat output/error.err
+JobName:
+	sacct --format="JobID,JobName%60"
 
 
 
@@ -38,8 +40,12 @@ vieww:
 clean:
 	rm -rf slurm* out_*
 
+cleann:
+	rm -rf output/* error/*
+
 cleannn:
-	rm -rf output/* error/* nsight/*
+	rm -rf slurm* out_* output/* error/*
+
 
 
 

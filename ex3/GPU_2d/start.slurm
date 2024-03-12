@@ -8,7 +8,7 @@ NVCCFLAGS="-rdc=true"
 LIBDIR="/../../usr/lib/x86_64-linux-gnu/libnccl.so"
 
 # List of source files
-SOURCES="main.cu programs/jacobi.cu programs/scenarios.cu ../../global_functions.cu"
+SOURCES="main.cu programs/jacobi.cu programs/scenarios.cu ../../global_functions.c ../../cuda_functions.cu"
 
 # Gets the first element which indicates the partition type
 PARTITION="$1"
