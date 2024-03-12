@@ -1,5 +1,5 @@
-#ifndef GLOBAL_FUNCTIONS_H
-#define GLOBAL_FUNCTIONS_H
+#ifndef CUDA_FUNCTIONS_H
+#define CUDA_FUNCTIONS_H
 
 #include <cuda_runtime.h>
 #include <cstdio>
@@ -16,10 +16,6 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort =
             exit(code);
     }
 }
-
-void fillValues(double *mat, double dx, double dy, int width, int height);
-
-void fillValues3D(double *mat, int width, int height, int depth_node, double dx, double dy, double dz, int rank);
 
 void initializeStreamsAndEvents(int gpus, cudaStream_t streams[][2], cudaEvent_t events[][4], cudaEvent_t *startevent, cudaEvent_t *stopevent);
 
