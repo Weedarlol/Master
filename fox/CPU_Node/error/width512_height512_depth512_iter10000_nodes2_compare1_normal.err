@@ -1,0 +1,38 @@
+main.c: In function ‘main’:
+main.c:62:9: error: too many arguments to function ‘MPI_Send’
+   62 |         MPI_Send(&data[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest_first);                    // Sender den nest siste slicen
+      |         ^~~~~~~~
+In file included from main.c:5:
+/cluster/software/EL9/easybuild/software/OpenMPI/4.1.4-GCC-11.3.0/include/mpi.h:1784:20: note: declared here
+ 1784 | OMPI_DECLSPEC  int MPI_Send(const void *buf, int count, MPI_Datatype datatype, int dest,
+      |                    ^~~~~~~~
+main.c:63:9: error: too few arguments to function ‘MPI_Recv’
+   63 |         MPI_Recv(&data[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD); // Mottar slice på den siste slicen
+      |         ^~~~~~~~
+In file included from main.c:5:
+/cluster/software/EL9/easybuild/software/OpenMPI/4.1.4-GCC-11.3.0/include/mpi.h:1723:20: note: declared here
+ 1723 | OMPI_DECLSPEC  int MPI_Recv(void *buf, int count, MPI_Datatype datatype, int source,
+      |                    ^~~~~~~~
+main.c:66:9: error: too few arguments to function ‘MPI_Recv’
+   66 |         MPI_Recv(&data[0],            width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD); // Mottar slice på den første slicen
+      |         ^~~~~~~~
+In file included from main.c:5:
+/cluster/software/EL9/easybuild/software/OpenMPI/4.1.4-GCC-11.3.0/include/mpi.h:1723:20: note: declared here
+ 1723 | OMPI_DECLSPEC  int MPI_Recv(void *buf, int count, MPI_Datatype datatype, int source,
+      |                    ^~~~~~~~
+main.c:86:117: error: ‘requests’ undeclared (first use in this function)
+   86 |             MPI_Isend(&data_tmp[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &requests[0]);
+      |                                                                                                                     ^~~~~~~~
+main.c:86:117: note: each undeclared identifier is reported only once for each function it appears in
+main.c:94:34: error: ‘statuses’ undeclared (first use in this function)
+   94 |         MPI_Waitall(2, requests, statuses);
+      |                                  ^~~~~~~~
+--------------------------------------------------------------------------
+mpirun was unable to launch the specified application as it could not access
+or execute an executable:
+
+Executable: ./out_width512_height512_depth512_iter10000_nodes2_compare1_normal
+Node: c1-5
+
+while attempting to start process rank 0.
+--------------------------------------------------------------------------

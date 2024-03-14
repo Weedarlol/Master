@@ -24,6 +24,8 @@ int main(int argc, char *argv[]) {
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Request myRequest_first[2];
+    MPI_Status myStatus_first[2];
 
     if (argc != 6) {
         printf("Wrong number of inputs\n Required inputs: %s <Width> <Height> <Depth> <Iterations> <Node> <Compare>", argv[0]); // Programname
@@ -57,11 +59,11 @@ int main(int argc, char *argv[]) {
     double division = 1/6.0;
 
     if(rank == 0){
-        MPI_Send(&data[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD);                    // Sender den nest siste slicen
-        MPI_Recv(&data[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE); // Mottar slice på den siste slicen
+        MPI_Send(&data[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest_first);                    // Sender den nest siste slicen
+        MPI_Recv(&data[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD); // Mottar slice på den siste slicen
     }
     else{
-        MPI_Recv(&data[0],            width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE); // Mottar slice på den første slicen
+        MPI_Recv(&data[0],            width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD); // Mottar slice på den første slicen
         MPI_Send(&data[width*height], width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD);                    // Sender den andre slicen
     }
 
@@ -81,13 +83,15 @@ int main(int argc, char *argv[]) {
         }
 
         if(rank == 0){
-            MPI_Send(&data_tmp[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD);                    // Sender den nest siste slicen
-            MPI_Recv(&data_tmp[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE); // Mottar slice på den siste slicen
+            MPI_Isend(&data_tmp[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &requests[0]);
+            MPI_Irecv(&data_tmp[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &requests[1]);
         }
         else{
-            MPI_Recv(&data_tmp[0],            width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE); // Mottar slice på den første slicen
-            MPI_Send(&data_tmp[width*height], width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD);                    // Sender den andre slicen
+            MPI_Irecv(&data_tmp[0],            width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &requests[0]);
+            MPI_Isend(&data_tmp[width*height], width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &requests[1]);
         }
+
+        MPI_Waitall(2, requests, statuses);
 
         double *data_tmp_swap = data_tmp;
         data_tmp = data;

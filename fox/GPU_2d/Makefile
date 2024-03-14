@@ -1,7 +1,7 @@
 
 # Creates a list of values for GPU allocation, max 3 integers when running with nsys nvprof
 # Example  = 2 3 4
-GPU_COUNTS = 2 3 4
+GPU_COUNTS = 2
 
 # Define different matrix sizes
 WIDTH = 8192
@@ -31,7 +31,6 @@ submit:
 		sbatch --account=ec12 -p $(partition) --time=00-00:01:00 --gpus-per-node=1 --mem-per-gpu=3G ./start.slurm $(partition) $(RUN_IDENTIFIERS); \
 	)
 
-
 babel:
 	sbatch -p $(PARTITION) ./babel.slurm $(PARTITION)
 
@@ -57,4 +56,4 @@ clean_all:
 
 
 cancel:
-	scancel -u vidaro
+	scancel -u ec-vidarlol

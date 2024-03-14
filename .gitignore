@@ -31,3 +31,8 @@ fox/GPU_3d/output/
 fox/GPU_3d/error/
 fox/GPU_3d_1GPU/output/
 fox/GPU_3d_1GPU/error/
+
+functions/cuda_functions_fox.o
+functions/cuda_functions_ex3.o
+functions/global_functions_fox.o
+functions/global_functions_ex3.o
