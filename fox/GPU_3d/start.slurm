@@ -8,7 +8,7 @@ NVCCFLAGS="-rdc=true"
 LIBDIR="/../../usr/lib/x86_64-linux-gnu/libnccl.so"
 
 # List of source files
-SOURCES="main.cu jacobi.cu"
+SOURCES="main.cu programs/jacobi.cu programs/scenarios.cu"
 OBJECTS_DIR="../../functions/"
 GLOBAL_FUNCTIONS_OBJECT="global_functions_fox.o"
 CUDA_FUNCTIONS_OBJECT="cuda_functions_fox.o"

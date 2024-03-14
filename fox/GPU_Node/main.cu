@@ -3,9 +3,7 @@
 #include <time.h>
 
 #include "mpi.h"
-
-
-#include "../../global_functions.h"
+#include "../../functions/global_functions.h"
 
 int main(int argc, char *argv[]) {
     /*
@@ -13,6 +11,8 @@ int main(int argc, char *argv[]) {
     height      | int   | The height of the grid
     iter        | int   | Number of max iterations for the jacobian algorithm
 
+    eps         | double | The limit for accepting the state of the grid during jacobian algorithm
+    maxdelta    | double | The largest difference in the grid between an iteration
     dx          | double | Distance between each element in the grid in x direction
     dy          | double | Distance between each element in the grid in y direction
 
@@ -24,9 +24,11 @@ int main(int argc, char *argv[]) {
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Request myRequest[2];
+    MPI_Status myStatus[2];
 
-    if (argc != 5) {
-        printf("Wrong number of inputs\n Required inputs: %s <Width> <Height> <Depth> <Iterations> <Node>", argv[0]); // Programname
+    if (argc != 6) {
+        printf("Wrong number of inputs\n Required inputs: %s <Width> <Height> <Depth> <Iterations> <Node> <Compare>", argv[0]); // Programname
         return 1;
     }
 
@@ -34,6 +36,8 @@ int main(int argc, char *argv[]) {
     int height = atoi(argv[2]);
     int depth = atoi(argv[3]);
     int iter = atoi(argv[4]);
+    int compare = atoi(argv[5]);
+
     int depth_node = depth/size + 1;
 
     double dx = 2.0 / (width - 1);
@@ -55,17 +59,19 @@ int main(int argc, char *argv[]) {
     double division = 1/6.0;
 
     if(rank == 0){
-        MPI_Send(&data[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD);
-        MPI_Recv(&data[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Isend(&data[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[0]);
+        MPI_Irecv(&data[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[1]); 
     }
     else{
-        MPI_Recv(&data[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        MPI_Send(&data[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD);
+        MPI_Irecv(&data[0],            width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[0]); 
+        MPI_Isend(&data[width*height], width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[1]); 
     }
+
+    MPI_Waitall(2, myRequest, myStatus);
 
     /* Performing Jacobian grid Calculation */
     // Performing a number of iterations while statement is not satisfied
-    while (iter > 0) {
+    while(iter > 0){
         for(int i = 1; i < depth_node - 1; i++){
             for(int j = 1; j < height - 1; j++){
                 for(int k = 1; k < width - 1; k++) {
@@ -79,13 +85,15 @@ int main(int argc, char *argv[]) {
         }
 
         if(rank == 0){
-            MPI_Send(&data_tmp[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD);
-            MPI_Recv(&data_tmp[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            MPI_Isend(&data_tmp[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[0]);
+            MPI_Irecv(&data_tmp[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[1]); 
         }
         else{
-            MPI_Recv(&data_tmp[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            MPI_Send(&data_tmp[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD);
+            MPI_Irecv(&data_tmp[0],            width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[0]); 
+            MPI_Isend(&data_tmp[width*height], width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[1]); 
         }
+
+        MPI_Waitall(2, myRequest, myStatus);
 
         double *data_tmp_swap = data_tmp;
         data_tmp = data;
@@ -96,23 +104,21 @@ int main(int argc, char *argv[]) {
 
 
     end = clock();
-    double *data_combined = NULL;
-
     printf("Time(event) - %.5f s\n", ((double) (end - start)) / CLOCKS_PER_SEC);
 
+
+    double *data_combined = NULL;
     if(rank == 0){
         data_combined = (double*)malloc(width * height * depth * sizeof(double));
 
-        MPI_Gather(&data[0], width*height*(depth_node-1), MPI_DOUBLE, data_combined, width*height*(depth_node-1), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Gather(&data[0],            width*height*(depth_node-1), MPI_DOUBLE, data_combined, width*height*(depth_node-1), MPI_DOUBLE, 0, MPI_COMM_WORLD);
     }
     else{
-
-        MPI_Gather(&data[width*height], width*height*(depth_node-1), MPI_DOUBLE, data_combined, width*height*(depth_node-1), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Gather(&data[width*height], width*height*(depth_node-1), MPI_DOUBLE, NULL,          0,                           MPI_DOUBLE, 0, MPI_COMM_WORLD);
     }
 
 
 
-    int compare = 1;
     if(compare == 1){
         if(rank == 0){
             double* data_compare = (double*)malloc(width * height * depth* sizeof(double));
@@ -147,11 +153,11 @@ int main(int argc, char *argv[]) {
 
             fclose(fptr);
 
-            for(int i = 0; i < depth; i++){
+            for(int i = 0; i < depth_node; i++){
                 for (int j = 0; j < height; j++) {
                     for (int k = 0; k < width; k++) {
-                        if (fabs(data_combined[k + j * width + i * width * height] - data_compare[k + j * width + i * width * height]) > 1e-15)  {
-                            printf("Mismatch found at position (width = %d, height = %d, depth = %d) (data_combined = %.16f, data_compare = %.16f)\n", k, j, i, data_combined[k + j * width + i * width * height], data_compare[k + j * width + i * width * height]);
+                        if (fabs(data[k + j * width + i * width * height] - data_compare[k + j * width + i * width * height]) > 1e-15)  {
+                            printf("Mismatch found at position (width = %d, height = %d, depth = %d) (data_Node = %.16f, data_compare = %.16f)\n", k, j, i, data[k + j * width + i * width * height], data_compare[k + j * width + i * width * height]);
                             free(data_compare);
                             MPI_Finalize();
                             exit(EXIT_FAILURE);

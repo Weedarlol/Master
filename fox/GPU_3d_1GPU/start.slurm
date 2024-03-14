@@ -1,17 +1,17 @@
 #!/bin/bash
 set -e
 
+# Common flags for nvcc
+NVCCFLAGS="-rdc=true"
+
+# Directory for your library (adjust this to the actual path)
+LIBDIR="/../../usr/lib/x86_64-linux-gnu/libnccl.so"
+
 # List of source files
-# List of source files
-SOURCES="main.cu programs/jacobi.cu programs/scenarios.cu"
+SOURCES="main.cu programs/jacobi.cu"
 OBJECTS_DIR="../../functions/"
 GLOBAL_FUNCTIONS_OBJECT="global_functions_fox.o"
 CUDA_FUNCTIONS_OBJECT="cuda_functions_fox.o"
-
-LIBDIR="/cluster/software/EL9/easybuild/software/OpenMPI/4.1.4-GCC-11.3.0/lib"
-INCLUDE="/cluster/software/EL9/easybuild/software/OpenMPI/4.1.4-GCC-11.3.0/include"
-
-
 
 # Gets the first element which indicates the partition type
 PARTITION="$1"
@@ -20,20 +20,19 @@ shift
 
 # Creates a scenario for the rest of the elements
 for SCENARIO in "$@"; do
-    # Extract matrix size and GPU count from the run identifier
+    # Extract grid size and GPU count from the run identifier
     WIDTH=$(echo $SCENARIO | awk -F'width' '{print $2}' | awk -F'_' '{print $1}')
     HEIGHT=$(echo $SCENARIO | awk -F'height' '{print $2}' | awk -F'_' '{print $1}')
     DEPTH=$(echo $SCENARIO | awk -F'depth' '{print $2}' | awk -F'_' '{print $1}')
     ITERATIONS=$(echo $SCENARIO | awk -F'iter' '{print $2}' | awk -F'_' '{print $1}')
-    NODES=$(echo $SCENARIO | awk -F'nodes' '{print $2}' | awk -F'_' '{print $1}')
-    GPUS=$(echo $SCENARIO | awk -F'gpus' '{print $2}')
+    COMPARE=$(echo $SCENARIO | awk -F'compare' '{print $2}')
 
     # Define the variable values
-    VAR1=$WIDTH # Width
-    VAR2=$HEIGHT # Height
-    VAR3=$DEPTH # Depth
-    VAR4=$ITERATIONS  # Iterations
-    VAR5=$GPUS
+    VAR1=$WIDTH
+    VAR2=$HEIGHT
+    VAR3=$DEPTH
+    VAR4=$ITERATIONS
+    VAR5=$COMPARE
 
     # Create a temporary Slurm script for this scenario
     TEMP_SCRIPT="slurm_script_${SCENARIO}_${PARTITION}.sh"
@@ -41,11 +40,12 @@ for SCENARIO in "$@"; do
     cat << EOF > "${TEMP_SCRIPT}"
 #!/bin/bash
 
-#SBATCH --job-name=${SCENARIO}_${PARTITION}
+#SBATCH --job-name=${SCENARIO}_${PARTITION}_GPU${NUM_GPUS}
 #SBATCH --account=ec12
-#SBATCH --mem-per-gpu=4G
 #SBATCH -p ${PARTITION}
-#SBATCH -N ${NODES}
+#SBATCH --mem-per-cpu=4G
+#SBATCH -N 1                                  # Antall noder, i dgx2q så er det bare 1 node bygd opp av DualProcessor AMD EPYC Milan 7763 64-core w/ 8 qty Nvidia Volta A100/80GB
+#SBATCH -n 1                                  # Antall CPU cores som vil bli allokert
 #SBATCH -t 14:00:00
 #SBATCH --ntasks-per-node=1                   # Antall ganger en vil kjøre programmet på hver node
 #SBATCH --cpus-per-task=1                     # Antall CPUer en vil allokere, er 64 cores per CPU, så kan i teorien bare trenge å øke dene når -n > 64
@@ -58,10 +58,11 @@ for SCENARIO in "$@"; do
 module purge
 module load CUDA/11.7.0
 module load OpenMPI/4.1.4-GCC-11.3.0
+module load NCCL/2.12.12-GCCcore-11.3.0-CUDA-11.7.0
 
-nvcc $SOURCES -o out_${SCENARIO}_${PARTITION} -lcudart -lmpi
+nvcc $NVCCFLAGS $SOURCES $OBJECTS_DIR/$GLOBAL_FUNCTIONS_OBJECT $OBJECTS_DIR/$CUDA_FUNCTIONS_OBJECT -o out_${SCENARIO}_${PARTITION} -L$LIBDIR -lnccl
 
-mpirun -n 2 ./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4
+./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5
 
 exit 0
 

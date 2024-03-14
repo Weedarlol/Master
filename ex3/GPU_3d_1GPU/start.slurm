@@ -10,8 +10,8 @@ LIBDIR="/../../usr/lib/x86_64-linux-gnu/libnccl.so"
 # List of source files
 SOURCES="main.cu jacobi.cu"
 OBJECTS_DIR="../../functions/"
-GLOBAL_FUNCTIONS_OBJECT="global_functions_fox.o"
-CUDA_FUNCTIONS_OBJECT="cuda_functions_fox.o"
+GLOBAL_FUNCTIONS_OBJECT="global_functions_ex3.o"
+CUDA_FUNCTIONS_OBJECT="cuda_functions_ex3.o"
 
 # Gets the first element which indicates the partition type
 PARTITION="$1"
