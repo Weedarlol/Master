@@ -45,4 +45,4 @@ cleannn:
 
 
 cancel:
-	scancel -u vidaro
+	scancel -u ec-vidarlol

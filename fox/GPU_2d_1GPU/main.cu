@@ -5,7 +5,7 @@
 #include <nvtx3/nvToolsExt.h>
 
 #include "programs/jacobi.h"
-#include "../../global_functions.h"
+#include "../../functions/global_functions.h"
 #include <cooperative_groups.h>
 
 using namespace cooperative_groups;

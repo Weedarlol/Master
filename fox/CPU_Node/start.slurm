@@ -2,7 +2,9 @@
 set -e
 
 # List of source files
-SOURCES="main.c ../../global_functions.c"
+SOURCES="main.c"
+OBJECTS_DIR="../../functions/"
+GLOBAL_FUNCTIONS_OBJECT="global_functions_fox.o"
 
 
 
@@ -48,7 +50,7 @@ module purge
 module load GCC/11.3.0
 module load OpenMPI/4.1.4-GCC-11.3.0
 
-mpicc $SOURCES -o out_${SCENARIO}_${PARTITION} -lm -O3
+mpicc $SOURCES $OBJECTS_DIR/$GLOBAL_FUNCTIONS_OBJECT -o out_${SCENARIO}_${PARTITION} -lm -O3
 
 mpirun -n 2 ./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5
 

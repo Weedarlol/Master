@@ -2,7 +2,9 @@
 set -e
 
 # List of source files
-SOURCES="main.c ../../global_functions.c"
+SOURCES="main.c"
+OBJECTS_DIR="../../functions/"
+GLOBAL_FUNCTIONS_OBJECT="global_functions_fox.o"
 
 
 # Gets the first element which indicates the partition type
@@ -48,7 +50,7 @@ for SCENARIO in "$@"; do
 module purge
 module load GCC/12.3.0
 
-gcc $SOURCES -o out_${SCENARIO}_${PARTITION} -lm -O3
+gcc $SOURCES $OBJECTS_DIR/$GLOBAL_FUNCTIONS_OBJECT -o out_${SCENARIO}_${PARTITION} -lm -O3
 
 ./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5
 

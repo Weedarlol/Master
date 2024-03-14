@@ -3,7 +3,7 @@
 #include <time.h>
 
 
-#include "../../global_functions.h"
+#include "../../functions/global_functions.h"
 
 int main(int argc, char *argv[]) {
     /*

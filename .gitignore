@@ -15,6 +15,20 @@ ex3/GPU_3d/error/
 ex3/GPU_3d_1GPU/output/
 ex3/GPU_3d_1GPU/error/
 
+ex3/CPU_2d/slurm*
+ex3/CPU_3d/slurm*
+ex3/GPU_2d/slurm*
+ex3/GPU_2d_1GPU/slurm*
+ex3/GPU_3d/slurm*
+ex3/GPU_3d_1GPU/slurm*
+
+ex3/CPU_2d/out_width*
+ex3/CPU_3d/out_width*
+ex3/GPU_2d/out_width*
+ex3/GPU_2d_1GPU/out_width*
+ex3/GPU_3d/out_width*
+ex3/GPU_3d_1GPU/out_width*
+
 fox/CPU_2d/matrices/
 fox/CPU_2d/output/
 fox/CPU_2d/error/
@@ -31,6 +45,22 @@ fox/GPU_3d/output/
 fox/GPU_3d/error/
 fox/GPU_3d_1GPU/output/
 fox/GPU_3d_1GPU/error/
+
+fox/CPU_2d/slurm*
+fox/CPU_3d/slurm*
+fox/CPU_Node/slurm*
+fox/GPU_2d/slurm*
+fox/GPU_2d_1GPU/slurm*
+fox/GPU_3d/slurm*
+fox/GPU_Node/slurm*
+
+fox/CPU_2d/out_width*
+fox/CPU_3d/out_width*
+fox/CPU_Node/out_width*
+fox/GPU_2d/out_width*
+fox/GPU_2d_1GPU/out_width*
+fox/GPU_3d/out_width*
+fox/GPU_Node/out_width*
 
 functions/cuda_functions_fox.o
 functions/cuda_functions_ex3.o

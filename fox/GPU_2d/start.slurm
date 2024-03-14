@@ -8,7 +8,7 @@ NVCCFLAGS="-rdc=true"
 LIBDIR="/../../usr/lib/x86_64-linux-gnu/libnccl.so"
 
 # List of source files
-SOURCES="main.cu"
+SOURCES="main.cu jacobi.cu"
 OBJECTS_DIR="../../functions/"
 GLOBAL_FUNCTIONS_OBJECT="global_functions_fox.o"
 CUDA_FUNCTIONS_OBJECT="cuda_functions_fox.o"
@@ -65,7 +65,8 @@ module load CUDA/11.7.0
 module load OpenMPI/4.1.4-GCC-11.3.0
 module load NCCL/2.12.12-GCCcore-11.3.0-CUDA-11.7.0
 
-nvcc $NVCCFLAGS $SOURCES $OBJECTS_DIR/$GLOBAL_FUNCTIONS_OBJECT $OBJECTS_DIR/$CUDA_FUNCTIONS_OBJECT -o out_${SCENARIO}_${PARTITION} -L$LIBDIR -lnccl
+nvcc $NVCCFLAGS $SOURCES $OBJECTS_DIR/$GLOBAL_FUNCTIONS_OBJECT $OBJECTS_DIR/$CUDA_FUNCTIONS_OBJECT -o out_${SCENARIO}_${PARTITION} -L$LIBDIR -lnccl -O3
+
 
 #nsys nvprof -o nsight/nsight_${SCENARIO}_${PARTITION} ./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5 $VAR6 $VAR7 $VAR8
 ./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5 $VAR6 $VAR7 $VAR8
