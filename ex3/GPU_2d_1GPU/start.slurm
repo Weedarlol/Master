@@ -8,8 +8,10 @@ NVCCFLAGS="-rdc=true"
 LIBDIR="/../../usr/lib/x86_64-linux-gnu/libnccl.so"
 
 # List of source files
-SOURCES="main.cu programs/jacobi.cu ../../cuda_functions.cu"
-C_SOURCES="../../global_functions.c"
+SOURCES="main.cu jacobi.cu"
+OBJECTS_DIR="../../functions/"
+GLOBAL_FUNCTIONS_OBJECT="global_functions_ex3.o"
+CUDA_FUNCTIONS_OBJECT="cuda_functions_ex3.o"
 
 
 # Object files derived from sources
@@ -60,18 +62,9 @@ module load cuda11.8/nsight/11.8.0
 module load cuda11.8/profiler/11.8.0
 module load cuda11.8/toolkit/11.8.0
 
-# Compile CUDA source files to object files
-nvcc -c main.cu -o main.o
-nvcc -c programs/jacobi.cu -o jacobi.o
-nvcc -c ../../cuda_functions.cu -o cuda_functions.o
+nvcc $NVCCFLAGS $SOURCES $OBJECTS_DIR/$GLOBAL_FUNCTIONS_OBJECT $OBJECTS_DIR/$CUDA_FUNCTIONS_OBJECT -o out_${SCENARIO}_${PARTITION} -L$LIBDIR -lnccl -O3
 
-# Compile C source files to object files
-gcc -c ../../global_functions.c -o global_functions.o
-
-
-#nvcc $NVCCFLAGS -o out_${SCENARIO}_${PARTITION} $OBJECTS $C_OBJECTS -L$LIBDIR -lnccl -lm
-
-#./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4
+./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4
 
 exit 0
 

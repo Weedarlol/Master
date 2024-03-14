@@ -27,6 +27,13 @@ TEST = 0
 RUN_IDENTIFIERS = $(foreach width,$(WIDTH),$(foreach height,$(HEIGHT),$(foreach depth,$(DEPTH),$(foreach gpu,$(GPU_COUNTS),$(foreach iter,$(ITERATIONS),$(foreach overlap,$(OVERLAP),$(foreach test,$(TEST),width$(width)_height$(height)_depth$(depth)_gpu$(gpu)_iter$(ITERATIONS)_compare$(COMPARE)_overlap$(overlap)_test$(test))))))))
 
 
+
+
+
+
+
+
+
 submit:
 	$(foreach partition,$(PARTITION), \
 		sbatch -p $(partition) ./start.slurm $(partition) $(RUN_IDENTIFIERS); \

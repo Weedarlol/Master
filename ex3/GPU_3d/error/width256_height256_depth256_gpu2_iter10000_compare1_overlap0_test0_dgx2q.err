@@ -1,6 +1,7 @@
-main.cu(55): error: identifier "cudaErrorHandle" is undefined
+main.cu(52): warning #177-D: variable "overlap_calc" was declared but never referenced
 
-main.cu(51): warning #177-D: variable "overlap_calc" was declared but never referenced
-
-1 error detected in the compilation of "main.cu".
-/cm/local/apps/slurm/var/spool/job147419/slurm_script: line 31: ./out_width256_height256_depth256_gpu2_iter10000_compare1_overlap0_test0_dgx2q: No such file or directory
+programs/scenarios.cu:5:10: fatal error: ../../global_functions.h: No such file or directory
+    5 | #include "../../global_functions.h"
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~
+compilation terminated.
+/cm/local/apps/slurm/var/spool/job148871/slurm_script: line 31: ./out_width256_height256_depth256_gpu2_iter10000_compare1_overlap0_test0_dgx2q: No such file or directory
