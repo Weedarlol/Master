@@ -1,12 +1,12 @@
 
 # Creates a list of values for GPU allocation, max 3 integers when running with nsys nvprof
 # Example  = 2 3 4
-GPU_COUNTS = 2
+GPU_COUNTS = 2 3 4
 
 # Define different matrix sizes
-WIDTH = 256
-HEIGHT = 256
-DEPTH = 256
+WIDTH = 512
+HEIGHT = 512
+DEPTH = 512
 
 # Number of max iterations to run for the scenario
 ITERATIONS = 10000
@@ -41,7 +41,7 @@ submit:
 
 
 babel:
-	sbatch -p $(PARTITION) ./babel.slurm $(PARTITION)
+	sbatch -p $(PARTITION) ./Babel/babel.slurm $(PARTITION)
 
 # View rules (On local computer)
 plot:

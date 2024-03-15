@@ -5,7 +5,7 @@ PARTITION="$1"
 if [ "$PARTITION" == "hgx2q" ]; then
     CUDA_ARCH="sm_80"
 elif [ "$PARTITION" == "dgx2q" ]; then
-    CUDA_ARCH="sm_70"  # or the appropriate value for hgx2q
+    CUDA_ARCH="sm_70"
 else
     echo "Invalid PARTITION value. Please use 'dgx2q' or 'hgx2q'."
     exit 1
@@ -21,8 +21,8 @@ fi
 #SBATCH --gres=gpu:1                          # Antall GPUer en allokerer per job, så totale antall GPU
 #SBATCH --gpus-per-task=1                     # Antall GPUer en allokerer per task, så totale antall GPU delt på antall noder
 #SBATCH --gpus=1                              # Antall GPUer en allokerer per node, så totale antall GPU delt på antall noder
-#SBATCH --output=output/Babel_${PARTITION}.out
-#SBATCH --error=error/Babel_${PARTITION}.err
+#SBATCH --output=Babel_${PARTITION}.out
+#SBATCH --error=Babel_${PARTITION}.err
 
 module purge
 module load slurm/21.08.8
@@ -33,11 +33,11 @@ module load cuda11.8/profiler/11.8.0
 module load cuda11.8/toolkit/11.8.0
 module load cmake/gcc/3.27.9
 
-cd ../../../BabelStream
+cd Babel/Build-x86_64/CMakeFiles
 
 cmake -B ../Master/Mas/GPU_n/Build-x86_64/ -DCMAKE_INSTALL_PREFIX=. -H. -DMODEL=cuda -DCMAKE_CUDA_COMPILER=/cm/shared/apps/cuda11.8/toolkit/11.8.0/bin/nvcc -DCUDA_ARCH="$CUDA_ARCH"
 
-cd ../Master/Mas/GPU_n/Build-x86_64/
+cd ../
 
 cmake --build 
 

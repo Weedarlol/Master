@@ -18,7 +18,6 @@ PARTITION="$1"
 
 shift
 
-
 # Creates a scenario for the rest of the elements
 for SCENARIO in "$@"; do
     # Extract matrix size and GPU count from the run identifier
