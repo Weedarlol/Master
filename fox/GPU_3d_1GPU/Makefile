@@ -1,14 +1,14 @@
 # Define different grid sizes
-WIDTH = 512
-HEIGHT = 512
-DEPTH = 512
+WIDTH = 128
+HEIGHT = 128
+DEPTH = 128
 
 # Number of max iterations to run for the scenario
 ITERATIONS = 10000
 
 # Chooses which partition to run at. (hgx2q and dgx2q for more than 1 GPU, a100q and a40q for more than 1 cluster)
 # Example = hgx2q, dgx2q, a100q
-PARTITION = hgx2q
+PARTITION = accel
 
 
 COMPARE = 1
@@ -19,7 +19,7 @@ RUN_IDENTIFIERS = $(foreach width,$(WIDTH),$(foreach height,$(HEIGHT),$(foreach 
 
 submit:
 	$(foreach partition,$(PARTITION), \
-		sbatch -p $(partition) ./start.slurm $(partition) $(RUN_IDENTIFIERS); \
+		sbatch --account=ec12 -p $(partition) --time=00-00:01:00 --gpus-per-node=1 --mem-per-gpu=3G ./start.slurm $(partition) $(RUN_IDENTIFIERS); \
 	)
 
 

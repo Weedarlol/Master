@@ -40,7 +40,7 @@ for SCENARIO in "$@"; do
     cat << EOF > "${TEMP_SCRIPT}"
 #!/bin/bash
 
-#SBATCH --job-name=${SCENARIO}_${PARTITION}_GPU${NUM_GPUS}
+#SBATCH --job-name=${SCENARIO}_${PARTITION}_GPU1
 #SBATCH --account=ec12
 #SBATCH -p ${PARTITION}
 #SBATCH --mem-per-cpu=4G
@@ -49,9 +49,9 @@ for SCENARIO in "$@"; do
 #SBATCH -t 14:00:00
 #SBATCH --ntasks-per-node=1                   # Antall ganger en vil kjøre programmet på hver node
 #SBATCH --cpus-per-task=1                     # Antall CPUer en vil allokere, er 64 cores per CPU, så kan i teorien bare trenge å øke dene når -n > 64
-#SBATCH --gres=gpu:${NUM_GPUS}                # Antall GPUer en allokerer per job, så totale antall GPU
-#SBATCH --gpus-per-task=${NUM_GPUS}           # Antall GPUer en allokerer per task, så totale antall GPU delt på antall noder
-#SBATCH --gpus=${NUM_GPUS}                    # Antall GPUer en allokerer per node, så totale antall GPU delt på antall noder
+#SBATCH --gres=gpu:1                # Antall GPUer en allokerer per job, så totale antall GPU
+#SBATCH --gpus-per-task=1           # Antall GPUer en allokerer per task, så totale antall GPU delt på antall noder
+#SBATCH --gpus=1                    # Antall GPUer en allokerer per node, så totale antall GPU delt på antall noder
 #SBATCH --output=output/${SCENARIO}_${PARTITION}.out
 #SBATCH --error=error/${SCENARIO}_${PARTITION}.err
 

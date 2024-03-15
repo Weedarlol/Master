@@ -4,6 +4,7 @@
 
 #include "programs/scenarios.h"
 #include "../../functions/global_functions.h"
+#include "../../functions/cuda_functions.h"
 #include <nvtx3/nvToolsExt.h>
 
 void initialization(int width, int height, int depth, int iter, double dx, double dy, double dz, int gpus, int compare, int overlap, int test, dim3 blockDim, dim3 gridDim){
@@ -83,7 +84,7 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     cudaErrorHandle(cudaMallocHost(&data_gpu,      gpus*sizeof(double*)));
     cudaErrorHandle(cudaMallocHost(&data_gpu_tmp,  gpus*sizeof(double*)));
 
-    fillValues3D(data, width, height, depth, dx, dy, dz, 1);
+    fillValues3D(data, width, height, depth, dx, dy, dz, 0);
 
     for(int g = 0; g < gpus; g++){
         cudaErrorHandle(cudaSetDevice(g));
@@ -118,7 +119,6 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
         kernelArgs[4] = &slices_compute_device[g];
         kernelArgs[5] = &threadInformation[4];
         kernelArgs[6] = &threadInformation[5];
-        kernelArgs[7] = &threadInformation[6];
 
         kernelCollEdge[g] = kernelArgs;
     }
@@ -132,14 +132,13 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
         kernelArgs[1] = &data_gpu_tmp[g];
         kernelArgs[2] = &width;
         kernelArgs[3] = &height;
-        kernelArgs[4] = &slices_leftover;
-        kernelArgs[5] = &device_nr[g];
-        kernelArgs[6] = &slices_compute_device[g];
-        kernelArgs[7] = &threadInformation[0];
-        kernelArgs[8] = &threadInformation[1];
-        kernelArgs[9] = &threadInformation[2];
-        kernelArgs[10] = &threadInformation[3];
-        kernelArgs[11] = &overlap_calc;
+        kernelArgs[5] = &slices_leftover;
+        kernelArgs[6] = &device_nr[g];
+        kernelArgs[7] = &slices_compute_device[g];
+        kernelArgs[8] = &threadInformation[0];
+        kernelArgs[9] = &threadInformation[1];
+        kernelArgs[10] = &threadInformation[2];
+        kernelArgs[11] = &threadInformation[3];
 
         kernelCollMid[g] = kernelArgs;
     }

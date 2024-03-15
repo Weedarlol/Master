@@ -41,24 +41,25 @@ for SCENARIO in "$@"; do
     cat << EOF > "${TEMP_SCRIPT}"
 #!/bin/bash
 
-#SBATCH --job-name=${SCENARIO}_${PARTITION}
+#SBATCH --job-name=${SCENARIO}_${PARTITION}_GPU1
+#SBATCH --account=ec12
 #SBATCH -p ${PARTITION}
-#SBATCH -N 1
-#SBATCH -n 1
+#SBATCH --mem-per-cpu=4G
+#SBATCH -N 1                                  # Antall noder, i dgx2q så er det bare 1 node bygd opp av DualProcessor AMD EPYC Milan 7763 64-core w/ 8 qty Nvidia Volta A100/80GB
+#SBATCH -n 1                                  # Antall CPU cores som vil bli allokert
 #SBATCH -t 14:00:00
-#SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=1
-#SBATCH --gres=gpu:1
+#SBATCH --ntasks-per-node=1                   # Antall ganger en vil kjøre programmet på hver node
+#SBATCH --cpus-per-task=1                     # Antall CPUer en vil allokere, er 64 cores per CPU, så kan i teorien bare trenge å øke dene når -n > 64
+#SBATCH --gres=gpu:1                # Antall GPUer en allokerer per job, så totale antall GPU
+#SBATCH --gpus-per-task=1           # Antall GPUer en allokerer per task, så totale antall GPU delt på antall noder
+#SBATCH --gpus=1                    # Antall GPUer en allokerer per node, så totale antall GPU delt på antall noder
 #SBATCH --output=output/${SCENARIO}_${PARTITION}.out
 #SBATCH --error=error/${SCENARIO}_${PARTITION}.err
 
 module purge
-module load slurm/21.08.8
-module load cuda11.8/blas/11.8.0
-module load cuda11.8/fft/11.8.0
-module load cuda11.8/nsight/11.8.0
-module load cuda11.8/profiler/11.8.0
-module load cuda11.8/toolkit/11.8.0
+module load CUDA/11.7.0
+module load OpenMPI/4.1.4-GCC-11.3.0
+module load NCCL/2.12.12-GCCcore-11.3.0-CUDA-11.7.0
 
 nvcc $NVCCFLAGS $SOURCES $OBJECTS_DIR/$GLOBAL_FUNCTIONS_OBJECT $OBJECTS_DIR/$CUDA_FUNCTIONS_OBJECT -o out_${SCENARIO}_${PARTITION} -L$LIBDIR -lnccl -O3
 
