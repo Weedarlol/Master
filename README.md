@@ -47,4 +47,8 @@ Ex3 had 3 partitions i was utilizing, "Dgx2q", "Hgx2q" and "A100q".
 - Hgx2q was made up of a single node consisting of DualProcessor AMD EPYC Milan 7763 64-core with 8 Nvidia Volta A100/80GB connected through PCIE, but which are interconnected by NVLink.
 - A100q
 
-
+# Oppgaver
+## CPU
+- CPU 2d
+- CPU 3d
+- CPU(node0) to CPU 

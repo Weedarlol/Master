@@ -7,10 +7,7 @@ NVCCFLAGS="-rdc=true"
 # Directory for your library (adjust this to the actual path)
 LIBDIR="/../../usr/lib/x86_64-linux-gnu/libnccl.so"
 
-SOURCES="main.cu programs/jacobi.cu"
-OBJECTS_DIR="../../functions/"
-GLOBAL_FUNCTIONS_OBJECT="global_functions_fox.o"
-CUDA_FUNCTIONS_OBJECT="cuda_functions_fox.o"
+SOURCES="main.cu programs/jacobi.cu programs/cuda_functions.cu"
 
 
 # Object files derived from sources
@@ -61,7 +58,7 @@ module load CUDA/11.7.0
 module load OpenMPI/4.1.4-GCC-11.3.0
 module load NCCL/2.12.12-GCCcore-11.3.0-CUDA-11.7.0
 
-nvcc $NVCCFLAGS $SOURCES $OBJECTS_DIR/$GLOBAL_FUNCTIONS_OBJECT $OBJECTS_DIR/$CUDA_FUNCTIONS_OBJECT -o out_${SCENARIO}_${PARTITION} -L$LIBDIR -lnccl -O3
+nvcc $NVCCFLAGS $SOURCES -o out_${SCENARIO}_${PARTITION} -L$LIBDIR -lnccl -O3 -lm
 
 ./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4
 

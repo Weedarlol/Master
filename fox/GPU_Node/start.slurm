@@ -1,20 +1,24 @@
 #!/bin/bash
 set -e
 
-# List of source files
+# Common flags for nvcc
+NVCCFLAGS="-rdc=true"
+
+# Directory for your library (adjust this to the actual path)
+LIBDIR="/../../usr/lib/x86_64-linux-gnu/libnccl.so"
+
 # List of source files
 SOURCES="main.cu programs/jacobi.cu programs/scenarios.cu"
 OBJECTS_DIR="../../functions/"
 GLOBAL_FUNCTIONS_OBJECT="global_functions_fox.o"
 CUDA_FUNCTIONS_OBJECT="cuda_functions_fox.o"
 
-LIBDIR="/cluster/software/EL9/easybuild/software/OpenMPI/4.1.4-GCC-11.3.0/lib"
-INCLUDE="/cluster/software/EL9/easybuild/software/OpenMPI/4.1.4-GCC-11.3.0/include"
-
-
+# Object files derived from sources
+OBJECTS=$(echo "$SOURCES" | sed 's/\.cu/\.o/g')
 
 # Gets the first element which indicates the partition type
 PARTITION="$1"
+
 shift
 
 
@@ -24,16 +28,22 @@ for SCENARIO in "$@"; do
     WIDTH=$(echo $SCENARIO | awk -F'width' '{print $2}' | awk -F'_' '{print $1}')
     HEIGHT=$(echo $SCENARIO | awk -F'height' '{print $2}' | awk -F'_' '{print $1}')
     DEPTH=$(echo $SCENARIO | awk -F'depth' '{print $2}' | awk -F'_' '{print $1}')
+    NUM_GPUS=$(echo $SCENARIO | awk -F'nodes' '{print $2}' | awk -F'_' '{print $1}')
+    NUM_GPUS=$(echo $SCENARIO | awk -F'gpu' '{print $2}' | awk -F'_' '{print $1}')
     ITERATIONS=$(echo $SCENARIO | awk -F'iter' '{print $2}' | awk -F'_' '{print $1}')
-    NODES=$(echo $SCENARIO | awk -F'nodes' '{print $2}' | awk -F'_' '{print $1}')
-    GPUS=$(echo $SCENARIO | awk -F'gpus' '{print $2}')
+    COMPARE=$(echo $SCENARIO | awk -F'compare' '{print $2}' | awk -F'_' '{print $1}')
+    OVERLAP=$(echo $SCENARIO | awk -F'overlap' '{print $2}' | awk -F'_' '{print $1}')
+    TEST=$(echo $SCENARIO | awk -F'test' '{print $2}')
 
     # Define the variable values
     VAR1=$WIDTH # Width
     VAR2=$HEIGHT # Height
-    VAR3=$DEPTH # Depth
+    VAR3=$DEPTH
     VAR4=$ITERATIONS  # Iterations
-    VAR5=$GPUS
+    VAR5=$NUM_GPUS    # GPUs
+    VAR6=$COMPARE
+    VAR7=$OVERLAP
+    VAR8=$TEST
 
     # Create a temporary Slurm script for this scenario
     TEMP_SCRIPT="slurm_script_${SCENARIO}_${PARTITION}.sh"
@@ -58,10 +68,17 @@ for SCENARIO in "$@"; do
 module purge
 module load CUDA/11.7.0
 module load OpenMPI/4.1.4-GCC-11.3.0
+module load NCCL/2.12.12-GCCcore-11.3.0-CUDA-11.7.0
 
-nvcc $SOURCES -o out_${SCENARIO}_${PARTITION} -lcudart -lmpi
 
-mpirun -n 2 ./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4
+
+nvcc $NVCCFLAGS $SOURCES $OBJECTS_DIR/$GLOBAL_FUNCTIONS_OBJECT $OBJECTS_DIR/$CUDA_FUNCTIONS_OBJECT -o out_${SCENARIO}_${PARTITION} -L$LIBDIR  -I$CPATH -L$LD_LIBRARY_PATH -lmpi -lnccl -O3
+
+#nsys nvprof -o nsight/nsight_${SCENARIO}_${PARTITION} ./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5 $VAR6 $VAR7 $VAR8
+./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5 $VAR6 $VAR7 $VAR8
+
+
+
 
 exit 0
 
@@ -74,5 +91,3 @@ EOF
     rm "${TEMP_SCRIPT}"
 
 done
-
-
