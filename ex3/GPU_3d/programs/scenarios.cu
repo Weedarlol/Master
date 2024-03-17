@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "../../../functions/cuda_functions.h"
+#include "cuda_functions.h"
 #include "jacobi.h"
 
 #include <cooperative_groups.h>

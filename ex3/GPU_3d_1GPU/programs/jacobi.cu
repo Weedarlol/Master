@@ -2,8 +2,6 @@
 #include <math.h>
 #include <nvtx3/nvToolsExt.h>
 
-#include "../../../functions/global_functions.h"
-
 #include <cooperative_groups.h>
 
 namespace cg = cooperative_groups;
