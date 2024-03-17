@@ -3,6 +3,7 @@
 #include <time.h>
 
 #include "programs/scenarios.h"
+#include "../../functions/cuda_functions.h"
 #include "../../functions/global_functions.h"
 #include <nvtx3/nvToolsExt.h>
 

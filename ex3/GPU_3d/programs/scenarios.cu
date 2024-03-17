@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include <math.h>
 
-
-#include "../../../functions/global_functions.h"
 #include "../../../functions/cuda_functions.h"
 #include "jacobi.h"
 

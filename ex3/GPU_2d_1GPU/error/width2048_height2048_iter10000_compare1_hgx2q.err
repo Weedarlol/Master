@@ -1,4 +1,0 @@
-/usr/bin/ld: /tmp/tmpxft_00153537_00000000-19_main.o: in function `start(int, int, int, double, double, int, dim3, dim3)':
-tmpxft_00153537_00000000-6_main.cudafe1.cpp:(.text+0x369): undefined reference to `fillValues(double*, double, double, int, int)'
-collect2: error: ld returned 1 exit status
-/cm/local/apps/slurm/var/spool/job148579/slurm_script: line 24: ./out_width2048_height2048_iter10000_compare1_hgx2q: No such file or directory

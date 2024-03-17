@@ -5,8 +5,8 @@
 #include <nvtx3/nvToolsExt.h>
 
 #include "programs/jacobi.h"
-#include "../../cuda_functions.h"
-#include "../../global_functions.h"
+#include "../../functions/global_functions.h"
+#include "../../functions/cuda_functions.h"
 #include <cooperative_groups.h>
 
 

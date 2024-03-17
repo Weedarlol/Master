@@ -4,9 +4,9 @@
 GPU_COUNTS = 2 3 4
 
 # Define different matrix sizes
-WIDTH = 512
-HEIGHT = 512
-DEPTH = 512
+WIDTH = 128
+HEIGHT = 128
+DEPTH = 128
 
 # Number of max iterations to run for the scenario
 ITERATIONS = 10000

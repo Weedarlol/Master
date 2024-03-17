@@ -1,5 +1,0 @@
-main.cu:8:10: fatal error: ../../cuda_functions.h: No such file or directory
-    8 | #include "../../cuda_functions.h"
-      |          ^~~~~~~~~~~~~~~~~~~~~~~~
-compilation terminated.
-/cm/local/apps/slurm/var/spool/job151523/slurm_script: line 24: ./out_width512_height512_iter10000_compare1_dgx2q: No such file or directory
