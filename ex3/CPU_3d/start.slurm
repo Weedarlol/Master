@@ -3,8 +3,6 @@ set -e
 
 # List of source files
 SOURCES="main.c"
-OBJECTS_DIR="../../functions/"
-GLOBAL_FUNCTIONS_OBJECT="global_functions_ex3.o"
 
 # Gets the first element which indicates the partition type
 PARTITION="$1"
