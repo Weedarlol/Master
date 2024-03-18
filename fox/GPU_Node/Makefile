@@ -1,7 +1,7 @@
 
 # Creates a list of values for GPU allocation, max 3 integers when running with nsys nvprof
 # Example  = 2 3 4
-GPU_COUNTS = 2 3 4
+GPU_COUNTS = 1
 NODES = 2
 
 # Define different matrix sizes
@@ -16,7 +16,7 @@ ITERATIONS = 10000
 PARTITION = accel
 
 # Enables or disables overlap, 1 = overlap, 0 = no overlap
-OVERLAP = 0
+OVERLAP = 1
 
 # If you want to compare the final resulting matrix with the matrix created by the CPU. (CPU has to computed it first and created its own textfile containing its matrix called "CPUMatrix%i_%i.txt" where %i are the width and height)
 COMPARE = 1

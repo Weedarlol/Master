@@ -63,3 +63,13 @@ fox/GPU_3d_1GPU/output/
 fox/GPU_3d_1GPU/error/
 fox/GPU_3d_1GPU/slurm*
 fox/GPU_3d_1GPU/out_width*
+
+fox/CPU_Node/output/
+fox/CPU_Node/error/
+fox/CPU_Node/slurm*
+fox/CPU_Node/out_width*
+
+fox/GPU_Node/output/
+fox/GPU_Node/error/
+fox/GPU_Node/slurm*
+fox/GPU_Node/out_width*
