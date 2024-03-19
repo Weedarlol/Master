@@ -1,15 +1,15 @@
 # Define different matrix sizes
-WIDTH = 10
-HEIGHT = 10
+WIDTH = 8192
+HEIGHT = 8192
 
 # Number of max iterations to run for the scenario
 ITERATIONS = 10000
 
 # Chooses which partition to run at. (hgx2q and dgx2q for more than 1 GPU, a100q and a40q for more than 1 cluster)
 # Example = hgx2q, dgx2q, a100q
-PARTITION = normal
+PARTITION = accel
 
-CREATEMATRIX = 0
+CREATEMATRIX = 1
 
 # Create a list of run identifiers for all combinations
 RUN_IDENTIFIERS = $(foreach width,$(WIDTH),$(foreach height,$(HEIGHT),$(foreach iter,$(ITERATIONS),width$(width)_height$(height)_iter$(ITERATIONS)_createMatrix$(CREATEMATRIX))))
@@ -17,7 +17,7 @@ RUN_IDENTIFIERS = $(foreach width,$(WIDTH),$(foreach height,$(HEIGHT),$(foreach 
 
 submit:
 	$(foreach partition,$(PARTITION), \
-		sbatch --account=ec12 -p $(partition) --time=00-00:01:00 --mem-per-cpu=3G ./start.slurm $(partition) $(RUN_IDENTIFIERS); \
+		sbatch --account=ec12 -p $(partition) --time=00-00:01:00 --mem-per-cpu=3G --gpus-per-node=0 ./start.slurm $(partition) $(RUN_IDENTIFIERS); \
 	)
 
 
