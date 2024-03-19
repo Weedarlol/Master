@@ -50,7 +50,7 @@ module load cuda11.8/nsight/11.8.0
 module load cuda11.8/profiler/11.8.0
 module load cuda11.8/toolkit/11.8.0
 
-gcc $SOURCES $OBJECTS_DIR/$GLOBAL_FUNCTIONS_OBJECT -o out_${SCENARIO}_${PARTITION} -lm -O3
+gcc $SOURCES -o out_${SCENARIO}_${PARTITION} -lm -O3
 
 ./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5
 

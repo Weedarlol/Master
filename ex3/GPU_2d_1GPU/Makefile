@@ -7,7 +7,7 @@ ITERATIONS = 10000
 
 # Chooses which partition to run at. (hgx2q and dgx2q for more than 1 GPU, a100q and a40q for more than 1 cluster)
 # Example = hgx2q, dgx2q, a100q
-PARTITION = dgx2q
+PARTITION = hgx2q
 
 COMPARE = 1
 

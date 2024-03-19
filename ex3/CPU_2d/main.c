@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#include <stdlib.h>
+#include <string.h>
 
 void fillValues(double *mat, double dx, double dy, int width, int height) {
     double x, y;

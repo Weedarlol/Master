@@ -166,36 +166,36 @@ void initialization(int width, int height, int iter, double dx, double dy, int g
     else{
         if(overlap == 1){
             if(test == 0){
-                full_calculation_overlap(data_gpu, data_gpu_tmp, height, width, iter, gpus, rows_device, gridDim, blockDim, kernelCollEdge, kernelCollMid);
+                full_calculation_overlap(data_gpu, data_gpu_tmp, width, height, iter, gpus, rows_device, gridDim, blockDim, kernelCollEdge, kernelCollMid);
             }
             else if(test == 1){
-                no_kernel_overlap(data_gpu, data_gpu_tmp, height, width, iter, gpus, rows_device, gridDim, blockDim, kernelCollEdge, kernelCollMid);
+                no_kernel_overlap(data_gpu, data_gpu_tmp, width, height, iter, gpus, rows_device, gridDim, blockDim, kernelCollEdge, kernelCollMid);
             }
             else if(test == 2){
-                no_communication_overlap(data_gpu, data_gpu_tmp, height, width, iter, gpus, rows_device, gridDim, blockDim, kernelCollEdge, kernelCollMid);
+                no_communication_overlap(data_gpu, data_gpu_tmp, width, height, iter, gpus, rows_device, gridDim, blockDim, kernelCollEdge, kernelCollMid);
             }
             else if(test == 3){
-                only_calculation_overlap(data_gpu, data_gpu_tmp, height, width, iter, gpus, rows_device, gridDim, blockDim, kernelCollEdge, kernelCollMid);
+                only_calculation_overlap(data_gpu, data_gpu_tmp, width, height, iter, gpus, rows_device, gridDim, blockDim, kernelCollEdge, kernelCollMid);
             }
             else if(test == 4){
-                only_communication_overlap(data_gpu, data_gpu_tmp, height, width, iter, gpus, rows_device, gridDim, blockDim, kernelCollEdge, kernelCollMid);
+                only_communication_overlap(data_gpu, data_gpu_tmp, width, height, iter, gpus, rows_device, gridDim, blockDim, kernelCollEdge, kernelCollMid);
             }
         }
         else{
             if(test == 0){
-                full_calculation_nooverlap(data_gpu, data_gpu_tmp, height, width, iter, gpus, rows_device, gridDim, blockDim, kernelCollMid);
+                full_calculation_nooverlap(data_gpu, data_gpu_tmp, width, height, iter, gpus, rows_device, gridDim, blockDim, kernelCollMid);
             }
             else if(test == 1){
-                no_kernel_nooverlap(data_gpu, data_gpu_tmp, height, width, iter, gpus, rows_device, gridDim, blockDim, kernelCollMid);
+                no_kernel_nooverlap(data_gpu, data_gpu_tmp, width, height, iter, gpus, rows_device, gridDim, blockDim, kernelCollMid);
             }
             else if(test == 2){
-                no_communication_nooverlap(data_gpu, data_gpu_tmp, height, width, iter, gpus, rows_device, gridDim, blockDim, kernelCollMid);
+                no_communication_nooverlap(data_gpu, data_gpu_tmp, width, height, iter, gpus, rows_device, gridDim, blockDim, kernelCollMid);
             }
             else if(test == 3){
-                only_calculation_nooverlap(data_gpu, data_gpu_tmp, height, width, iter, gpus, rows_device, gridDim, blockDim, kernelCollMid);
+                only_calculation_nooverlap(data_gpu, data_gpu_tmp, width, height, iter, gpus, rows_device, gridDim, blockDim, kernelCollMid);
             }
             else if(test == 4){
-                only_communication_nooverlap(data_gpu, data_gpu_tmp, height, width, iter, gpus, rows_device, gridDim, blockDim, kernelCollMid);
+                only_communication_nooverlap(data_gpu, data_gpu_tmp, width, height, iter, gpus, rows_device, gridDim, blockDim, kernelCollMid);
             }
         }
     }
@@ -226,7 +226,7 @@ void initialization(int width, int height, int iter, double dx, double dy, int g
     if(compare == 1){
         double* data_compare = (double*)malloc(width * height * sizeof(double));
         FILE *fptr;
-        char filename[30];
+        char filename[100];
         sprintf(filename, "../CPU_2d/matrices/CPUMatrix%d_%d.txt", width, height);
 
         printf("Comparing the matrixes\n");

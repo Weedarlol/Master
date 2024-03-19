@@ -3,7 +3,6 @@
 #include <math.h>
 #include <time.h>
 #include <nvtx3/nvToolsExt.h>
-
 #include "programs/jacobi.h"
 #include "programs/cuda_functions.h"
 #include <cooperative_groups.h>
@@ -57,8 +56,6 @@ void start(int width, int height, int iter, double dx, double dy, int compare, d
 
     /* initialization */
     fillValues(data, dx, dy, width, height);
-    
-
 
 
     // Here we are done with the allocation, and start with the compution
@@ -78,8 +75,6 @@ void start(int width, int height, int iter, double dx, double dy, int compare, d
     // Copies back value from device i to CPU
     cudaErrorHandle(cudaMemcpy(data, data_gpu, total*sizeof(double), cudaMemcpyDeviceToHost));
     cudaErrorHandle(cudaDeviceSynchronize());
-
-
 
 
     cudaErrorHandle(cudaEventRecord(stopevent));

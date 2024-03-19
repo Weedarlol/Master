@@ -3,8 +3,6 @@ set -e
 
 # List of source files
 SOURCES="main.c"
-OBJECTS_DIR="../../functions/"
-GLOBAL_FUNCTIONS_OBJECT="global_functions_ex3.o"
 
 # Gets the first element which indicates the partition type
 PARTITION="$1"
@@ -51,7 +49,7 @@ module load cuda11.8/profiler/11.8.0
 module load cuda11.8/toolkit/11.8.0
 
 
-gcc $SOURCES $OBJECTS_DIR/$GLOBAL_FUNCTIONS_OBJECT -o out_${SCENARIO}_${PARTITION} -O3 -lm
+gcc $SOURCES -o out_${SCENARIO}_${PARTITION} -O3 -lm
 
 ./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4
 

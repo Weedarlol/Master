@@ -163,9 +163,45 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
 
 
 
-
-
-    full_calculation_nooverlap(data_gpu, data_gpu_tmp, width, height, depth, iter, gpus, slices_device, gridDim, blockDim, kernelCollMid);
+    if(gpus < 2){
+        printf("You are running on less than 2 gpus, to be able to communicate between gpus you are required to compute on more than 1 gpu.\n");
+    }
+    else{
+        if(overlap == 1){
+            if(test == 0){
+                full_calculation_overlap(data_gpu, data_gpu_tmp, width, height, depth, iter, gpus, slices_device, gridDim, blockDim, kernelCollEdge, kernelCollMid);
+            }
+            else if(test == 1){
+                no_kernel_overlap(data_gpu, data_gpu_tmp, width, height, depth, iter, gpus, slices_device, gridDim, blockDim, kernelCollEdge, kernelCollMid);
+            }
+            else if(test == 2){
+                no_communication_overlap(data_gpu, data_gpu_tmp, width, height, depth, iter, gpus, slices_device, gridDim, blockDim, kernelCollEdge, kernelCollMid);
+            }
+            else if(test == 3){
+                only_calculation_overlap(data_gpu, data_gpu_tmp, width, height, depth, iter, gpus, slices_device, gridDim, blockDim, kernelCollEdge, kernelCollMid);
+            }
+            else if(test == 4){
+                only_communication_overlap(data_gpu, data_gpu_tmp, width, height, depth, iter, gpus, slices_device, gridDim, blockDim, kernelCollEdge, kernelCollMid);
+            }
+        }
+        else{
+            if(test == 0){
+                full_calculation_nooverlap(data_gpu, data_gpu_tmp, width, height, depth, iter, gpus, slices_device, gridDim, blockDim, kernelCollMid);
+            }
+            else if(test == 1){
+                no_kernel_nooverlap(data_gpu, data_gpu_tmp, width, height, depth, iter, gpus, slices_device, gridDim, blockDim, kernelCollMid);
+            }
+            else if(test == 2){
+                no_communication_nooverlap(data_gpu, data_gpu_tmp, width, height, depth, iter, gpus, slices_device, gridDim, blockDim, kernelCollMid);
+            }
+            else if(test == 3){
+                only_calculation_nooverlap(data_gpu, data_gpu_tmp, width, height, depth, iter, gpus, slices_device, gridDim, blockDim, kernelCollMid);
+            }
+            else if(test == 4){
+                only_communication_nooverlap(data_gpu, data_gpu_tmp, width, height, depth, iter, gpus, slices_device, gridDim, blockDim, kernelCollMid);
+            }
+        }
+    }
 
 
 

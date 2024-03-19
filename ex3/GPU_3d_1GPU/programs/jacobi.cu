@@ -7,9 +7,8 @@
 namespace cg = cooperative_groups;
 
 
-__device__ void calc(double *data_gpu, double *data_gpu_tmp, int iter, int thread_size,
-    int amountPerThread, int index_start, int width, int height, int depth,
-    cg::grid_group grid_g){
+__device__ void calc(double *data_gpu, double *data_gpu_tmp, int iter, int index_start, int amountPerThread, 
+    int thread_size, int width, int height, int depth, cg::grid_group grid_g){
 
     double division = 1.0/6;
 
@@ -29,6 +28,13 @@ __device__ void calc(double *data_gpu, double *data_gpu_tmp, int iter, int threa
                 data_gpu[index + width*height] + data_gpu[index - width*height]);
         } 
 
+        // Changes pointers
+        double *data_tmp_cha = data_gpu_tmp;
+        data_gpu_tmp = data_gpu;
+        data_gpu = data_tmp_cha;
+
+        iter--;
+
         grid_g.sync();
     }
 }
@@ -42,7 +48,6 @@ __global__ void jacobi(double *data_gpu, double *data_gpu_tmp, int width, int he
     amountPerThread| int       | Number of elements to be calculated by each thread each iteration
     leftover       | int       | Number of threads which is required to compute one more element to be calculate all the elements
     thread         | int       | The index of each thread
-    index_start    | int       | Element index the thread will start computing on, unique for each thread in grid_g group
     */
 
     cg::grid_group grid_g = cg::this_grid();
@@ -51,12 +56,11 @@ __global__ void jacobi(double *data_gpu, double *data_gpu_tmp, int width, int he
     int jacobiSize = (width - 2) * (height - 2) * (depth - 2);
     int amountPerThread = jacobiSize / thread_size;
     int leftover = jacobiSize % thread_size;
-    int index_start = thread * amountPerThread + min(thread, leftover); //- (thread < leftover ? thread : 0);
 
     if(thread < leftover){
         amountPerThread++;
     }
 
-    calc(data_gpu, data_gpu_tmp, iter, amountPerThread, index_start, thread_size,
+    calc(data_gpu, data_gpu_tmp, iter, thread, amountPerThread, thread_size,
         width, height, depth, grid_g);
 }

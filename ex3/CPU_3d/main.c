@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#include <stdlib.h>
+#include <string.h>
 
 void fillValues3D(double *mat, int width, int height, int depth, double dx, double dy, double dz, int rank) {
     double x, y, z;
@@ -59,7 +61,7 @@ int main(int argc, char *argv[]) {
     data_tmp = (double*)malloc(width*height*depth*sizeof(double));
 
     /* initialization */
-    fillValues3D(data, width, height, depth, dx, dy, dz, 1);
+    fillValues3D(data, width, height, depth, dx, dy, dz, 0);
 
     start = clock();
     double division = 1/6.0;

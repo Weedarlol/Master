@@ -97,7 +97,7 @@ void start(int width, int height, int depth, int iter, double dx, double dy, dou
 
     // Used to compare the matrix to the matrix which only the CPU created
     if(compare == 1){
-        double* data_compare = (double*)malloc(width * height * depth* sizeof(double));
+        double* data_compare = (double*)malloc(width * height * depth * sizeof(double));
         FILE *fptr;
         char filename[100];
         sprintf(filename, "../CPU_3d/grids/CPUGrid%d_%d_%d.txt", width, height, depth);
@@ -143,7 +143,6 @@ void start(int width, int height, int depth, int iter, double dx, double dy, dou
         // Free allocated memory
         free(data_compare);
     }
-    
 
     cudaErrorHandle(cudaFreeHost(data));
     cudaErrorHandle(cudaFree(data_gpu));

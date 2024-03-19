@@ -1,3 +1,0 @@
-cc1: fatal error: main.c: No such file or directory
-compilation terminated.
-/cm/local/apps/slurm/var/spool/job153197/slurm_script: line 25: ./out_width8192_height8192_iter10000_createMatrix0_hgx2q: No such file or directory
