@@ -49,7 +49,7 @@ plot:
 	
 
 JobName:
-	sacct --format="JobID,JobName%60"
+	sacct --format="JobID,JobName%100"
 
 
 

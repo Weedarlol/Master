@@ -92,7 +92,6 @@ void initialization(int width, int height, int iter, double dx, double dy, int g
     threadInformation[3] = ((rows_compute_device[gpus-1])*(width-2))%threadSize; // Finding which threads require 1 more element
     threadInformation[4] = (1                            *(width-2))/threadSize; // Find number of elements for each thread for a row, if 0 it means there are more threads than elements in row
     threadInformation[5] = (1                            *(width-2))%threadSize; // Finding which threads require 1 more element
-    threadInformation[6] = (width - 2) % warp_size != 0 ? ((width-2)/warp_size)*warp_size+warp_size : ((width-2)/warp_size)*warp_size;
 
     double *data;
     double **data_gpu, **data_gpu_tmp;
@@ -112,7 +111,7 @@ void initialization(int width, int height, int iter, double dx, double dy, int g
     cudaErrorHandle(cudaMallocHost(&kernelCollEdge, gpus * sizeof(void**)));
     // Allocates the elements in the kernelCollEdge, used for cudaLaunchCooperativeKernel as functon variables.
     for (int g = 0; g < gpus; g++) {
-        void **kernelArgs = new void*[8];
+        void **kernelArgs = new void*[7];
         kernelArgs[0] = &data_gpu[g];
         kernelArgs[1] = &data_gpu_tmp[g];
         kernelArgs[2] = &width;
@@ -120,7 +119,6 @@ void initialization(int width, int height, int iter, double dx, double dy, int g
         kernelArgs[4] = &rows_compute_device[g];
         kernelArgs[5] = &threadInformation[4];
         kernelArgs[6] = &threadInformation[5];
-        kernelArgs[7] = &threadInformation[6];
 
         kernelCollEdge[g] = kernelArgs;
     }
