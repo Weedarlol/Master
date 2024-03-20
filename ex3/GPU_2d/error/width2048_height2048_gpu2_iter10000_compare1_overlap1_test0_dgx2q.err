@@ -1,0 +1,2 @@
+main.cu(60): warning #177-D: variable "warp_size" was declared but never referenced
+

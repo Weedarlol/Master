@@ -1,0 +1,15 @@
+main.cu(69): warning #177-D: variable "overlap_calc" was declared but never referenced
+
+/usr/bin/ld: /tmp/tmpxft_00138e29_00000000-29_scenarios.o: in function `full_calculation_overlap(double**, double**, int, int, int, int, int, int*, dim3, dim3, void***, void***)':
+tmpxft_00138e29_00000000-14_scenarios.cudafe1.cpp:(.text+0x27c): undefined reference to `jacobiMid(double*, double*, int, int, int, int, int, int, int, int, int)'
+/usr/bin/ld: /tmp/tmpxft_00138e29_00000000-29_scenarios.o: in function `full_calculation_nooverlap(double**, double**, int, int, int, int, int, int*, dim3, dim3, void***)':
+tmpxft_00138e29_00000000-14_scenarios.cudafe1.cpp:(.text+0xb0b): undefined reference to `jacobiMid(double*, double*, int, int, int, int, int, int, int, int, int)'
+/usr/bin/ld: /tmp/tmpxft_00138e29_00000000-29_scenarios.o: in function `no_communication_overlap(double**, double**, int, int, int, int, int, int*, dim3, dim3, void***, void***)':
+tmpxft_00138e29_00000000-14_scenarios.cudafe1.cpp:(.text+0x2216): undefined reference to `jacobiMid(double*, double*, int, int, int, int, int, int, int, int, int)'
+/usr/bin/ld: /tmp/tmpxft_00138e29_00000000-29_scenarios.o: in function `no_communication_nooverlap(double**, double**, int, int, int, int, int, int*, dim3, dim3, void***)':
+tmpxft_00138e29_00000000-14_scenarios.cudafe1.cpp:(.text+0x2808): undefined reference to `jacobiMid(double*, double*, int, int, int, int, int, int, int, int, int)'
+/usr/bin/ld: /tmp/tmpxft_00138e29_00000000-29_scenarios.o: in function `only_calculation_overlap(double**, double**, int, int, int, int, int, int*, dim3, dim3, void***, void***)':
+tmpxft_00138e29_00000000-14_scenarios.cudafe1.cpp:(.text+0x32ed): undefined reference to `jacobiMid(double*, double*, int, int, int, int, int, int, int, int, int)'
+/usr/bin/ld: /tmp/tmpxft_00138e29_00000000-29_scenarios.o:tmpxft_00138e29_00000000-14_scenarios.cudafe1.cpp:(.text+0x3800): more undefined references to `jacobiMid(double*, double*, int, int, int, int, int, int, int, int, int)' follow
+collect2: error: ld returned 1 exit status
+/cm/local/apps/slurm/var/spool/job154594/slurm_script: line 28: ./out_width512_height256_depth256_gpu2_iter10000_compare1_overlap0_test0_dgx2q: No such file or directory

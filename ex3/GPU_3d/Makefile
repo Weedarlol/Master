@@ -12,10 +12,10 @@ DEPTH = 128
 ITERATIONS = 10000
 
 # Chooses which partition to run at. Only one at a time
-PARTITION = hgx2q
+PARTITION = dgx2q
 
 # Enables or disables overlap, 0 = no overlap, 1 = overlap
-OVERLAP = 0
+OVERLAP = 0 1
 
 # If you want to compare the final resulting matrix with the matrix created by the CPU. (CPU has to computed it first and created its own textfile containing its matrix called "CPUMatrix%i_%i.txt" where %i are the width and height)
 COMPARE = 1
