@@ -1,9 +1,22 @@
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#include <stdlib.h>
+#include <string.h>
 
+void fillValues(double *mat, double dx, double dy, int width, int height) {
+    double x, y;
 
-#include "../../functions/global_functions.h"
+    memset(mat, 0, height * width * sizeof(double));
+
+    for (int i = 1; i < height - 1; i++) {
+        y = i * dy; // y coordinate
+        for (int j = 1; j < width - 1; j++) {
+            x = j * dx; // x coordinate
+            mat[j + i * width] = sin(M_PI * y) * sin(M_PI * x);
+        }
+    }
+}
 
 int main(int argc, char *argv[]) {
     /*
@@ -60,9 +73,10 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        double *data_tmp_swap = data_tmp;
+        /* pointer swapping */
+        double *data_tmp_cha = data_tmp;
         data_tmp = data;
-        data = data_tmp_swap;
+        data = data_tmp_cha;
 
         iter--;
     }
@@ -74,7 +88,7 @@ int main(int argc, char *argv[]) {
         // Creates an output which can be used to compare the different resulting matrixes
         FILE *fptr;
         char filename[30];
-        sprintf(filename, "matrices/CPUMatrix%i_%i.txt", width, height);
+        sprintf(filename, "matrices/CPUMatrix%d_%d.txt", width, height);
         fptr = fopen(filename, "w");
         for(int i = 0; i < height; i++){
             for(int j = 0; j < width; j++){

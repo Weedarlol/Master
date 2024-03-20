@@ -1,9 +1,26 @@
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#include <stdlib.h>
+#include <string.h>
 
+void fillValues3D(double *mat, int width, int height, int depth, double dx, double dy, double dz, int rank) {
+    double x, y, z;
 
-#include "../../functions/global_functions.h"
+    // Assuming the data in the matrix is stored contiguously in memory
+    memset(mat, 0, height * width * depth * sizeof(double));
+
+    for (int i = 1; i < depth-1; i++) {
+        z = (i + rank * (depth - 2)) * dz; // z coordinate
+        for (int j = 1; j < height - 1; j++) {
+            y = j * dy; // z coordinate
+            for (int k = 1; k < width - 1; k++) {
+                x = k * dx; // x coordinate
+                mat[k +  j*width + i*width*height] = sin(M_PI * x) * sin(M_PI * y) * sin(M_PI * z);
+            }
+        }
+    }
+}
 
 int main(int argc, char *argv[]) {
     /*
@@ -21,7 +38,7 @@ int main(int argc, char *argv[]) {
     */
 
     if (argc != 6) {
-        printf("Wrong number of inputs, requires: %s <Width> <Height> <Depth> <Iterations> <createGrid>", argv[0]); // Programname
+        printf("Usage: %s <Width> <Height> <Depth> <Iterations> <CreateGrid>", argv[0]); // Programname
         return 1;
     }
 
@@ -35,7 +52,6 @@ int main(int argc, char *argv[]) {
     double dy = 2.0 / (height - 1);
     double dz = 2.0 / (depth - 1);
 
-    
     double *data;
     double *data_tmp;
 
@@ -44,13 +60,15 @@ int main(int argc, char *argv[]) {
     data = (double*)malloc(width*height*depth*sizeof(double));
     data_tmp = (double*)malloc(width*height*depth*sizeof(double));
 
+    /* initialization */
     fillValues3D(data, width, height, depth, dx, dy, dz, 0);
 
     start = clock();
     double division = 1/6.0;
 
+    /* Performing Jacobian grid Calculation */
     // Performing a number of iterations while statement is not satisfied
-    while(iter > 0){
+    while (iter > 0) {
         for(int i = 1; i < depth - 1; i++){
             for(int j = 1; j < height - 1; j++){
                 for(int k = 1; k < width - 1; k++) {
@@ -79,7 +97,7 @@ int main(int argc, char *argv[]) {
     if(createGrid == 1){
         FILE *fptr;
         char filename[30];
-        sprintf(filename, "grids/CPUGrid%i_%i_%i.txt", width, height, depth);
+        sprintf(filename, "grids/CPUGrid%d_%d_%d.txt", width, height, depth);
         fptr = fopen(filename, "w");
         for(int i = 0; i < depth; i++){
             for(int j = 0; j < height; j++){
