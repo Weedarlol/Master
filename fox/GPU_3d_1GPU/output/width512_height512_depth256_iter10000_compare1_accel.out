@@ -1,0 +1,30 @@
+Starting job 480405 on gpu-9 at Tue Mar 19 20:25:43 CET 2024
+
+Time(event) - 58.22211 s
+Comparing the grids
+All elements match!
+
+Task and CPU usage stats:
+JobID           JobName  AllocCPUS   NTasks     MinCPU MinCPUTask     AveCPU    Elapsed ExitCode 
+------------ ---------- ---------- -------- ---------- ---------- ---------- ---------- -------- 
+480405       width512_+          1                                             00:01:22      0:0 
+480405.batch      batch          1        1   00:01:22          0   00:01:22   00:01:22      0:0 
+480405.exte+     extern          1        1   00:00:00          0   00:00:00   00:01:22      0:0 
+
+Memory usage stats:
+JobID            MaxRSS MaxRSSTask     AveRSS MaxPages   MaxPagesTask   AvePages 
+------------ ---------- ---------- ---------- -------- -------------- ---------- 
+480405                                                                           
+480405.batch    546676K          0    546676K        0              0          0 
+480405.exte+          0          0          0        0              0          0 
+
+Disk usage stats:
+JobID         MaxDiskRead MaxDiskReadTask    AveDiskRead MaxDiskWrite MaxDiskWriteTask   AveDiskWrite 
+------------ ------------ --------------- -------------- ------------ ---------------- -------------- 
+480405                                                                                                
+480405.batch       66.01M               0         66.01M       19.69M                0         19.69M 
+480405.exte+        0.01M               0          0.01M        0.00M                0          0.00M 
+
+GPU usage stats:
+
+Job 480405 completed at Tue Mar 19 20:27:06 CET 2024

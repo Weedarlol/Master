@@ -1,0 +1,26 @@
+Starting job 480352 on gpu-7 at Tue Mar 19 17:03:28 CET 2024
+
+Time(event) - 1296.08238 s
+
+Task and CPU usage stats:
+JobID           JobName  AllocCPUS   NTasks     MinCPU MinCPUTask     AveCPU    Elapsed ExitCode 
+------------ ---------- ---------- -------- ---------- ---------- ---------- ---------- -------- 
+480352       width512_+          1                                             00:22:15      0:0 
+480352.batch      batch          1        1   00:22:00          0   00:22:00   00:22:15      0:0 
+480352.exte+     extern          1        1   00:00:00          0   00:00:00   00:22:15      0:0 
+
+Memory usage stats:
+JobID            MaxRSS MaxRSSTask     AveRSS MaxPages   MaxPagesTask   AvePages 
+------------ ---------- ---------- ---------- -------- -------------- ---------- 
+480352                                                                           
+480352.batch   1049460K          0   1049460K        0              0          0 
+480352.exte+          0          0          0        0              0          0 
+
+Disk usage stats:
+JobID         MaxDiskRead MaxDiskReadTask    AveDiskRead MaxDiskWrite MaxDiskWriteTask   AveDiskWrite 
+------------ ------------ --------------- -------------- ------------ ---------------- -------------- 
+480352                                                                                                
+480352.batch        5.21M               0          5.21M      504.11M                0        504.11M 
+480352.exte+        0.01M               0          0.01M        0.00M                0          0.00M 
+
+Job 480352 completed at Tue Mar 19 17:25:42 CET 2024
