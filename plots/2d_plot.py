@@ -1,16 +1,20 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import math
 import os
 import re
 
 
 # FETCHING DATA FROM FILES
 #____________________________________________________________________________________
-folder_path_2d_ex3 = "../ex3/CPU_2d/output"
+folder_path_2d_ex3_cpu = "../ex3/CPU_2d/output"
+folder_path_2d_fox_cpu = "../fox/CPU_2d/output"
+folder_path_2d_ex3_gpu = "../ex3/GPU_2d/output"
+folder_path_2d_fox_gpu = "../fox/GPU_2d/output"
 
 def extract_info_from_file(filename):
     # Define the pattern for extracting information from the filename
-    pattern = r".*/width(\d+)_height(\d+)_iter(\d+)_createMatrix(\d+)_(\w+)\.out"
+    pattern = r".*/width(\d+)_height(\d+)_gpu(\d+)_iter(\d+)_compare(\d+)_overlap(\d+)_test(\d+)_createMatrix(\d+)_(\w+)\.out"
     # Match the pattern in the filename
     match_name = re.match(pattern, filename)
 
@@ -20,18 +24,19 @@ def extract_info_from_file(filename):
     
     if match_name and match_content:
         # Extract information from the matched groups
-        width, height, iterations, create_matrix, y_string = match_name.groups()
-        width, height, iterations, create_matrix = map(int, (width, height, iterations, create_matrix))
+        width, height, gpu, iterations, compare, overlap, test, create_matrix, y_string = match_name.groups()
+        width, height, gpu, iterations, compare, overlap, test, create_matrix = map(int, (width, height, gpu, iterations, compare, overlap, test, create_matrix))
         time = float(match_content.group(1))
-        return width, height, iterations, y_string, time
+        return width, height, gpu, iterations, overlap, test, y_string, time
     else:
         return None
 
-def process_files(folder_path):
+
+def process_files(folder_path, existing_info_list=None):
     # Get a list of all files in the specified folder
     files = os.listdir(folder_path)
 
-    info_list = []
+    info_list = existing_info_list if existing_info_list else []
     
     for file_name in files:
         # Construct the full path to the file
@@ -46,12 +51,15 @@ def process_files(folder_path):
     
     return sorted_list
 
-info_list = process_files(folder_path_2d_ex3)
+info_list_cpu = []
+info_list_cpu = process_files(folder_path_2d_ex3_cpu, info_list_cpu)
+info_list_cpu = process_files(folder_path_2d_fox_cpu, info_list_cpu)
+info_list_gpu = []
+info_list_gpu = process_files(folder_path_2d_ex3_gpu, info_list_gpu)
+info_list_gpu = process_files(folder_path_2d_fox_gpu, info_list_gpu)
+
+
 #_____________________________________________________________________________________________
-
-
-
-
 def group_by_string(info_list):
     # Create a dictionary to hold the grouped elements
     grouped_info = {}
@@ -59,7 +67,7 @@ def group_by_string(info_list):
     # Iterate over the elements in info_list
     for info in info_list:
         # Extract the string from the info tuple
-        string = info[3]
+        string = info[6]
         # If the string is not already in the dictionary, create a new list for it
         if string not in grouped_info:
             grouped_info[string] = []
@@ -72,55 +80,155 @@ def group_by_string(info_list):
     return grouped_info_list
 
 # Call the function to group the info_list by the string
-grouped_info_list = group_by_string(info_list)
+grouped_info_list_cpu = group_by_string(info_list_cpu)
+grouped_info_list_gpu = group_by_string(info_list_gpu)
 
 
 
-# Creates area where we want to land
-# Constants
-iterations = 10000
-bandwidth_dgx2q = 23.84 * 2**30
-bandwidth_hgx2q = 23.84 * 2**30
-bandwidth_fox = 23.84 * 2**30
-bandwidth = 23.84 * 2**30
 
 
 
 def plot_info(grouped_info_list):
-    # Separate the elements based on the partition
-    partitions = {}
-    matrix_sizes = set()
-    for string, elements in grouped_info_list:
-        for element in elements:
-            partition = element[3]
-            matrix_size = f"{element[0]}x{element[1]}"
-            matrix_sizes.add(matrix_size)
-            if partition not in partitions:
-                partitions[partition] = {'x_values': [], 'y_values': []}
-            partitions[partition]['x_values'].append(matrix_size)
-            partitions[partition]['y_values'].append(element[4])
+    num_partitions = len(grouped_info_list)
+    num_rows = math.ceil(math.sqrt(num_partitions))
+    num_cols = math.ceil(num_partitions / num_rows)
 
+    bandwidth_values = [
+        ("dgx2q", 19.87 * 2**30),
+        ("hgx2q", 23.84 * 2**30)
+    ]
+
+    _, axes = plt.subplots(num_rows, num_cols, figsize=(10, 8), sharex=True, sharey=True)
+
+    for i, (partition, elements) in enumerate(grouped_info_list):
+        row_idx = i // num_cols
+        col_idx = i % num_cols
+
+        # Prepare data for plotting
+        x_values = [f"{element[0]}x{element[1]}" for element in elements]
+        y_values = [element[7] for element in elements]
+
+        size = [int(size.split('x')[0]) for size in x_values]
+
+        for string, value in bandwidth_values:
+            if partition == string:
+                # Extract information from the sorted list
+                memory_operations = [2, 3, 4, 5]
+                y_values_1 = [(memory_operations[0] * s * s * 8 * 10000) / value for s in size]
+                y_values_2 = [(memory_operations[1] * s * s * 8 * 10000) / value for s in size]
+                y_values_3 = [(memory_operations[2] * s * s * 8 * 10000) / value for s in size]
+                y_values_4 = [(memory_operations[3] * s * s * 8 * 10000) / value for s in size]
+
+                # Plot the first two lines on the left y-axis
+                axes[row_idx, col_idx].plot(x_values, y_values_1, label='Memory Operations = 2', color='blue', marker='o')
+                axes[row_idx, col_idx].plot(x_values, y_values_2, label='Memory Operations = 3', color='lightblue', marker='o')
+                axes[row_idx, col_idx].plot(x_values, y_values_3, label='Memory Operations = 4', color='lightblue', marker='s')
+                axes[row_idx, col_idx].plot(x_values, y_values_4, label='Memory Operations = 5', color='blue', marker='s')
+
+
+                axes[row_idx, col_idx].fill_between(x_values, y_values_1, y_values_4, color='lightgray', alpha=0.5)
+
+        axes[row_idx, col_idx].plot(x_values, y_values, label=partition, color="red", marker='x')
+
+        axes[row_idx, col_idx].set_title(f"Partition: {elements[0][6]}")
+        axes[row_idx, col_idx].set_ylabel("Time (s)")
+        axes[row_idx, col_idx].legend()
+
+    # Plot all lines in the last subplot
+    for i, (partition, elements) in enumerate(grouped_info_list):
+        x_values = [f"{element[0]}x{element[1]}" for element in elements]
+        y_values = [element[7] for element in elements]
         
+        axes[-1, -1].plot(x_values, y_values, label=partition, marker='x')
 
-    print(partitions)
-
-    for partition, data in partitions.items():
-        plt.plot(data['x_values'], data['y_values'], label=partition)
-
-    # Set title and labels
-    plt.title(f"Iterations: {info_list[0][2]}")
-    plt.xlabel("Matrix Size")
-    plt.ylabel("Time (s)")
+        axes[-1, -1].set_title(f"Combined")
+        axes[-1, -1].set_ylabel("Time (s)")
+        axes[-1, -1].legend()
 
     # Rotate x-axis labels for better visibility
-    plt.xticks(rotation=45)
+    for ax in plt.gcf().get_axes():
+        ax.grid(axis='y')  # Add gridlines along the y-axis for each subplot
+        ax.tick_params(axis='x', rotation=45)
+ 
+    #plt.tight_layout()
+    #plt.show()
 
-    # Add legend
-    plt.legend()
 
-    # Show the plot
-    plt.tight_layout()
-    plt.show()
+#plot_info(grouped_info_list_gpu)
+
+
+
+
+
+def plot_info_gpu(grouped_info_list):
+    num_partitions = len(grouped_info_list)
+    num_rows = math.ceil(math.sqrt(num_partitions))
+    num_cols = math.ceil(num_partitions / num_rows)
+
+    bandwidth_values = [
+        ("dgx2q", 600 * 2**30),
+        ("hgx2q", 600 * 2**30)
+    ]
+
+    _, axes = plt.subplots(num_rows, num_cols, figsize=(10, 8), sharex=True, sharey=True)
+
+    for i, (partition, elements) in enumerate(grouped_info_list):
+        row_idx = i // num_cols
+        col_idx = i % num_cols
+
+        # Prepare data for plotting
+        x_values = [f"{element[0]}x{element[1]}" for element in elements]
+        y_values = [element[7] for element in elements]
+
+        size = [int(size.split('x')[0]) for size in x_values]
+        print(size)
+
+        for string, value in bandwidth_values:
+            if partition == string:
+                # Extract information from the sorted list
+                memory_operations = [2, 3, 4, 5]
+                y_values_1 = [(memory_operations[0] * s * s * 8 * 10000) / value for s in size]
+                y_values_2 = [(memory_operations[1] * s * s * 8 * 10000) / value for s in size]
+                y_values_3 = [(memory_operations[2] * s * s * 8 * 10000) / value for s in size]
+                y_values_4 = [(memory_operations[3] * s * s * 8 * 10000) / value for s in size]
+
+                # Plot the first two lines on the left y-axis
+                axes[row_idx, col_idx].plot(x_values, y_values_1, label='Memory Operations = 2', color='blue', marker='o')
+                axes[row_idx, col_idx].plot(x_values, y_values_2, label='Memory Operations = 3', color='lightblue', marker='o')
+                axes[row_idx, col_idx].plot(x_values, y_values_3, label='Memory Operations = 4', color='lightblue', marker='s')
+                axes[row_idx, col_idx].plot(x_values, y_values_4, label='Memory Operations = 5', color='blue', marker='s')
+
+
+                axes[row_idx, col_idx].fill_between(x_values, y_values_1, y_values_4, color='lightgray', alpha=0.5)
+
+        axes[row_idx, col_idx].plot(x_values, y_values, label=partition, color="red", marker='x')
+
+        axes[row_idx, col_idx].set_title(f"Partition: {elements[0][6]}")
+        axes[row_idx, col_idx].set_ylabel("Time (s)")
+        axes[row_idx, col_idx].legend()
+
+    # Plot all lines in the last subplot
+    for i, (partition, elements) in enumerate(grouped_info_list):
+        x_values = [f"{element[0]}x{element[1]}" for element in elements]
+        y_values = [element[7] for element in elements]
+        
+        axes[-1, -1].plot(x_values, y_values, label=partition, marker='x')
+
+        axes[-1, -1].set_title(f"Combined")
+        axes[-1, -1].set_ylabel("Time (s)")
+        axes[-1, -1].legend()
+
+    # Rotate x-axis labels for better visibility
+    for ax in plt.gcf().get_axes():
+        ax.grid(axis='y')  # Add gridlines along the y-axis for each subplot
+        ax.tick_params(axis='x', rotation=45)
+ 
+    #plt.tight_layout()
+    #plt.show()
+
+
 
 # Plot the info_list
-plot_info(grouped_info_list)
+plot_info_gpu(grouped_info_list_gpu)
+
+

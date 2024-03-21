@@ -24,7 +24,7 @@ for SCENARIO in "$@"; do
     ITERATIONS=$(echo $SCENARIO | awk -F'iter' '{print $2}' | awk -F'_' '{print $1}')
     COMPARE=$(echo $SCENARIO | awk -F'compare' '{print $2}' | awk -F'_' '{print $1}')
     OVERLAP=$(echo $SCENARIO | awk -F'overlap' '{print $2}' | awk -F'_' '{print $1}')
-    TEST=$(echo $SCENARIO | awk -F'test' '{print $2}')
+    TEST=$(echo $SCENARIO | awk -F'test' '{print $2}' | awk -F'_' '{print $1}')
 
     # Define the variable values
     VAR1=$WIDTH # Width

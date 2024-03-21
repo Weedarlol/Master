@@ -57,7 +57,6 @@ void initialization(int width, int height, int iter, double dx, double dy, int g
     int total = width*height;
     int overlap_calc = (width-2)*overlap;
     int threadSize = blockDim.x*blockDim.y*blockDim.z*gridDim.x*gridDim.y*gridDim.z;
-    int warp_size = 32;
 
     int *device_nr;
     cudaErrorHandle(cudaMallocHost(&device_nr, gpus*sizeof(int*)));

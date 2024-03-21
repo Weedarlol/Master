@@ -45,7 +45,7 @@ __global__ void jacobiEdge(double *data_gpu, double *data_gpu_tmp, int width, in
         if(thread < leftover){
             // The same threads will compute both slices
             calc(data_gpu, data_gpu_tmp, amountPerThread, thread, width, height, thread, thread_size);
-            calc(data_gpu, data_gpu_tmp, amountPerThread, thread+slices_compute*(width-2)*(height-2), width, height, thread, thread_size);
+            calc(data_gpu, data_gpu_tmp, amountPerThread, thread+slices_compute, width, height, thread, thread_size);
         }
     }
     // There are less threads than elements in 1 slice
