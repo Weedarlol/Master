@@ -5,14 +5,14 @@ HEIGHT = 8192
 # Number of max iterations to run for the scenario
 ITERATIONS = 10000
 
-# Chooses which partition to run at. (hgx2q and dgx2q for more than 1 GPU, a100q and a40q for more than 1 cluster)
-# Example = hgx2q, dgx2q, a100q
+# Chooses which partition to run at. Only one at a time
 PARTITION = accel
 
-CREATEMATRIX = 1
+# 0 = full calculation, 1 = No kernel, 2 = No communication, 3 = only calculation, 4 = only communication
+CREATEMATRIX = 0
 
 # Create a list of run identifiers for all combinations
-RUN_IDENTIFIERS = $(foreach width,$(WIDTH),$(foreach height,$(HEIGHT),$(foreach iter,$(ITERATIONS),width$(width)_height$(height)_iter$(ITERATIONS)_createMatrix$(CREATEMATRIX))))
+RUN_IDENTIFIERS = $(foreach width,$(WIDTH),$(foreach height,$(HEIGHT),width$(width)_height$(height)_gpu0_iter$(ITERATIONS)_compare0_overlap0_test0_createMatrix$(CREATEMATRIX)))
 
 
 submit:
