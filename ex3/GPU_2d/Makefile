@@ -2,7 +2,7 @@
 WIDTH = 8192
 HEIGHT = 8192
 
-GPU_COUNT = 0
+GPU_COUNT = 2 3 4
 
 # Number of max iterations to run for the scenario
 ITERATIONS = 10000
@@ -17,7 +17,7 @@ COMPARE = 1
 TEST = 0 3 4
 
 # Chooses which partition to run at. (hgx2q and dgx2q for more than 1 GPU, a100q and a40q for more than 1 cluster)
-PARTITION = dgx2q
+PARTITION = hgx2q
 
 # Create a list of run identifiers for all combinations
 RUN_IDENTIFIERS = $(foreach width,$(WIDTH),$(foreach height,$(HEIGHT),$(foreach gpu,$(GPU_COUNT),$(foreach iter,$(ITERATIONS),$(foreach overlap,$(OVERLAP),$(foreach test,$(TEST),width$(width)_height$(height)_gpu$(gpu)_iter$(ITERATIONS)_compare$(COMPARE)_overlap$(overlap)_test$(test)_createMatrix0))))))

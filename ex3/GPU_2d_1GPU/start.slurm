@@ -26,7 +26,7 @@ for SCENARIO in "$@"; do
     WIDTH=$(echo $SCENARIO | awk -F'width' '{print $2}' | awk -F'_' '{print $1}')
     HEIGHT=$(echo $SCENARIO | awk -F'height' '{print $2}' | awk -F'_' '{print $1}')
     ITERATIONS=$(echo $SCENARIO | awk -F'iter' '{print $2}' | awk -F'_' '{print $1}')
-    COMPARE=$(echo $SCENARIO | awk -F'compare' '{print $2}')
+    COMPARE=$(echo $SCENARIO | awk -F'compare' '{print $2}' | awk -F'_' '{print $1}')
 
     # Define the variable values
     VAR1=$WIDTH # Width
