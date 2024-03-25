@@ -1,2 +1,0 @@
-out_width128_height128_depth128_gpu2_iter10000_compare1_overlap1_test0_hgx2q: malloc.c:4118: _int_malloc: Assertion `chunk_main_arena (fwd)' failed.
-/cm/local/apps/slurm/var/spool/job154554/slurm_script: line 28: 1892121 Aborted                 (core dumped) ./out_width128_height128_depth128_gpu2_iter10000_compare1_overlap1_test0_hgx2q 128 128 128 10000 2 1 1 0

@@ -1,6 +1,6 @@
 # Define different matrix sizes
-WIDTH = 8192
-HEIGHT = 8192
+WIDTH = 512
+HEIGHT = 512
 
 GPU_COUNT = 2 3 4
 
@@ -14,7 +14,7 @@ OVERLAP = 0 1
 COMPARE = 1
 
 # 0 = full calculation, 1 = No kernel, 2 = No communication, 3 = only calculation, 4 = only communication
-TEST = 0 3 4
+TEST = 0
 
 # Chooses which partition to run at. (hgx2q and dgx2q for more than 1 GPU, a100q and a40q for more than 1 cluster)
 PARTITION = hgx2q

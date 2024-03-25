@@ -143,6 +143,10 @@ void full_calculation_nooverlap(double **data_gpu, double **data_gpu_tmp, int wi
         }
         iter--;
     }
+    for(int g = 0; g < gpus; g++){
+        cudaErrorHandle(cudaSetDevice(g));
+        cudaErrorHandle(cudaDeviceSynchronize());
+    }
     cudaErrorHandle(cudaEventRecord(stopevent));
 
     cudaErrorHandle(cudaEventSynchronize(stopevent));
@@ -200,6 +204,10 @@ void no_kernel_overlap(double **data_gpu, double **data_gpu_tmp, int width, int 
             data_gpu_tmp[g] = data_change;
         }
         iter--;
+    }
+    for(int g = 0; g < gpus; g++){
+        cudaErrorHandle(cudaSetDevice(g));
+        cudaErrorHandle(cudaDeviceSynchronize());
     }
     cudaErrorHandle(cudaEventRecord(stopevent));
     cudaErrorHandle(cudaEventSynchronize(stopevent));
@@ -259,6 +267,10 @@ void no_kernel_nooverlap(double **data_gpu, double **data_gpu_tmp, int width, in
         }
         iter--;
     }
+    for(int g = 0; g < gpus; g++){
+        cudaErrorHandle(cudaSetDevice(g));
+        cudaErrorHandle(cudaDeviceSynchronize());
+    }
     cudaErrorHandle(cudaEventRecord(stopevent));
 
     cudaErrorHandle(cudaEventSynchronize(stopevent));
@@ -308,6 +320,10 @@ void no_communication_overlap(double **data_gpu, double **data_gpu_tmp, int widt
             data_gpu_tmp[g] = data_change;
         }
         iter--;
+    }
+    for(int g = 0; g < gpus; g++){
+        cudaErrorHandle(cudaSetDevice(g));
+        cudaErrorHandle(cudaDeviceSynchronize());
     }
     cudaErrorHandle(cudaEventRecord(stopevent));
     cudaErrorHandle(cudaEventSynchronize(stopevent));
@@ -359,6 +375,10 @@ void no_communication_nooverlap(double **data_gpu, double **data_gpu_tmp, int wi
         }
         iter--;
     }
+    for(int g = 0; g < gpus; g++){
+        cudaErrorHandle(cudaSetDevice(g));
+        cudaErrorHandle(cudaDeviceSynchronize());
+    }
     cudaErrorHandle(cudaEventRecord(stopevent));
 
     cudaErrorHandle(cudaEventSynchronize(stopevent));
@@ -406,6 +426,10 @@ void only_events(double **data_gpu, double **data_gpu_tmp, int width, int height
             data_gpu_tmp[g] = data_change;
         }
         iter--;
+    }
+    for(int g = 0; g < gpus; g++){
+        cudaErrorHandle(cudaSetDevice(g));
+        cudaErrorHandle(cudaDeviceSynchronize());
     }
     cudaErrorHandle(cudaEventRecord(stopevent));
 
@@ -458,7 +482,10 @@ void only_calculation_overlap(double **data_gpu, double **data_gpu_tmp, int widt
         iter--;
     }
     
-
+    for(int g = 0; g < gpus; g++){
+        cudaErrorHandle(cudaSetDevice(g));
+        cudaErrorHandle(cudaDeviceSynchronize());
+    }
     cudaErrorHandle(cudaEventRecord(stopevent));
     cudaErrorHandle(cudaEventSynchronize(stopevent));
 
@@ -502,6 +529,10 @@ void only_calculation_nooverlap(double **data_gpu, double **data_gpu_tmp, int wi
         }
 
         iter--;
+    }
+    for(int g = 0; g < gpus; g++){
+        cudaErrorHandle(cudaSetDevice(g));
+        cudaErrorHandle(cudaDeviceSynchronize());
     }
     cudaErrorHandle(cudaEventRecord(stopevent));
 
@@ -554,6 +585,10 @@ void only_communication_overlap(double **data_gpu, double **data_gpu_tmp, int wi
         }
         iter--;
     }
+    for(int g = 0; g < gpus; g++){
+        cudaErrorHandle(cudaSetDevice(g));
+        cudaErrorHandle(cudaDeviceSynchronize());
+    }
     cudaErrorHandle(cudaEventRecord(stopevent));
     cudaErrorHandle(cudaEventSynchronize(stopevent));
 
@@ -604,6 +639,11 @@ void only_communication_nooverlap(double **data_gpu, double **data_gpu_tmp, int 
             cudaErrorHandle(cudaEventSynchronize(events[g][1]));
         }
         iter--;
+    }
+
+    for(int g = 0; g < gpus; g++){
+        cudaErrorHandle(cudaSetDevice(g));
+        cudaErrorHandle(cudaDeviceSynchronize());
     }
     cudaErrorHandle(cudaEventRecord(stopevent));
 

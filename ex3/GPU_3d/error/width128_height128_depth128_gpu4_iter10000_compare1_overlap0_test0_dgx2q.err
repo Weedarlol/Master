@@ -1,0 +1,2 @@
+corrupted size vs. prev_size
+/cm/local/apps/slurm/var/spool/job155816/slurm_script: line 28: 1424875 Aborted                 (core dumped) ./out_width128_height128_depth128_gpu4_iter10000_compare1_overlap0_test0_dgx2q 128 128 128 10000 4 1 0 0
