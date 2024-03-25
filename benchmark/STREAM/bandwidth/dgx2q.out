@@ -1,0 +1,40 @@
+make[1]: Entering directory '/global/D1/homes/vidaro/Master/Mas/benchmark/STREAM'
+gcc -O2 -fopenmp   -c -o mysecond.o mysecond.c
+gcc -O2 -fopenmp -c mysecond.c
+gfortran -O2 -fopenmp -c stream.f
+gfortran -O2 -fopenmp stream.o mysecond.o -o stream_f.exe
+gcc -O2 -fopenmp stream.c -o stream_c.exe
+make[1]: Leaving directory '/global/D1/homes/vidaro/Master/Mas/benchmark/STREAM'
+make[1]: Entering directory '/global/D1/homes/vidaro/Master/Mas/benchmark/STREAM'
+gcc -O3 -march=native -mcmodel=medium -DSTREAM_ARRAY_SIZE=138412032 -DNTIMES=20 stream.c -o stream_gcc
+make[1]: Leaving directory '/global/D1/homes/vidaro/Master/Mas/benchmark/STREAM'
+-------------------------------------------------------------
+STREAM version $Revision: 5.10 $
+-------------------------------------------------------------
+This system uses 8 bytes per array element.
+-------------------------------------------------------------
+Array size = 138412032 (elements), Offset = 0 (elements)
+Memory per array = 1056.0 MiB (= 1.0 GiB).
+Total memory required = 3168.0 MiB (= 3.1 GiB).
+Each kernel will be executed 20 times.
+ The *best* time for each kernel (excluding the first iteration)
+ will be used to compute the reported bandwidth.
+-------------------------------------------------------------
+Your clock granularity/precision appears to be 1 microseconds.
+Each test below will take on the order of 136734 microseconds.
+   (= 136734 clock ticks)
+Increase the size of the arrays if this shows that
+you are not getting at least 20 clock ticks per test.
+-------------------------------------------------------------
+WARNING -- The above is only a rough guideline.
+For best results, please be sure you know the
+precision of your system timer.
+-------------------------------------------------------------
+Function    Best Rate MB/s  Avg time     Min time     Max time
+Copy:           11093.0     0.202228     0.199639     0.220284
+Scale:          11094.2     0.204605     0.199617     0.215560
+Add:            11914.9     0.284163     0.278802     0.297648
+Triad:          11927.8     0.286024     0.278499     0.309116
+-------------------------------------------------------------
+Solution Validates: avg error less than 1.000000e-13 on all three arrays
+-------------------------------------------------------------
