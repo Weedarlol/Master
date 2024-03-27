@@ -21,7 +21,7 @@ clean:
 
 # an example of a more complex build line for the Intel icc compiler
 stream.gcc: stream.c
-	gcc -O3 -march=native -mcmodel=medium -DSTREAM_ARRAY_SIZE=138412032 -DNTIMES=20 stream.c -o stream_gcc
+	gcc -O3 -march=native -mcmodel=medium -DSTREAM_ARRAY_SIZE=2147483648 -DNTIMES=20 stream.c -o stream_gcc
 
 run_stream_ex3:
 	sbatch -p $(PARTITION) run_stream_ex3.slurm
