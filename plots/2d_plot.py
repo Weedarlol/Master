@@ -76,7 +76,8 @@ def plot_info_cpu(grouped_info_list):
     _, axes = plt.subplots(num_rows, num_cols, figsize=(10, 8), sharex=True, sharey=True)
     bandwidth_values = [
         ("dgx2q", 11.107 * 2**30),
-        ("hgx2q", 26.625 * 2**30)
+        ("hgx2q", 26.625 * 2**30),
+        ("accel", 21.861 * 2**30)
     ]
     for i, (partition, elements) in enumerate(grouped_info_list):
         row_idx = i // num_cols

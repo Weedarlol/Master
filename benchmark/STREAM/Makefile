@@ -23,5 +23,8 @@ clean:
 stream.gcc: stream.c
 	gcc -O3 -march=native -mcmodel=medium -DSTREAM_ARRAY_SIZE=138412032 -DNTIMES=20 stream.c -o stream_gcc
 
-run_stream:
-	sbatch -p $(PARTITION) run_stream.slurm
+run_stream_ex3:
+	sbatch -p $(PARTITION) run_stream_ex3.slurm
+
+run_stream_fox:
+	sbatch --account=ec12 -p accel --time=00-00:10:00 --gpus-per-node=0 --mem-per-cpu=512G ./run_stream_fox.slurm
