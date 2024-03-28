@@ -79,3 +79,9 @@ Hgx2q is the more powerfull partition and is also made up of its own machine cal
 - [x] 3d plots
 - [ ] Communication plot
 - [ ] Node plot
+
+## General
+- [ ] Create one folder for all clusters
+- [ ] Clean up github
+- [ ] Finish tests
+- [ ] Finish Master Document
