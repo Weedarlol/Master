@@ -29,26 +29,47 @@ The candidate will learn about advanced parallel programming applicable to both 
 The candidate is expected to be skillful in technical programming (experience with parallel programming is not required but preferred). Importantly, the candidate must be hardworking and eager to learn new skills and knowledge, such as basic mathematical modeling and basic bioinformatics applications.
 
 
+
 # Content Information
 
-"fox" and "ex3" are two different clusters i worked on which i was allowed to use to test my projects. The folders are therefore quite similar, the biggest difference is that the folders are specialised for scenarios which i was allowed to run in the specified cluster
+For running my tests i was given access to two different clusters. The first cluster was named Fox and was provided to me through Educloud Research, while the other was eX3 which was provided through Simula Research Laboratory.
+
+These two clusters was chosen as they contained nodes which contained both CPUs and GPUs which could communicate with eachother through either PCIe or NVLink.
+
+The folders "ex3" and "fox" are therefore each assigned to their own cluster, but they are in practice quite similar in code.
 
 ## Fox cluster
-The fox cluster was provided to me by UiO through Educloud Research
+The fox cluster was provided to me by Educloud Research through my masterstudent status at University of Oslo
 
-Fox had 2 partitions i was utilizing, "Normal" and "Accel"
-- Normal was made up
+Fox had several nodes i was utilizing called "Accel" nodes, each of these nodes consisted of the following parts
+- AMD EPYC 7702 64-Core Processor CPU
+- 4x NVIDIA A100 GPUs
 
 ## Ex3 Cluster
-The Ex3 cluster was provided to me by Simula through my project guidance Xing Cai.
+The Ex3 cluster was provided to me by Simula Research Laboratory through my project guidance Xing Cai.
 
-Ex3 had 3 partitions i was utilizing, "Dgx2q", "Hgx2q" and "A100q". 
-- Dgx2q was made up of a single node consisting of DualProcessor Intel Xeon Scalable Platinum 8176 with 16 Nvidia Volta V100 connected through PCIe, but which are interconnected by NVLink.
-- Hgx2q was made up of a single node consisting of DualProcessor AMD EPYC Milan 7763 64-core with 8 Nvidia Volta A100/80GB connected through PCIE, but which are interconnected by NVLink.
-- A100q
+Ex3 had 3 partitions i was utilizing, "Dgx2q" and "Hgx2q". Each corresponding to only 1 node.
 
-# Oppgaver
+Dgx2q was the less powerfull of the two partitions and it was made up of an [Dgx2](https://www.nvidia.com/content/dam/en-zz/Solutions/Data-Center/dgx-1/dgx-2-datasheet-us-nvidia-955420-r2-web-new.pdf) machine, but with the following parts
+- DualProcessor Intel Xeon Scalable Platinum 8176 CPU
+- 16x Nvidia V100 GPUs
+
+Hgx2q is the more powerfull partition and is also made up of its own machine called [Hgx2](https://images.nvidia.com/content/pdf/hgx2-datasheet.pdf), but with the following parts
+- DualProcessor AMD EPYC Milan 7763 64-core CPU
+- 8x Nvidia A100/80GB GPUs
+
+# Tasks
 ## CPU
-- CPU 2d
-- CPU 3d
-- CPU(node0) to CPU 
+- [x] CPU 2d
+- [x] CPU 3d
+
+## GPU
+- [x] GPU 2d 1 GPU
+- [x] GPU 2d
+- [x] GPU 3d 1 GPU
+- [ ] GPU 3d
+
+## Nodes
+- [x] CPU to CPU
+- [ ] CPU to GPU
+- [ ] GPU to GPU
