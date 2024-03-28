@@ -188,72 +188,51 @@ def plot_overlap_gpu(grouped_info_list):
 
 
 def plot_estimate_gpu(grouped_info_list):
+    grouped_info_list = [
+        (partition, [(x, y, z, w, u, v-2 if v > 0 else v, a, b) for x, y, z, w, u, v, a, b in elements if u == 1])
+        for partition, elements in grouped_info_list
+    ]
+
     num_rows = 3
     num_cols = len(grouped_info_list)
     _, axes = plt.subplots(num_rows, num_cols, figsize=(10, 8), sharex=True, sharey=True)
 
     for i, (partition, elements) in enumerate(grouped_info_list):
-        for element in elements:
-            print(element)
-        
+        x_values = [f"{element[0]}x{element[1]}" for element in elements]
+        x_values = list(dict.fromkeys(x_values))
 
-    """ grouped_info_list = [
-        (partition, sorted([(x, y, z, w, u, v, a, b) for x, y, z, w, u, v, a, b in elements if u == 1 and a == "dgx2q"], key=lambda x: x[2]))
-        for partition, elements in grouped_info_list
-    ]
-    unique_partition = set()
-    unique_gpus = set()
-    unique_width = set()
-    unique_test = set()
-    for _, elements in grouped_info_list:
-        for element in elements:
-            unique_partition.add(element[6])
-            unique_gpus.add(element[2])
-            unique_width.add(element[0])
-            unique_test.add(element[5])
-    unique_gpus = sorted(unique_gpus)
-    num_rows = len(unique_gpus)
-    num_cols = len(unique_partition)
-    _, axes = plt.subplots(num_rows, num_cols, figsize=(10, 8), sharex=True, sharey=False)
-    for i, (partition, elements) in enumerate(grouped_info_list):
-        x_values_dict = {}
-        y_values_dict = {}
-        row_idx = i // num_cols
-        col_idx = i % num_cols
-        for element in elements:
-            y_idx = list(unique_partition).index(element[6])
-            x_idx = list(unique_gpus).index(element[2])
-            x_label = str(element[0])
-            y_value = element[-1]
-            # Group x and y values by subplot index
-            if (x_idx, y_idx) not in x_values_dict:
-                x_values_dict[(x_idx, y_idx)] = []
-                y_values_dict[(x_idx, y_idx)] = []
-            x_values_dict[(x_idx, y_idx)].append(x_label)
-            y_values_dict[(x_idx, y_idx)].append(y_value)
-        y_data = []
-        for (x_idx, y_idx), (x_values, y_values) in zip(x_values_dict.keys(), zip(x_values_dict.values(), y_values_dict.values())):
-            y_data.append([y_values[i::len(unique_test)] for i in range(len(unique_test))])
+        y_values = [[] for _ in range(num_rows*num_cols*3)]
 
-        for j, data in enumerate(y_data):
-            print("Number of GPUs = ", j+2, ", Matrix size = " , unique_width)
-            print("Total execution time =  ", data[0], "\nCalculation time =      ", data[1], "\nCommunication time =    ", data[2])
-            print("Percentage difference = ", np.array(data[0]) / (np.array(data[1]) + np.array(data[2])), "\n")
-        for j, data in enumerate(y_data):
-            for d in data:
-                if(num_cols > 1):
-                    axes[row_idx+j, col_idx].plot(x_values[::len(unique_test)], d, marker='o', label=f'Line {j+1}')
-                    axes[row_idx+j, col_idx].legend()
-                else:
-                    axes[row_idx+j].plot(x_values[::len(unique_test)], d, marker='o', label=f'Line {j+1}')
-                    axes[row_idx+j].legend()
-    # Set common labels and title
+        for element in elements:
+            y_values[(element[2] - 2) + element[5]*3].append(element[7])
+        if(num_cols > 1):
+            for row in range(num_rows):
+                if len(y_values[row*3]) < len(x_values):
+                    x_values = x_values[:len(y_values[row*3])]
+                elif len(y_values[row*3+1]) < len(x_values):
+                    x_values = x_values[:len(y_values[row*3+1])]
+                axes[row].plot(x_values, y_values[row*3], label='Full time')
+                axes[row].plot(x_values, y_values[row*3+1], label='Only Computation')
+                axes[row].plot(x_values, y_values[row*3+2], label='Only Communication')
+                axes[row, i].legend()
+                axes[row, i].set_ylabel("Time (s)")
+        else:
+            for row in range(num_rows):
+                if len(y_values[row*2]) < len(x_values):
+                    x_values = x_values[:len(y_values[row*2])]
+                elif len(y_values[row*2+1]) < len(x_values):
+                    x_values = x_values[:len(y_values[row*2+1])]
+                axes[row].plot(x_values, y_values[row], label='Full time')
+                axes[row].plot(x_values, y_values[row + 1*num_rows], label='Only Computation')
+                axes[row].plot(x_values, y_values[row + 2*num_rows], label='Only Communication')
+                axes[row].set_title(f"{partition} - GPUs: {row+2}")
+                axes[row].legend(loc='upper left')
+                axes[row].set_ylabel("Time (s)")
+
     plt.xlabel("Matrix Size")
-    plt.ylabel("Time (s)")
     plt.suptitle("Overlap by GPU Type")
-    plt.tight_layout()
-    plt.show() """
-
+    plt.tight_layout()  
+    plt.show()
 
 
 def plot_bandwidth_gpu(grouped_info_list):
@@ -348,7 +327,7 @@ info_list_gpu = process_files(folder_path_ex3_gpu, info_list_gpu)
 grouped_info_list_cpu = group_by_string(info_list_cpu)
 grouped_info_list_gpu = group_by_string(info_list_gpu)
 
-#grouped_info_list_gpu = [grouped_info_list_gpu[0]]
+grouped_info_list_gpu = [grouped_info_list_gpu[0]]
 
 # Plot the info_list
 

@@ -1,0 +1,2 @@
+out_width128_height128_depth128_gpu2_iter10000_compare1_overlap0_test0_createGrid0_hgx2q: malloc.c:4105: _int_malloc: Assertion `chunk_main_arena (bck->bk)' failed.
+/cm/local/apps/slurm/var/spool/job159845/slurm_script: line 28: 252193 Aborted                 (core dumped) ./out_width128_height128_depth128_gpu2_iter10000_compare1_overlap0_test0_createGrid0_hgx2q 128 128 128 10000 2 1 0 0_createGrid0

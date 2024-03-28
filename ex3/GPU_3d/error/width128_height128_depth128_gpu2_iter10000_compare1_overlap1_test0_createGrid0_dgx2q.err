@@ -1,0 +1,1 @@
+/cm/local/apps/slurm/var/spool/job159871/slurm_script: line 28: 2464125 Segmentation fault      (core dumped) ./out_width128_height128_depth128_gpu2_iter10000_compare1_overlap1_test0_createGrid0_dgx2q 128 128 128 10000 2 1 1 0_createGrid0

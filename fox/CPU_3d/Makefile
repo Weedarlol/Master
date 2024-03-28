@@ -11,10 +11,10 @@ ITERATIONS = 10000
 PARTITION = accel
 
 
-CREATEGRID = 1
+CREATEGRID = 0
 
 # Create a list of run identifiers for all combinations
-RUN_IDENTIFIERS = $(foreach width,$(WIDTH),$(foreach height,$(HEIGHT),$(foreach depth,$(DEPTH),$(foreach iter,$(ITERATIONS),width$(width)_height$(height)_depth$(depth)_iter$(ITERATIONS)_createGrid$(CREATEGRID)))))
+RUN_IDENTIFIERS = $(foreach width,$(WIDTH),$(foreach height,$(HEIGHT),$(foreach depth,$(DEPTH),width$(width)_height$(height)_depth$(depth)_gpu0_iter$(ITERATIONS)_compare0_overlap0_test0_createGrid$(CREATEGRID))))
 
 
 submit:

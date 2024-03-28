@@ -1,6 +1,6 @@
 # Define different matrix sizes
-WIDTH = 4096
-HEIGHT = 4096
+WIDTH = 512
+HEIGHT = 512
 
 GPU_COUNT = 2 3 4
 
@@ -14,10 +14,10 @@ OVERLAP = 0 1
 COMPARE = 1
 
 # 0 = full calculation, 1 = No kernel, 2 = No communication, 3 = only calculation, 4 = only communication
-TEST = 3 4
+TEST = 0 3 4
 
 # Chooses which partition to run at. (hgx2q and dgx2q for more than 1 GPU, a100q and a40q for more than 1 cluster)
-PARTITION = hgx2q
+PARTITION = dgx2q
 
 # Create a list of run identifiers for all combinations
 RUN_IDENTIFIERS = $(foreach width,$(WIDTH),$(foreach height,$(HEIGHT),$(foreach gpu,$(GPU_COUNT),$(foreach iter,$(ITERATIONS),$(foreach overlap,$(OVERLAP),$(foreach test,$(TEST),width$(width)_height$(height)_gpu$(gpu)_iter$(ITERATIONS)_compare$(COMPARE)_overlap$(overlap)_test$(test)_createMatrix0))))))
