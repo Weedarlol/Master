@@ -77,7 +77,7 @@ def plot_info_cpu(grouped_info_list):
     bandwidth_values = [
         ("dgx2q", 11.107 * 2**30),
         ("hgx2q", 26.625 * 2**30),
-        ("accel", 21.861 * 2**30)
+        ("accel", 19.0205 * 2**30)
     ]
     for i, (partition, elements) in enumerate(grouped_info_list):
         row_idx = i // num_cols
