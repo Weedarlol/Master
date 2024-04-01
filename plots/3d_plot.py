@@ -40,7 +40,7 @@ def process_files(folder_path, existing_info_list=None):
         if info:
             info_list.append(info)
 
-    sorted_list = sorted(info_list, key=lambda x: (x[0], x[1]))
+    sorted_list = sorted(info_list, key=lambda x: (x[0], x[1], x[2]))
     
     return sorted_list
 
@@ -125,7 +125,7 @@ def plot_info_cpu(grouped_info_list):
 
 def plot_overlap_gpu(grouped_info_list):
     grouped_info_list = [
-        (partition, [(x, y, z, w, u, v, a, b) for x, y, z, w, u, v, a, b in elements if v == 0])
+        (partition, [(x, y, z, w, u, v, a, b, c) for x, y, z, w, u, v, a, b, c in elements if a == 0])
         for partition, elements in grouped_info_list
     ]
 
@@ -134,15 +134,15 @@ def plot_overlap_gpu(grouped_info_list):
     _, axes = plt.subplots(num_rows, num_cols, figsize=(10, 8), sharex=True, sharey=True)
 
     for i, (partition, elements) in enumerate(grouped_info_list):
-        x_values = [f"{element[0]}x{element[1]}" for element in elements]
+        x_values = [f"{element[0]}x{element[1]}x{element[2]}" for element in elements]
         x_values = list(dict.fromkeys(x_values))
         y_values = [[] for _ in range(num_rows*num_cols*2)]
 
         for element in elements:
-            if element[4] == 0:
-                y_values[element[2]*2-4].append(element[7])
+            if element[5] == 0:
+                y_values[element[3]*2-4].append(element[8])
             else:
-                y_values[element[2]*2-3].append(element[7])
+                y_values[element[3]*2-3].append(element[8])
         
         percentage_diff = []
         for j in range(0, len(y_values), 2):
@@ -193,7 +193,7 @@ def plot_overlap_gpu(grouped_info_list):
 
 def plot_estimate_gpu(grouped_info_list):
     grouped_info_list = [
-        (partition, [(x, y, z, w, u, v-2 if v > 0 else v, a, b) for x, y, z, w, u, v, a, b in elements if u == 1])
+        (partition, [(x, y, z, w, u, v, a-2 if a > 0 else a, b, c) for x, y, z, w, u, v, a, b, c in elements if v == 1])
         for partition, elements in grouped_info_list
     ]
 
@@ -202,13 +202,14 @@ def plot_estimate_gpu(grouped_info_list):
     _, axes = plt.subplots(num_rows, num_cols, figsize=(10, 8), sharex=True, sharey=True)
 
     for i, (partition, elements) in enumerate(grouped_info_list):
-        x_values = [f"{element[0]}x{element[1]}" for element in elements]
+        x_values = [f"{element[0]}x{element[1]}x{element[2]}" for element in elements]
         x_values = list(dict.fromkeys(x_values))
 
         y_values = [[] for _ in range(num_rows*num_cols*3)]
 
         for element in elements:
-            y_values[(element[2] - 2) + element[5]*3].append(element[7])
+            y_values[(element[3] - 2) + element[6]*3].append(element[8])
+
         if(num_cols > 1):
             for row in range(num_rows):
                 if len(y_values[row*3]) < len(x_values):
@@ -241,7 +242,7 @@ def plot_estimate_gpu(grouped_info_list):
 
 def plot_bandwidth_gpu(grouped_info_list):
     grouped_info_list = [
-        (partition, sorted([(x, y, z, w, u, v, a, b) for x, y, z, w, u, v, a, b in elements if u == 1 and a == "dgx2q" and v == 0], key=lambda x: x[2]))
+        (partition, sorted([(x, y, z, w, u, v, a, b) for x, y, z, w, u, v, a, b in elements if u == 1 ], key=lambda x: x[2]))
         for partition, elements in grouped_info_list
     ]
     num_partitions = len(grouped_info_list)
@@ -313,25 +314,28 @@ def plot_bandwidth_gpu(grouped_info_list):
 folder_path_ex3_cpu = "../ex3/CPU_3d/output"
 folder_path_fox_cpu = "../fox/CPU_3d/output"
 
-#folder_path_ex3_gpu = "../ex3/GPU_3d/output"
+folder_path_ex3_gpu = "../ex3/GPU_3d/output"
 #folder_path_fox_gpu = "../fox/GPU_3d/output"
 
 info_list_cpu = []
 info_list_cpu = process_files(folder_path_ex3_cpu, info_list_cpu)
 info_list_cpu = process_files(folder_path_fox_cpu, info_list_cpu)
-#info_list_gpu = []
-#info_list_gpu = process_files(folder_path_ex3_gpu, info_list_gpu)
+info_list_gpu = []
+info_list_gpu = process_files(folder_path_ex3_gpu, info_list_gpu)
 #info_list_gpu = process_files(folder_path_ex3_1gpu, info_list_gpu)
+
 
 # Call the function to group the info_list by the string
 grouped_info_list_cpu = group_by_string(info_list_cpu)
-#grouped_info_list_gpu = group_by_string(info_list_gpu)
+grouped_info_list_gpu = group_by_string(info_list_gpu)
 
-#grouped_info_list_gpu = [grouped_info_list_gpu[0]]
+
+
+grouped_info_list_gpu = [grouped_info_list_gpu[0]]
 
 # Plot the info_list
 
-plot_info_cpu(grouped_info_list_cpu)
+#plot_info_cpu(grouped_info_list_cpu)
 #plot_overlap_gpu(grouped_info_list_gpu)
-#plot_estimate_gpu(grouped_info_list_gpu)
+plot_estimate_gpu(grouped_info_list_gpu)
 #plot_bandwidth_gpu(grouped_info_list_gpu)

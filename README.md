@@ -36,7 +36,7 @@ For running my tests i was given access to two different clusters. The first clu
 
 These two clusters was chosen as they contained nodes which contained both CPUs and GPUs which could communicate with eachother through either PCIe or NVLink.
 
-The folders "ex3" and "fox" are therefore each assigned to their own cluster, but they are in practice quite similar in code.
+The folders "ex3" and "fox" are therefore each assigned to their own cluster, but they are in practice quite similar in code. The biggest difference is that i do not have the opportunity to perform cross-node computation in the "ex3" cluster as the partition i wanted to use there called "a100q" is occupied most of the time.
 
 ## Fox cluster
 The fox cluster was provided to me by Educloud Research through my masterstudent status at University of Oslo

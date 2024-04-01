@@ -10,7 +10,7 @@ void fillValues3D(double *mat, int width, int height, int depth, double dx, doub
     double x, y, z;
 
     // Assuming the data in the matrix is stored contiguously in memory
-    memset(mat, 0, height * width * depth * sizeof(double));
+    memset(mat, 0, width * height * depth * sizeof(double));
 
     for (int i = 1; i < depth-1; i++) {
         z = (i + rank * (depth - 2)) * dz; // z coordinate
@@ -75,6 +75,7 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
         device_nr[g] = g;
     }
 
+
     // Ignores first and last slice
     int slices_total = depth-2;
     int slices_per_device = slices_total/gpus;
@@ -105,6 +106,11 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
 
     for(int g = 0; g < gpus; g++){
         cudaErrorHandle(cudaSetDevice(g));
+        cudaErrorHandle(cudaDeviceSynchronize());
+    }
+
+    for(int g = 0; g < gpus; g++){
+        cudaErrorHandle(cudaSetDevice(g));
         cudaErrorHandle(cudaMalloc(&data_gpu[g],     width*height*slices_device[g]*sizeof(double)));
         cudaErrorHandle(cudaMalloc(&data_gpu_tmp[g], width*height*slices_device[g]*sizeof(double)));
     }
@@ -123,12 +129,12 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     threadInformation[4] = (1                              *(width-2)*(height-2))/threadSize; // Find number of elements for each thread for a slice, if 0 it means there are more threads than elements in slice
     threadInformation[5] = (1                              *(width-2)*(height-2))%threadSize; // Finding which threads require 1 more element
 
-
+    
     void ***kernelCollEdge;
     cudaErrorHandle(cudaMallocHost(&kernelCollEdge, gpus * sizeof(void**)));
     // Allocates the elements in the kernelCollEdge, used for cudaLaunchCooperativeKernel as functon variables.
     for (int g = 0; g < gpus; g++) {
-        void **kernelArgs = new void*[8];
+        void **kernelArgs = new void*[7];
         kernelArgs[0] = &data_gpu[g];
         kernelArgs[1] = &data_gpu_tmp[g];
         kernelArgs[2] = &width;
@@ -144,7 +150,7 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     cudaErrorHandle(cudaMallocHost(&kernelCollMid, gpus * sizeof(void**)));
     // Allocates the elements in the kernelCollMid, used for cudaLaunchCooperativeKernel as functon variables.
     for (int g = 0; g < gpus; g++) {
-        void **kernelArgs = new void*[11];
+        void **kernelArgs = new void*[12];
         kernelArgs[0] = &data_gpu[g];     
         kernelArgs[1] = &data_gpu_tmp[g];
         kernelArgs[2] = &width;
@@ -160,10 +166,7 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
 
         kernelCollMid[g] = kernelArgs;
     }
-
-
-
-
+    
     if(gpus < 2){
         printf("You are running on less than 2 gpus, to be able to communicate between gpus you are required to compute on more than 1 gpu.\n");
     }
@@ -209,7 +212,7 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
 
 
 
-
+    
     for(int g = 0; g < gpus; g++){
         cudaErrorHandle(cudaSetDevice(g));
         cudaErrorHandle(cudaDeviceSynchronize());
@@ -295,7 +298,7 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     cudaErrorHandle(cudaFreeHost(slices_starting_index));
     cudaErrorHandle(cudaFreeHost(slices_compute_device));
 
-}
+ }
 
 
 

@@ -2,19 +2,19 @@
 WIDTH = 512
 HEIGHT = 512
 
-GPU_COUNT = 2 3 4
+GPU_COUNT = 4
 
 # Number of max iterations to run for the scenario
 ITERATIONS = 10000
 
 # Enables or disables overlap, 1 = overlap, 0 = no overlap
-OVERLAP = 0 1
+OVERLAP = 1
 
 # If you want to compare the final resulting matrix with the matrix created by the CPU. (CPU has to computed it first and created its own textfile containing its matrix called "CPUMatrix%i_%i.txt" where %i are the width and height)
 COMPARE = 1
 
 # 0 = full calculation, 1 = No kernel, 2 = No communication, 3 = only calculation, 4 = only communication
-TEST = 0 3 4
+TEST = 0
 
 # Chooses which partition to run at. (hgx2q and dgx2q for more than 1 GPU, a100q and a40q for more than 1 cluster)
 PARTITION = dgx2q

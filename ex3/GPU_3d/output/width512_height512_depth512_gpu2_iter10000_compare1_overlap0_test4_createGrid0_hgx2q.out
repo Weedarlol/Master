@@ -1,0 +1,3 @@
+Time(event) - 2.09025 s
+Comparing the grids
+Mismatch found at position (width = 1, height = 1, depth = 1) (data = 0.0000018588488385, data_compare = 0.0000008728402527)
