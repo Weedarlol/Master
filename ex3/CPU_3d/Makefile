@@ -1,14 +1,14 @@
 # Define different grid sizes
-WIDTH = 128
-HEIGHT = 128
-DEPTH = 128
+WIDTH = 1024
+HEIGHT = 1024
+DEPTH = 1024
 
 # Number of max iterations to run for the scenario
 ITERATIONS = 10000
 
 # Chooses which partition to run at. (hgx2q and dgx2q for more than 1 GPU, a100q and a40q for more than 1 cluster)
 # Example = hgx2q, dgx2q, a100q
-PARTITION = hgx2q
+PARTITION = dgx2q
 
 
 CREATEGRID = 0
