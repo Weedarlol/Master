@@ -1,0 +1,27 @@
+Starting job 494469 on gpu-9 at Tue Apr 2 18:50:16 CEST 2024
+
+
+Task and CPU usage stats:
+JobID           JobName  AllocCPUS   NTasks     MinCPU MinCPUTask     AveCPU    Elapsed ExitCode 
+------------ ---------- ---------- -------- ---------- ---------- ---------- ---------- -------- 
+494469       width256_+          1                                             00:00:11      0:0 
+494469.batch      batch          1        1   00:00:08          0   00:00:08   00:00:11      0:0 
+494469.exte+     extern          1        1   00:00:00          0   00:00:00   00:00:11      0:0 
+
+Memory usage stats:
+JobID            MaxRSS MaxRSSTask     AveRSS MaxPages   MaxPagesTask   AvePages 
+------------ ---------- ---------- ---------- -------- -------------- ---------- 
+494469                                                                           
+494469.batch     49424K          0     49424K        0              0          0 
+494469.exte+          0          0          0        0              0          0 
+
+Disk usage stats:
+JobID         MaxDiskRead MaxDiskReadTask    AveDiskRead MaxDiskWrite MaxDiskWriteTask   AveDiskWrite 
+------------ ------------ --------------- -------------- ------------ ---------------- -------------- 
+494469                                                                                                
+494469.batch            0               0              0        0.00M                0          0.00M 
+494469.exte+        0.01M               0          0.01M        0.00M                0          0.00M 
+
+GPU usage stats:
+
+Job 494469 completed at Tue Apr 2 18:50:28 CEST 2024

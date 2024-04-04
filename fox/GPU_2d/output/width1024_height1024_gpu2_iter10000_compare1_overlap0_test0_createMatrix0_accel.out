@@ -1,30 +1,28 @@
-Starting job 471419 on gpu-9 at Mon Mar 18 07:42:52 CET 2024
+Starting job 491661 on gpu-5 at Thu Mar 28 20:41:05 CET 2024
 
-Time(event) - 0.74040 s
+Time(event) - 0.85679 s
 Comparing the matrixes
 All elements match!
 
 Task and CPU usage stats:
 JobID           JobName  AllocCPUS   NTasks     MinCPU MinCPUTask     AveCPU    Elapsed ExitCode 
 ------------ ---------- ---------- -------- ---------- ---------- ---------- ---------- -------- 
-471419       width1024+          1                                             00:00:12      0:0 
-471419.batch      batch          1        1   00:00:09          0   00:00:09   00:00:12      0:0 
-471419.exte+     extern          1        1   00:00:00          0   00:00:00   00:00:12      0:0 
+491661       width1024+          1                                             00:00:10      0:0 
+491661.batch      batch          1        1   00:00:09          0   00:00:09   00:00:10      0:0 
+491661.exte+     extern          1        1   00:00:00          0   00:00:00   00:00:10      0:0 
 
 Memory usage stats:
 JobID            MaxRSS MaxRSSTask     AveRSS MaxPages   MaxPagesTask   AvePages 
 ------------ ---------- ---------- ---------- -------- -------------- ---------- 
-471419                                                                           
-471419.batch     11228K          0     11228K        0              0          0 
-471419.exte+          0          0          0        0              0          0 
+491661                                                                           
+491661.batch       444K          0       444K        0              0          0 
+491661.exte+          0          0          0        0              0          0 
 
 Disk usage stats:
 JobID         MaxDiskRead MaxDiskReadTask    AveDiskRead MaxDiskWrite MaxDiskWriteTask   AveDiskWrite 
 ------------ ------------ --------------- -------------- ------------ ---------------- -------------- 
-471419                                                                                                
-471419.batch            0               0              0        0.00M                0          0.00M 
-471419.exte+        0.01M               0          0.01M        0.00M                0          0.00M 
+491661                                                                                                
+491661.batch            0               0              0        0.00M                0          0.00M 
+491661.exte+        0.01M               0          0.01M        0.00M                0          0.00M 
 
-GPU usage stats:
-
-Job 471419 completed at Mon Mar 18 07:43:04 CET 2024
+Job 491661 completed at Thu Mar 28 20:41:14 CET 2024

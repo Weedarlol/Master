@@ -5,9 +5,9 @@
 
 namespace cg = cooperative_groups;
 
-__device__ void calc(double *data_gpu, double *data_gpu_tmp, int amountPerThread, int index_start, int width, int height, int thread, int thread_size){
+__device__ void calc(double *data_gpu, double *data_gpu_tmp, int elementsPerThread, int index_start, int width, int height, int thread, int thread_size){
     double division = 1.0/6;
-    for(int i = 0; i < amountPerThread; i++){
+    for(int i = 0; i < elementsPerThread; i++){
         int index = index_start + i*thread_size;
         int x = index % (width - 2) + 1;
         int y = (index / (width - 2)) % (height - 2) + 1;
@@ -22,36 +22,41 @@ __device__ void calc(double *data_gpu, double *data_gpu_tmp, int amountPerThread
 }
 
 __global__ void jacobiEdge(double *data_gpu, double *data_gpu_tmp, int width, int height, 
-                        int slices_compute, int amountPerThread, int leftover){
+                        int slices_compute, int elementsPerThread, int leftover){
 
     cg::grid_group grid_g = cg::this_grid();
     int thread = grid_g.thread_rank();
     int thread_size = grid_g.size();
 
-    // More threads than elements in 2 slices
-    if(thread_size > leftover*2){
-        amountPerThread++;
-        // Selects all threads with index less than width
+    // There are more threads than elements 
+    if(elementsPerThread > 0){
         if(thread < leftover){
-            calc(data_gpu, data_gpu_tmp, amountPerThread, thread, width, height, thread, thread_size);
+            elementsPerThread++;
         }
-        // Selects all threads with index between width and width*2
-        else if(thread > leftover && thread < leftover+leftover){
-            calc(data_gpu, data_gpu_tmp, amountPerThread, thread+slices_compute*(width-2)*(height-2), width, height, thread, thread_size);
-        }
-    }
-    else if(thread_size > leftover){
-        amountPerThread++;
-        if(thread < leftover){
-            // The same threads will compute both slices
-            calc(data_gpu, data_gpu_tmp, amountPerThread, thread, width, height, thread, thread_size);
-            calc(data_gpu, data_gpu_tmp, amountPerThread, thread+slices_compute*(width-2)*(height-2), width, height, thread, thread_size);
-        }
+        calc(data_gpu, data_gpu_tmp, elementsPerThread, thread, width, height, thread, thread_size);
+        calc(data_gpu, data_gpu_tmp, elementsPerThread, thread + (slices_compute+1)*(width-2)*(height-2), width, height, thread, thread_size);
     }
     // There are less threads than elements in 1 slice
     else{
-        calc(data_gpu, data_gpu_tmp, amountPerThread, thread, width, height, thread, thread_size);
-        calc(data_gpu, data_gpu_tmp, amountPerThread, thread+slices_compute*(width-2)*(height-2), width, height, thread, thread_size);
+        if(thread_size >= leftover*2){
+            elementsPerThread++;
+            // Selects all threads with index less than width
+            if(thread < leftover){
+                calc(data_gpu, data_gpu_tmp, elementsPerThread, thread, width, height, thread, thread_size);
+            }
+            // Selects all threads with index between width and width*2
+            else if(thread < leftover+leftover){
+                calc(data_gpu, data_gpu_tmp, elementsPerThread, thread + (slices_compute+1)*(width-2)*(height-2), width, height, thread, thread_size);
+            }
+        }
+        else{
+            elementsPerThread++;
+            if(thread < leftover){
+                // The same threads will compute both slices
+                calc(data_gpu, data_gpu_tmp, elementsPerThread, thread, width, height, thread, thread_size);
+                calc(data_gpu, data_gpu_tmp, elementsPerThread, thread + (slices_compute+1)*(width-2)*(height-2), width, height, thread, thread_size);
+            }
+        }
     }
 }
 

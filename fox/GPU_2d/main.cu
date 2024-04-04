@@ -57,7 +57,6 @@ void initialization(int width, int height, int iter, double dx, double dy, int g
     int total = width*height;
     int overlap_calc = (width-2)*overlap;
     int threadSize = blockDim.x*blockDim.y*blockDim.z*gridDim.x*gridDim.y*gridDim.z;
-    int warp_size = 32;
 
     int *device_nr;
     cudaErrorHandle(cudaMallocHost(&device_nr, gpus*sizeof(int*)));
@@ -92,7 +91,6 @@ void initialization(int width, int height, int iter, double dx, double dy, int g
     threadInformation[3] = ((rows_compute_device[gpus-1])*(width-2))%threadSize; // Finding which threads require 1 more element
     threadInformation[4] = (1                            *(width-2))/threadSize; // Find number of elements for each thread for a row, if 0 it means there are more threads than elements in row
     threadInformation[5] = (1                            *(width-2))%threadSize; // Finding which threads require 1 more element
-    threadInformation[6] = (width - 2) % warp_size != 0 ? ((width-2)/warp_size)*warp_size+warp_size : ((width-2)/warp_size)*warp_size;
 
     double *data;
     double **data_gpu, **data_gpu_tmp;
@@ -112,7 +110,7 @@ void initialization(int width, int height, int iter, double dx, double dy, int g
     cudaErrorHandle(cudaMallocHost(&kernelCollEdge, gpus * sizeof(void**)));
     // Allocates the elements in the kernelCollEdge, used for cudaLaunchCooperativeKernel as functon variables.
     for (int g = 0; g < gpus; g++) {
-        void **kernelArgs = new void*[8];
+        void **kernelArgs = new void*[7];
         kernelArgs[0] = &data_gpu[g];
         kernelArgs[1] = &data_gpu_tmp[g];
         kernelArgs[2] = &width;
@@ -120,7 +118,6 @@ void initialization(int width, int height, int iter, double dx, double dy, int g
         kernelArgs[4] = &rows_compute_device[g];
         kernelArgs[5] = &threadInformation[4];
         kernelArgs[6] = &threadInformation[5];
-        kernelArgs[7] = &threadInformation[6];
 
         kernelCollEdge[g] = kernelArgs;
     }
@@ -166,36 +163,36 @@ void initialization(int width, int height, int iter, double dx, double dy, int g
     else{
         if(overlap == 1){
             if(test == 0){
-                full_calculation_overlap(data_gpu, data_gpu_tmp, height, width, iter, gpus, rows_device, gridDim, blockDim, kernelCollEdge, kernelCollMid);
+                full_calculation_overlap(data_gpu, data_gpu_tmp, width, height, iter, gpus, rows_device, gridDim, blockDim, kernelCollEdge, kernelCollMid);
             }
             else if(test == 1){
-                no_kernel_overlap(data_gpu, data_gpu_tmp, height, width, iter, gpus, rows_device, gridDim, blockDim, kernelCollEdge, kernelCollMid);
+                no_kernel_overlap(data_gpu, data_gpu_tmp, width, height, iter, gpus, rows_device, gridDim, blockDim, kernelCollEdge, kernelCollMid);
             }
             else if(test == 2){
-                no_communication_overlap(data_gpu, data_gpu_tmp, height, width, iter, gpus, rows_device, gridDim, blockDim, kernelCollEdge, kernelCollMid);
+                no_communication_overlap(data_gpu, data_gpu_tmp, width, height, iter, gpus, rows_device, gridDim, blockDim, kernelCollEdge, kernelCollMid);
             }
             else if(test == 3){
-                only_calculation_overlap(data_gpu, data_gpu_tmp, height, width, iter, gpus, rows_device, gridDim, blockDim, kernelCollEdge, kernelCollMid);
+                only_calculation_overlap(data_gpu, data_gpu_tmp, width, height, iter, gpus, rows_device, gridDim, blockDim, kernelCollEdge, kernelCollMid);
             }
             else if(test == 4){
-                only_communication_overlap(data_gpu, data_gpu_tmp, height, width, iter, gpus, rows_device, gridDim, blockDim, kernelCollEdge, kernelCollMid);
+                only_communication_overlap(data_gpu, data_gpu_tmp, width, height, iter, gpus, rows_device, gridDim, blockDim, kernelCollEdge, kernelCollMid);
             }
         }
         else{
             if(test == 0){
-                full_calculation_nooverlap(data_gpu, data_gpu_tmp, height, width, iter, gpus, rows_device, gridDim, blockDim, kernelCollMid);
+                full_calculation_nooverlap(data_gpu, data_gpu_tmp, width, height, iter, gpus, rows_device, gridDim, blockDim, kernelCollMid);
             }
             else if(test == 1){
-                no_kernel_nooverlap(data_gpu, data_gpu_tmp, height, width, iter, gpus, rows_device, gridDim, blockDim, kernelCollMid);
+                no_kernel_nooverlap(data_gpu, data_gpu_tmp, width, height, iter, gpus, rows_device, gridDim, blockDim, kernelCollMid);
             }
             else if(test == 2){
-                no_communication_nooverlap(data_gpu, data_gpu_tmp, height, width, iter, gpus, rows_device, gridDim, blockDim, kernelCollMid);
+                no_communication_nooverlap(data_gpu, data_gpu_tmp, width, height, iter, gpus, rows_device, gridDim, blockDim, kernelCollMid);
             }
             else if(test == 3){
-                only_calculation_nooverlap(data_gpu, data_gpu_tmp, height, width, iter, gpus, rows_device, gridDim, blockDim, kernelCollMid);
+                only_calculation_nooverlap(data_gpu, data_gpu_tmp, width, height, iter, gpus, rows_device, gridDim, blockDim, kernelCollMid);
             }
             else if(test == 4){
-                only_communication_nooverlap(data_gpu, data_gpu_tmp, height, width, iter, gpus, rows_device, gridDim, blockDim, kernelCollMid);
+                only_communication_nooverlap(data_gpu, data_gpu_tmp, width, height, iter, gpus, rows_device, gridDim, blockDim, kernelCollMid);
             }
         }
     }
@@ -226,7 +223,7 @@ void initialization(int width, int height, int iter, double dx, double dy, int g
     if(compare == 1){
         double* data_compare = (double*)malloc(width * height * sizeof(double));
         FILE *fptr;
-        char filename[30];
+        char filename[100];
         sprintf(filename, "../CPU_2d/matrices/CPUMatrix%d_%d.txt", width, height);
 
         printf("Comparing the matrixes\n");

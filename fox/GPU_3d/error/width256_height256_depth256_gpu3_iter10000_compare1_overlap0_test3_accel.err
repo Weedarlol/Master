@@ -1,0 +1,13 @@
+/cluster/software/EL9/easybuild/software/binutils/2.38-GCCcore-11.3.0/bin/ld: /localscratch/494513/tmpxft_002b37cd_00000000-29_scenarios.o: in function `full_calculation_overlap(double**, double**, int, int, int, int, int, int*, dim3, dim3, void***, void***)':
+tmpxft_002b37cd_00000000-14_scenarios.cudafe1.cpp:(.text+0x157): undefined reference to `jacobiMid(double*, double*, int, int, int, int, int, int, int, int, int)'
+/cluster/software/EL9/easybuild/software/binutils/2.38-GCCcore-11.3.0/bin/ld: /localscratch/494513/tmpxft_002b37cd_00000000-29_scenarios.o: in function `full_calculation_nooverlap(double**, double**, int, int, int, int, int, int*, dim3, dim3, void***)':
+tmpxft_002b37cd_00000000-14_scenarios.cudafe1.cpp:(.text+0x860): undefined reference to `jacobiMid(double*, double*, int, int, int, int, int, int, int, int, int)'
+/cluster/software/EL9/easybuild/software/binutils/2.38-GCCcore-11.3.0/bin/ld: /localscratch/494513/tmpxft_002b37cd_00000000-29_scenarios.o: in function `no_communication_overlap(double**, double**, int, int, int, int, int, int*, dim3, dim3, void***, void***)':
+tmpxft_002b37cd_00000000-14_scenarios.cudafe1.cpp:(.text+0x1cd3): undefined reference to `jacobiMid(double*, double*, int, int, int, int, int, int, int, int, int)'
+/cluster/software/EL9/easybuild/software/binutils/2.38-GCCcore-11.3.0/bin/ld: /localscratch/494513/tmpxft_002b37cd_00000000-29_scenarios.o: in function `no_communication_nooverlap(double**, double**, int, int, int, int, int, int*, dim3, dim3, void***)':
+tmpxft_002b37cd_00000000-14_scenarios.cudafe1.cpp:(.text+0x21e6): undefined reference to `jacobiMid(double*, double*, int, int, int, int, int, int, int, int, int)'
+/cluster/software/EL9/easybuild/software/binutils/2.38-GCCcore-11.3.0/bin/ld: /localscratch/494513/tmpxft_002b37cd_00000000-29_scenarios.o: in function `only_calculation_overlap(double**, double**, int, int, int, int, int, int*, dim3, dim3, void***, void***)':
+tmpxft_002b37cd_00000000-14_scenarios.cudafe1.cpp:(.text+0x2b1b): undefined reference to `jacobiMid(double*, double*, int, int, int, int, int, int, int, int, int)'
+/cluster/software/EL9/easybuild/software/binutils/2.38-GCCcore-11.3.0/bin/ld: /localscratch/494513/tmpxft_002b37cd_00000000-29_scenarios.o:tmpxft_002b37cd_00000000-14_scenarios.cudafe1.cpp:(.text+0x2f5b): more undefined references to `jacobiMid(double*, double*, int, int, int, int, int, int, int, int, int)' follow
+collect2: error: ld returned 1 exit status
+/var/spool/slurmd/job494513/slurm_script: line 28: ./out_width256_height256_depth256_gpu3_iter10000_compare1_overlap0_test3_accel: No such file or directory

@@ -9,7 +9,7 @@
 namespace cg = cooperative_groups;
 
 
-void full_calculation_overlap(double **data_gpu, double **data_gpu_tmp, int height, int width, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollEdge, void*** kernelCollMid){
+void full_calculation_overlap(double **data_gpu, double **data_gpu_tmp, int width, int height, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollEdge, void*** kernelCollMid){
     cudaStream_t streams[gpus][2];
     cudaEvent_t events[gpus][4], startevent, stopevent;
     initializeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
@@ -84,7 +84,7 @@ void full_calculation_overlap(double **data_gpu, double **data_gpu_tmp, int heig
 
 
 
-void full_calculation_nooverlap(double **data_gpu, double **data_gpu_tmp, int height, int width, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollMid){
+void full_calculation_nooverlap(double **data_gpu, double **data_gpu_tmp, int width, int height, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollMid){
     cudaStream_t streams[gpus][2];
     cudaEvent_t events[gpus][4], startevent, stopevent;
     initializeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
@@ -153,7 +153,7 @@ void full_calculation_nooverlap(double **data_gpu, double **data_gpu_tmp, int he
 
 
 
-void no_kernel_overlap(double **data_gpu, double **data_gpu_tmp, int height, int width, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollEdge, void*** kernelCollMid){
+void no_kernel_overlap(double **data_gpu, double **data_gpu_tmp, int width, int height, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollEdge, void*** kernelCollMid){
     cudaStream_t streams[gpus][2];
     cudaEvent_t events[gpus][4], startevent, stopevent;
     initializeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
@@ -210,7 +210,7 @@ void no_kernel_overlap(double **data_gpu, double **data_gpu_tmp, int height, int
 
 
 
-void no_kernel_nooverlap(double **data_gpu, double **data_gpu_tmp, int height, int width, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollMid){
+void no_kernel_nooverlap(double **data_gpu, double **data_gpu_tmp, int width, int height, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollMid){
     cudaStream_t streams[gpus][2];
     cudaEvent_t events[gpus][4], startevent, stopevent;
     initializeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
@@ -269,7 +269,7 @@ void no_kernel_nooverlap(double **data_gpu, double **data_gpu_tmp, int height, i
 
 
 
-void no_communication_overlap(double **data_gpu, double **data_gpu_tmp, int height, int width, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollEdge, void*** kernelCollMid){
+void no_communication_overlap(double **data_gpu, double **data_gpu_tmp, int width, int height, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollEdge, void*** kernelCollMid){
     cudaStream_t streams[gpus][2];
     cudaEvent_t events[gpus][4], startevent, stopevent;
     initializeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
@@ -318,7 +318,7 @@ void no_communication_overlap(double **data_gpu, double **data_gpu_tmp, int heig
 
 
 
-void no_communication_nooverlap(double **data_gpu, double **data_gpu_tmp, int height, int width, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollMid){
+void no_communication_nooverlap(double **data_gpu, double **data_gpu_tmp, int width, int height, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollMid){
     cudaStream_t streams[gpus][2];
     cudaEvent_t events[gpus][4], startevent, stopevent;
     initializeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
@@ -369,7 +369,7 @@ void no_communication_nooverlap(double **data_gpu, double **data_gpu_tmp, int he
 
 
 
-void only_calculation_overlap(double **data_gpu, double **data_gpu_tmp, int height, int width, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollEdge, void*** kernelCollMid){
+void only_calculation_overlap(double **data_gpu, double **data_gpu_tmp, int width, int height, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollEdge, void*** kernelCollMid){
     cudaStream_t streams[gpus][2];
     cudaEvent_t events[gpus][4], startevent, stopevent;
     initializeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
@@ -420,7 +420,7 @@ void only_calculation_overlap(double **data_gpu, double **data_gpu_tmp, int heig
 
 
 
-void only_calculation_nooverlap(double **data_gpu, double **data_gpu_tmp, int height, int width, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollMid){
+void only_calculation_nooverlap(double **data_gpu, double **data_gpu_tmp, int width, int height, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollMid){
     cudaStream_t streams[gpus][2];
     cudaEvent_t events[gpus][4], startevent, stopevent;
     initializeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
@@ -465,7 +465,7 @@ void only_calculation_nooverlap(double **data_gpu, double **data_gpu_tmp, int he
 
 
 
-void only_communication_overlap(double **data_gpu, double **data_gpu_tmp, int height, int width, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollEdge, void*** kernelCollMid){
+void only_communication_overlap(double **data_gpu, double **data_gpu_tmp, int width, int height, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollEdge, void*** kernelCollMid){
     cudaStream_t streams[gpus][2];
     cudaEvent_t events[gpus][4], startevent, stopevent;
     initializeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
@@ -515,7 +515,7 @@ void only_communication_overlap(double **data_gpu, double **data_gpu_tmp, int he
 
 
 
-void only_communication_nooverlap(double **data_gpu, double **data_gpu_tmp, int height, int width, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollMid){
+void only_communication_nooverlap(double **data_gpu, double **data_gpu_tmp, int width, int height, int iter, int gpus, int *rows_device, dim3 gridDim, dim3 blockDim, void*** kernelCollMid){
     cudaStream_t streams[gpus][2];
     cudaEvent_t events[gpus][4], startevent, stopevent;
     initializeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);

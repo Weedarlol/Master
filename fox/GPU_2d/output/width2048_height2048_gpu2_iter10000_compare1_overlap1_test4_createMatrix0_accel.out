@@ -1,0 +1,28 @@
+Starting job 491705 on gpu-5 at Fri Mar 29 05:35:51 CET 2024
+
+Time(event) - 0.25442 s
+Comparing the matrixes
+Mismatch found at position (1, 1) (0.0000094215571637, 0.0000089880181277)
+
+Task and CPU usage stats:
+JobID           JobName  AllocCPUS   NTasks     MinCPU MinCPUTask     AveCPU    Elapsed ExitCode 
+------------ ---------- ---------- -------- ---------- ---------- ---------- ---------- -------- 
+491705       width2048+          1                                             00:00:10      0:0 
+491705.batch      batch          1        1   00:00:09          0   00:00:09   00:00:10      0:0 
+491705.exte+     extern          1        1   00:00:00          0   00:00:00   00:00:10      0:0 
+
+Memory usage stats:
+JobID            MaxRSS MaxRSSTask     AveRSS MaxPages   MaxPagesTask   AvePages 
+------------ ---------- ---------- ---------- -------- -------------- ---------- 
+491705                                                                           
+491705.batch       436K          0       436K        0              0          0 
+491705.exte+          0          0          0        0              0          0 
+
+Disk usage stats:
+JobID         MaxDiskRead MaxDiskReadTask    AveDiskRead MaxDiskWrite MaxDiskWriteTask   AveDiskWrite 
+------------ ------------ --------------- -------------- ------------ ---------------- -------------- 
+491705                                                                                                
+491705.batch            0               0              0        0.00M                0          0.00M 
+491705.exte+        0.01M               0          0.01M        0.00M                0          0.00M 
+
+Job 491705 completed at Fri Mar 29 05:36:01 CET 2024

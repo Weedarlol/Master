@@ -4,7 +4,7 @@ WIDTH = 8192
 HEIGHT = 8192
 
 # Example  = 2 3 4
-GPU_COUNTS = 2
+GPU_COUNTS = 2 3 4
 
 # Number of max iterations to run for the scenario
 ITERATIONS = 10000
@@ -19,7 +19,7 @@ OVERLAP = 0 1
 COMPARE = 1
 
 # 0 = full calculation, 1 = No kernel, 2 = No communication, 3 = only calculation, 4 = only communication
-TEST = 0
+TEST = 0 3 4
 
 # Create a list of run identifiers for all combinations
 RUN_IDENTIFIERS = $(foreach width,$(WIDTH),$(foreach height,$(HEIGHT),$(foreach gpu,$(GPU_COUNTS),$(foreach overlap,$(OVERLAP),$(foreach test,$(TEST),width$(width)_height$(height)_gpu$(gpu)_iter$(ITERATIONS)_compare$(COMPARE)_overlap$(overlap)_test$(test)_createMatrix0)))))

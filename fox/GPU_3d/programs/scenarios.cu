@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <math.h>
 
-
 #include "cuda_functions.h"
 #include "jacobi.h"
 
@@ -42,14 +41,14 @@ void full_calculation_overlap(double **data_gpu, double **data_gpu_tmp, int widt
         for(int g = 1; g < gpus; g++){
             cudaErrorHandle(cudaSetDevice(g));
             cudaErrorHandle(cudaStreamWaitEvent(streams[g][0], events[g][0]));
-            cudaErrorHandle(cudaMemcpyPeerAsync(data_gpu_tmp[g-1] + (slices_device[g-1]-1)*width + 1, g-1, data_gpu_tmp[g] + width + 1, g, (width-2)*(height-2)*sizeof(double), streams[g][0]));
+            cudaErrorHandle(cudaMemcpyPeerAsync(data_gpu_tmp[g-1] + (slices_device[g-1]-1)*width*height, g-1, data_gpu_tmp[g] + width*height, g, width*height*sizeof(double), streams[g][0]));
             cudaErrorHandle(cudaEventRecord(events[g][2], streams[g][0]));
         }
         // Transfers n-2 slice of the matrix
         for(int g = 0; g < gpus-1; g++){
             cudaErrorHandle(cudaSetDevice(g));
             cudaErrorHandle(cudaStreamWaitEvent(streams[g][0], events[g][0]));
-            cudaErrorHandle(cudaMemcpyPeerAsync(data_gpu_tmp[g+1] + 1, g+1, data_gpu_tmp[g] + (slices_device[g]-2)*width + 1, g, (width-2)*(height-2)*sizeof(double), streams[g][0]));
+            cudaErrorHandle(cudaMemcpyPeerAsync(data_gpu_tmp[g+1], g+1, data_gpu_tmp[g] + (slices_device[g]-2)*width*height,                  g, width*height*sizeof(double), streams[g][0]));
             cudaErrorHandle(cudaEventRecord(events[g][3], streams[g][0]));
         }
 
@@ -71,6 +70,11 @@ void full_calculation_overlap(double **data_gpu, double **data_gpu_tmp, int widt
         iter--;
     }
 
+    for(int g = 0; g < gpus; g++){
+        cudaErrorHandle(cudaSetDevice(g));
+        cudaErrorHandle(cudaDeviceSynchronize());
+    }
+
     cudaErrorHandle(cudaEventRecord(stopevent));
     cudaErrorHandle(cudaEventSynchronize(stopevent));
 
@@ -81,7 +85,7 @@ void full_calculation_overlap(double **data_gpu, double **data_gpu_tmp, int widt
     
     float milliseconds = 0.0f;
     cudaErrorHandle(cudaEventElapsedTime(&milliseconds, startevent, stopevent));
-    printf("Time(event) - %.5f s\n", milliseconds*1000);
+    printf("Time(event) - %.5f s\n", milliseconds/1000);
 
     freeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
 }
@@ -112,14 +116,14 @@ void full_calculation_nooverlap(double **data_gpu, double **data_gpu_tmp, int wi
         for(int g = 1; g < gpus; g++){
             cudaErrorHandle(cudaSetDevice(g));
             cudaErrorHandle(cudaStreamWaitEvent(streams[g][1], events[g][0]));
-            cudaErrorHandle(cudaMemcpyPeerAsync(data_gpu_tmp[g-1] + (slices_device[g-1]-1)*width + 1, g-1, data_gpu_tmp[g] + width + 1, g, (width-2)*sizeof(double), streams[g][1]));
+            cudaErrorHandle(cudaMemcpyPeerAsync(data_gpu_tmp[g-1] + (slices_device[g-1]-1)*width*height, g-1, data_gpu_tmp[g] + width*height, g, width*height*sizeof(double), streams[g][1]));
             cudaErrorHandle(cudaEventRecord(events[g][1], streams[g][1]));
         }
         // Transfers n-2 slice of the matrix
         for(int g = 0; g < gpus-1; g++){
             cudaErrorHandle(cudaSetDevice(g));
             cudaErrorHandle(cudaStreamWaitEvent(streams[g][1], events[g][0]));
-            cudaErrorHandle(cudaMemcpyPeerAsync(data_gpu_tmp[g+1] + 1, g+1, data_gpu_tmp[g] + (slices_device[g]-2)*width + 1, g, (width-2)*sizeof(double), streams[g][1]));
+            cudaErrorHandle(cudaMemcpyPeerAsync(data_gpu_tmp[g+1], g+1, data_gpu_tmp[g] + (slices_device[g]-2)*width*height, g, width*height*sizeof(double), streams[g][1]));
             cudaErrorHandle(cudaEventRecord(events[g][2], streams[g][1]));
         }
 
@@ -139,6 +143,10 @@ void full_calculation_nooverlap(double **data_gpu, double **data_gpu_tmp, int wi
         }
         iter--;
     }
+    for(int g = 0; g < gpus; g++){
+        cudaErrorHandle(cudaSetDevice(g));
+        cudaErrorHandle(cudaDeviceSynchronize());
+    }
     cudaErrorHandle(cudaEventRecord(stopevent));
 
     cudaErrorHandle(cudaEventSynchronize(stopevent));
@@ -150,7 +158,7 @@ void full_calculation_nooverlap(double **data_gpu, double **data_gpu_tmp, int wi
     
     float milliseconds = 0.0f;
     cudaErrorHandle(cudaEventElapsedTime(&milliseconds, startevent, stopevent));
-    printf("Time(event) - %.5f s\n", milliseconds*1000);
+    printf("Time(event) - %.5f s\n", milliseconds/1000);
 
     freeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
 }
@@ -172,13 +180,13 @@ void no_kernel_overlap(double **data_gpu, double **data_gpu_tmp, int width, int 
         // Transfer 2 slice of the matrix
         for(int g = 1; g < gpus; g++){
             cudaErrorHandle(cudaSetDevice(g));
-            cudaErrorHandle(cudaMemcpyPeerAsync(data_gpu_tmp[g-1] + (slices_device[g-1]-1)*width + 1, g-1, data_gpu_tmp[g] + width + 1, g, (width-2)*(height-2)*sizeof(double), streams[g][0]));
+            cudaErrorHandle(cudaMemcpyPeerAsync(data_gpu_tmp[g-1] + (slices_device[g-1]-1)*width*height, g-1, data_gpu_tmp[g] + width*height, g, width*height*(height-2)*sizeof(double), streams[g][0]));
             cudaErrorHandle(cudaEventRecord(events[g][0], streams[g][0]));
         }
         // Transfers n-2 slice of the matrix
         for(int g = 0; g < gpus-1; g++){
             cudaErrorHandle(cudaSetDevice(g));
-            cudaErrorHandle(cudaMemcpyPeerAsync(data_gpu_tmp[g+1] + 1, g+1, data_gpu_tmp[g] + (slices_device[g]-2)*width + 1, g, (width-2)*(height-2)*sizeof(double), streams[g][1]));
+            cudaErrorHandle(cudaMemcpyPeerAsync(data_gpu_tmp[g+1], g+1, data_gpu_tmp[g] + (slices_device[g]-2)*width*height, g, width*height*sizeof(double), streams[g][1]));
             cudaErrorHandle(cudaEventRecord(events[g][1], streams[g][1]));
         }
 
@@ -197,6 +205,10 @@ void no_kernel_overlap(double **data_gpu, double **data_gpu_tmp, int width, int 
         }
         iter--;
     }
+    for(int g = 0; g < gpus; g++){
+        cudaErrorHandle(cudaSetDevice(g));
+        cudaErrorHandle(cudaDeviceSynchronize());
+    }
     cudaErrorHandle(cudaEventRecord(stopevent));
     cudaErrorHandle(cudaEventSynchronize(stopevent));
 
@@ -207,7 +219,7 @@ void no_kernel_overlap(double **data_gpu, double **data_gpu_tmp, int width, int 
     
     float milliseconds = 0.0f;
     cudaErrorHandle(cudaEventElapsedTime(&milliseconds, startevent, stopevent));
-    printf("Time(event) - %.5f s\n", milliseconds*1000);
+    printf("Time(event) - %.5f s\n", milliseconds/1000);
 
     freeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
 }
@@ -230,13 +242,13 @@ void no_kernel_nooverlap(double **data_gpu, double **data_gpu_tmp, int width, in
         // Transfers 2 slice of the matrix
         for(int g = 1; g < gpus; g++){
             cudaErrorHandle(cudaSetDevice(g));
-            cudaErrorHandle(cudaMemcpyPeerAsync(data_gpu_tmp[g-1] + (slices_device[g-1]-1)*width + 1, g-1, data_gpu_tmp[g] + width + 1, g, (width-2)*(height-2)*sizeof(double), streams[g][0]));
+            cudaErrorHandle(cudaMemcpyPeerAsync(data_gpu_tmp[g-1] + (slices_device[g-1]-1)*width + 1, g-1, data_gpu_tmp[g] + width + 1, g, width*height*sizeof(double), streams[g][0]));
             cudaErrorHandle(cudaEventRecord(events[g][0], streams[g][0]));
         }
         // Transfers n-2 slice of the matrix
         for(int g = 0; g < gpus-1; g++){
             cudaErrorHandle(cudaSetDevice(g));
-            cudaErrorHandle(cudaMemcpyPeerAsync(data_gpu_tmp[g+1] + 1, g+1, data_gpu_tmp[g] + (slices_device[g]-2)*width + 1, g, (width-2)*(height-2)*sizeof(double), streams[g][1]));
+            cudaErrorHandle(cudaMemcpyPeerAsync(data_gpu_tmp[g+1], g+1, data_gpu_tmp[g] + (slices_device[g]-2)*width*height, g, width*height*sizeof(double), streams[g][1]));
             cudaErrorHandle(cudaEventRecord(events[g][1], streams[g][1]));
         }
 
@@ -255,6 +267,10 @@ void no_kernel_nooverlap(double **data_gpu, double **data_gpu_tmp, int width, in
         }
         iter--;
     }
+    for(int g = 0; g < gpus; g++){
+        cudaErrorHandle(cudaSetDevice(g));
+        cudaErrorHandle(cudaDeviceSynchronize());
+    }
     cudaErrorHandle(cudaEventRecord(stopevent));
 
     cudaErrorHandle(cudaEventSynchronize(stopevent));
@@ -266,7 +282,7 @@ void no_kernel_nooverlap(double **data_gpu, double **data_gpu_tmp, int width, in
     
     float milliseconds = 0.0f;
     cudaErrorHandle(cudaEventElapsedTime(&milliseconds, startevent, stopevent));
-    printf("Time(event) - %.5f s\n", milliseconds*1000);
+    printf("Time(event) - %.5f s\n", milliseconds/1000);
 
     freeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
 }
@@ -305,6 +321,10 @@ void no_communication_overlap(double **data_gpu, double **data_gpu_tmp, int widt
         }
         iter--;
     }
+    for(int g = 0; g < gpus; g++){
+        cudaErrorHandle(cudaSetDevice(g));
+        cudaErrorHandle(cudaDeviceSynchronize());
+    }
     cudaErrorHandle(cudaEventRecord(stopevent));
     cudaErrorHandle(cudaEventSynchronize(stopevent));
 
@@ -315,7 +335,7 @@ void no_communication_overlap(double **data_gpu, double **data_gpu_tmp, int widt
     
     float milliseconds = 0.0f;
     cudaErrorHandle(cudaEventElapsedTime(&milliseconds, startevent, stopevent));
-    printf("Time(event) - %.5f s\n", milliseconds*1000);
+    printf("Time(event) - %.5f s\n", milliseconds/1000);
 
     freeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
 }
@@ -355,6 +375,10 @@ void no_communication_nooverlap(double **data_gpu, double **data_gpu_tmp, int wi
         }
         iter--;
     }
+    for(int g = 0; g < gpus; g++){
+        cudaErrorHandle(cudaSetDevice(g));
+        cudaErrorHandle(cudaDeviceSynchronize());
+    }
     cudaErrorHandle(cudaEventRecord(stopevent));
 
     cudaErrorHandle(cudaEventSynchronize(stopevent));
@@ -366,7 +390,7 @@ void no_communication_nooverlap(double **data_gpu, double **data_gpu_tmp, int wi
     
     float milliseconds = 0.0f;
     cudaErrorHandle(cudaEventElapsedTime(&milliseconds, startevent, stopevent));
-    printf("Time(event) - %.5f s\n", milliseconds*1000);
+    printf("Time(event) - %.5f s\n", milliseconds/1000);
 
     freeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
 }
@@ -403,6 +427,10 @@ void only_events(double **data_gpu, double **data_gpu_tmp, int width, int height
         }
         iter--;
     }
+    for(int g = 0; g < gpus; g++){
+        cudaErrorHandle(cudaSetDevice(g));
+        cudaErrorHandle(cudaDeviceSynchronize());
+    }
     cudaErrorHandle(cudaEventRecord(stopevent));
 
     cudaErrorHandle(cudaEventSynchronize(stopevent));
@@ -414,7 +442,7 @@ void only_events(double **data_gpu, double **data_gpu_tmp, int width, int height
     
     float milliseconds = 0.0f;
     cudaErrorHandle(cudaEventElapsedTime(&milliseconds, startevent, stopevent));
-    printf("Time(event) - %.5f s\n", milliseconds*1000);
+    printf("Time(event) - %.5f s\n", milliseconds/1000);
 
     freeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
 }
@@ -454,7 +482,10 @@ void only_calculation_overlap(double **data_gpu, double **data_gpu_tmp, int widt
         iter--;
     }
     
-
+    for(int g = 0; g < gpus; g++){
+        cudaErrorHandle(cudaSetDevice(g));
+        cudaErrorHandle(cudaDeviceSynchronize());
+    }
     cudaErrorHandle(cudaEventRecord(stopevent));
     cudaErrorHandle(cudaEventSynchronize(stopevent));
 
@@ -465,7 +496,7 @@ void only_calculation_overlap(double **data_gpu, double **data_gpu_tmp, int widt
     
     float milliseconds = 0.0f;
     cudaErrorHandle(cudaEventElapsedTime(&milliseconds, startevent, stopevent));
-    printf("Time(event) - %.5f s\n", milliseconds*1000);
+    printf("Time(event) - %.5f s\n", milliseconds/1000);
 
     freeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
 }
@@ -499,6 +530,10 @@ void only_calculation_nooverlap(double **data_gpu, double **data_gpu_tmp, int wi
 
         iter--;
     }
+    for(int g = 0; g < gpus; g++){
+        cudaErrorHandle(cudaSetDevice(g));
+        cudaErrorHandle(cudaDeviceSynchronize());
+    }
     cudaErrorHandle(cudaEventRecord(stopevent));
 
     cudaErrorHandle(cudaEventSynchronize(stopevent));
@@ -510,7 +545,7 @@ void only_calculation_nooverlap(double **data_gpu, double **data_gpu_tmp, int wi
     
     float milliseconds = 0.0f;
     cudaErrorHandle(cudaEventElapsedTime(&milliseconds, startevent, stopevent));
-    printf("Time(event) - %.5f s\n", milliseconds*1000);
+    printf("Time(event) - %.5f s\n", milliseconds/1000);
 
     freeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
 }
@@ -532,13 +567,13 @@ void only_communication_overlap(double **data_gpu, double **data_gpu_tmp, int wi
         // Transfer 2 slice of the matrix
         for(int g = 1; g < gpus; g++){
             cudaErrorHandle(cudaSetDevice(g));
-            cudaErrorHandle(cudaMemcpyPeerAsync(data_gpu_tmp[g-1] + (slices_device[g-1]-1)*width + 1, g-1, data_gpu_tmp[g] + width + 1, g, (width-2)*(height-2)*sizeof(double), streams[g][0]));
+            cudaErrorHandle(cudaMemcpyPeerAsync(data_gpu_tmp[g-1] + (slices_device[g-1]-1)*width*height, g-1, data_gpu_tmp[g] + width*height, g, width*height*sizeof(double), streams[g][0]));
             cudaErrorHandle(cudaEventRecord(events[g][0], streams[g][0]));
         }
         // Transfers n-2 slice of the matrix
         for(int g = 0; g < gpus-1; g++){
             cudaErrorHandle(cudaSetDevice(g));
-            cudaErrorHandle(cudaMemcpyPeerAsync(data_gpu_tmp[g+1] + 1, g+1, data_gpu_tmp[g] + (slices_device[g]-2)*width + 1, g, (width-2)*(height-2)*sizeof(double), streams[g][1]));
+            cudaErrorHandle(cudaMemcpyPeerAsync(data_gpu_tmp[g+1], g+1, data_gpu_tmp[g] + (slices_device[g]-2)*width*height, g, width*height*sizeof(double), streams[g][1]));
             cudaErrorHandle(cudaEventRecord(events[g][1], streams[g][1]));
         }
 
@@ -550,6 +585,10 @@ void only_communication_overlap(double **data_gpu, double **data_gpu_tmp, int wi
         }
         iter--;
     }
+    for(int g = 0; g < gpus; g++){
+        cudaErrorHandle(cudaSetDevice(g));
+        cudaErrorHandle(cudaDeviceSynchronize());
+    }
     cudaErrorHandle(cudaEventRecord(stopevent));
     cudaErrorHandle(cudaEventSynchronize(stopevent));
 
@@ -560,7 +599,7 @@ void only_communication_overlap(double **data_gpu, double **data_gpu_tmp, int wi
     
     float milliseconds = 0.0f;
     cudaErrorHandle(cudaEventElapsedTime(&milliseconds, startevent, stopevent));
-    printf("Time(event) - %.5f s\n", milliseconds*1000);
+    printf("Time(event) - %.5f s\n", milliseconds/1000);
 
     freeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
 }
@@ -583,13 +622,13 @@ void only_communication_nooverlap(double **data_gpu, double **data_gpu_tmp, int 
         // Transfers 2 slice of the matrix
         for(int g = 1; g < gpus; g++){
             cudaErrorHandle(cudaSetDevice(g));
-            cudaErrorHandle(cudaMemcpyPeerAsync(data_gpu_tmp[g-1] + (slices_device[g-1]-1)*width + 1, g-1, data_gpu_tmp[g] + width + 1, g, (width-2)*(height-2)*sizeof(double), streams[g][0]));
+            cudaErrorHandle(cudaMemcpyPeerAsync(data_gpu_tmp[g-1] + (slices_device[g-1]-1)*width*height, g-1, data_gpu_tmp[g] + width*height, g, width*height*sizeof(double), streams[g][0]));
             cudaErrorHandle(cudaEventRecord(events[g][0], streams[g][0]));
         }
         // Transfers n-2 slice of the matrix
         for(int g = 0; g < gpus-1; g++){
             cudaErrorHandle(cudaSetDevice(g));
-            cudaErrorHandle(cudaMemcpyPeerAsync(data_gpu_tmp[g+1] + 1, g+1, data_gpu_tmp[g] + (slices_device[g]-2)*width + 1, g, (width-2)*(height-2)*sizeof(double), streams[g][1]));
+            cudaErrorHandle(cudaMemcpyPeerAsync(data_gpu_tmp[g+1], g+1, data_gpu_tmp[g] + (slices_device[g]-2)*width*height, g, width*height*sizeof(double), streams[g][1]));
             cudaErrorHandle(cudaEventRecord(events[g][1], streams[g][1]));
         }
 
@@ -600,6 +639,11 @@ void only_communication_nooverlap(double **data_gpu, double **data_gpu_tmp, int 
             cudaErrorHandle(cudaEventSynchronize(events[g][1]));
         }
         iter--;
+    }
+
+    for(int g = 0; g < gpus; g++){
+        cudaErrorHandle(cudaSetDevice(g));
+        cudaErrorHandle(cudaDeviceSynchronize());
     }
     cudaErrorHandle(cudaEventRecord(stopevent));
 
@@ -612,7 +656,7 @@ void only_communication_nooverlap(double **data_gpu, double **data_gpu_tmp, int 
     
     float milliseconds = 0.0f;
     cudaErrorHandle(cudaEventElapsedTime(&milliseconds, startevent, stopevent));
-    printf("Time(event) - %.5f s\n", milliseconds*1000);
+    printf("Time(event) - %.5f s\n", milliseconds/1000);
 
     freeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
 }
