@@ -46,17 +46,12 @@
 -- Linker Flags:   
 -- Defs        : CUDA;DEFAULT
 -- Executable  : cuda-stream
--- Configuring done (0.1s)
+-- Configuring done (0.0s)
 -- Generating done (0.0s)
 -- Build files have been written to: /home/vidaro/D1/Master/Mas/benchmark/BabelStream/Build-x86_64
 gmake[1]: Entering directory '/global/D1/homes/vidaro/Master/Mas/benchmark/BabelStream/Build-x86_64'
 gmake[2]: Entering directory '/global/D1/homes/vidaro/Master/Mas/benchmark/BabelStream/Build-x86_64'
 gmake[3]: Entering directory '/global/D1/homes/vidaro/Master/Mas/benchmark/BabelStream/Build-x86_64'
-gmake[3]: Leaving directory '/global/D1/homes/vidaro/Master/Mas/benchmark/BabelStream/Build-x86_64'
-gmake[3]: Entering directory '/global/D1/homes/vidaro/Master/Mas/benchmark/BabelStream/Build-x86_64'
-[ 33%] [32mBuilding CUDA object CMakeFiles/cuda-stream.dir/src/cuda/CUDAStream.cu.o[0m
-[ 66%] [32mBuilding CXX object CMakeFiles/cuda-stream.dir/src/main.cpp.o[0m
-[100%] [32m[1mLinking CXX executable cuda-stream[0m
 gmake[3]: Leaving directory '/global/D1/homes/vidaro/Master/Mas/benchmark/BabelStream/Build-x86_64'
 [100%] Built target cuda-stream
 gmake[2]: Leaving directory '/global/D1/homes/vidaro/Master/Mas/benchmark/BabelStream/Build-x86_64'
@@ -68,7 +63,15 @@ Running kernels 100 times
 Precision: double
 Array size: 268.4 MB (=0.3 GB)
 Total size: 805.3 MB (=0.8 GB)
-Using CUDA device Tesla V100-SXM3-32GB
+Using CUDA device NVIDIA A100-SXM4-80GB
 Driver: 12000
 Memory: DEFAULT
-Reduction kernel config: 320 groups of (fixed) size 1024
+Reduction kernel config: 432 groups of (fixed) size 1024
+Init: 0.047064 s (=17110.781052 MBytes/sec)
+Read: 0.000439 s (=1834582.200160 MBytes/sec)
+Function    MBytes/sec  Min (sec)   Max         Average     
+Copy        1735985.617 0.00031     0.00032     0.00031     
+Mul         1695744.181 0.00032     0.00032     0.00032     
+Add         1731473.015 0.00047     0.00047     0.00047     
+Triad       1742073.053 0.00046     0.00047     0.00047     
+Dot         1628855.922 0.00033     0.00035     0.00034     

@@ -7,7 +7,7 @@ CUDA_DEFINES = -DCUDA -DDEFAULT
 
 CUDA_INCLUDES = --options-file CMakeFiles/cuda-stream.dir/includes_CUDA.rsp
 
-CUDA_FLAGS = -forward-unknown-to-host-compiler -arch=sm_70  -DNDEBUG -std=c++11 -O3 -march=native
+CUDA_FLAGS = -forward-unknown-to-host-compiler -arch=sm_80  -DNDEBUG -std=c++11 -O3 -march=native
 
 CXX_DEFINES = -DCUDA -DDEFAULT
 

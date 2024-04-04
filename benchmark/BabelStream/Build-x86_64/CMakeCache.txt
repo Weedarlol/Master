@@ -258,7 +258,7 @@ CMAKE_TAPI:FILEPATH=CMAKE_TAPI-NOTFOUND
 CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE
 
 //No help, variable specified on the command line.
-CUDA_ARCH:UNINITIALIZED=sm_70
+CUDA_ARCH:UNINITIALIZED=sm_80
 
 //Directory under which to collect all populated content
 FETCHCONTENT_BASE_DIR:PATH=/home/vidaro/D1/Master/Mas/benchmark/BabelStream/Build-x86_64/_deps
@@ -298,7 +298,7 @@ MODEL:UNINITIALIZED=cuda
 NTIMES:UNINITIALIZED=20
 
 //No help, variable specified on the command line.
-STREAM_ARRAY_SIZE:UNINITIALIZED=2147483648
+STREAM_ARRAY_SIZE:UNINITIALIZED=25165824
 
 //Whether to print all custom flags for the selected model
 USAGE:BOOL=ON

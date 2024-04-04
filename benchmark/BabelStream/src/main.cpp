@@ -55,7 +55,7 @@
 
 // Default size of 2^25
 int ARRAY_SIZE = 33554432;
-unsigned int num_times = 20;
+unsigned int num_times = 100;
 unsigned int deviceIndex = 0;
 bool use_float = false;
 bool output_as_csv = false;

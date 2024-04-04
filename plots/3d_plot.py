@@ -62,8 +62,6 @@ def group_by_string(info_list):
     grouped_info_list = [(string, elements) for string, elements in grouped_info.items()]
     return grouped_info_list
 
-
-
 def plot_info_cpu(grouped_info_list):
     grouped_info_list = [
         (partition, [(x, y, z, w, u, v, a, b, c) for x, y, z, w, u, v, a, b, c in elements if v == 0])
@@ -119,6 +117,8 @@ def plot_info_cpu(grouped_info_list):
         ax.grid(axis='y')  # Add gridlines along the y-axis for each subplot
         ax.tick_params(axis='x', rotation=45)
     plt.tight_layout()
+    plt.suptitle("Estimated CPU Computation Time vs Real CPU Computation Time")
+    plt.subplots_adjust(top=0.9)
     plt.show()
 
 def plot_info_gpu(grouped_info_list):
@@ -154,41 +154,6 @@ def plot_info_gpu(grouped_info_list):
             else:
                 x_values_tmp = x_values
 
-            """ if gpu_number == 1:
-                bandwidth_values = [
-                    ("dgx2q", 900 * 2**30),
-                    ("hgx2q", 900 * 2**30),
-                    ("accel", 900 * 2**30)
-                ]
-                for string, value in bandwidth_values:
-                    if partition == string:
-                        # Extract information from the sorted list
-                        memory_operations = [2, 3, 4, 5, 6, 7]
-                        unique_combinations = sorted(set((element[0], element[1], element[2]) for element in elements), key=lambda x: (x[0], x[1], x[2]))
-                        y_values_1 = [(memory_operations[0] * x * y * z * 8 * 10000) / value for x, y, z in unique_combinations]
-                        y_values_2 = [(memory_operations[1] * x * y * z * 8 * 10000) / value for x, y, z in unique_combinations]
-                        y_values_3 = [(memory_operations[2] * x * y * z * 8 * 10000) / value for x, y, z in unique_combinations]
-                        y_values_4 = [(memory_operations[3] * x * y * z * 8 * 10000) / value for x, y, z in unique_combinations]
-                        y_values_5 = [(memory_operations[4] * x * y * z * 8 * 10000) / value for x, y, z in unique_combinations]
-                        y_values_6 = [(memory_operations[5] * x * y * z * 8 * 10000) / value for x, y, z in unique_combinations]
-                        # Plot the first two lines on the left y-axis
-                        if(num_cols > 1):
-                            axes[row_idx, col_idx].plot(x_values, y_values_1, label='Memory Operations = 2', color='blue', marker='o')
-                            axes[row_idx, col_idx].plot(x_values, y_values_2, label='Memory Operations = 3', color='lightblue', marker='o')
-                            axes[row_idx, col_idx].plot(x_values, y_values_3, label='Memory Operations = 4', color='lightgreen', marker='o')
-                            axes[row_idx, col_idx].plot(x_values, y_values_4, label='Memory Operations = 5', color='lightgreen', marker='s')
-                            axes[row_idx, col_idx].plot(x_values, y_values_5, label='Memory Operations = 6', color='lightblue', marker='s')
-                            axes[row_idx, col_idx].plot(x_values, y_values_6, label='Memory Operations = 7', color='blue', marker='s')
-                            axes[row_idx, col_idx].fill_between(x_values, y_values_1, y_values_6, color='lightgray', alpha=0.5)
-                        else:
-                            axes[row_idx].plot(x_values, y_values_1, label='Memory Operations = 2', color='blue', marker='o')
-                            axes[row_idx].plot(x_values, y_values_2, label='Memory Operations = 3', color='lightblue', marker='o')
-                            axes[row_idx].plot(x_values, y_values_3, label='Memory Operations = 4', color='lightgreen', marker='o')
-                            axes[row_idx].plot(x_values, y_values_4, label='Memory Operations = 5', color='lightgreen', marker='s')
-                            axes[row_idx].plot(x_values, y_values_5, label='Memory Operations = 6', color='lightblue', marker='s')
-                            axes[row_idx].plot(x_values, y_values_6, label='Memory Operations = 7', color='blue', marker='s')
-                            axes[row_idx].fill_between(x_values, y_values_1, y_values_6, color='lightgray', alpha=0.5) """
-
             if(num_cols > 1):
                 axes[row_idx, col_idx].plot(x_values_tmp, y_values[j], label=f'Number of GPUs = {gpu_number}', marker='o')
                 
@@ -205,6 +170,8 @@ def plot_info_gpu(grouped_info_list):
         ax.grid(axis='y')  # Add gridlines along the y-axis for each subplot
         ax.tick_params(axis='x', rotation=45)
     plt.tight_layout()
+    plt.suptitle("GPU Computation time, Overlap versus No Overlap")
+    plt.subplots_adjust(top=0.9)
     plt.show()
 
 def plot_overlap_gpu(grouped_info_list):
@@ -222,7 +189,6 @@ def plot_overlap_gpu(grouped_info_list):
         x_values = list(dict.fromkeys(x_values))
         y_values = [[] for _ in range(num_rows*num_cols*2)]
         for element in elements:
-            print(element)
             if element[5] == 0:
                 y_values[element[3]*2-4].append(element[8])
             else:
@@ -272,7 +238,8 @@ def plot_overlap_gpu(grouped_info_list):
         ax.grid(axis='y')  # Add gridlines along the y-axis for each subplot
         ax.tick_params(axis='x', rotation=45)
     plt.xlabel("Matrix Size")
-    plt.suptitle("Overlap by GPU Type")
+    plt.suptitle("GPU Computation time, Overlap versus No Overlap")
+    plt.subplots_adjust(top=0.9)
     plt.tight_layout()  
     plt.show()
 
@@ -325,70 +292,77 @@ def plot_estimate_gpu(grouped_info_list):
         ax.grid(axis='y')  # Add gridlines along the y-axis for each subplot
         ax.tick_params(axis='x', rotation=45)
     plt.xlabel("Matrix Size")
-    plt.suptitle("Overlap by GPU Type")
+    plt.suptitle("GPU computation time difference: Total, Computation and Communication")
+    plt.subplots_adjust(top=0.9)
     plt.tight_layout()  
     plt.show()
 
 def plot_bandwidth_gpu(grouped_info_list):
     grouped_info_list = [
-        (partition, sorted([(x, y, z, w, u, v, a, b) for x, y, z, w, u, v, a, b in elements if u == 1 ], key=lambda x: x[2]))
+        (partition, [(x, y, z, w, u, v, a, b, c) for x, y, z, w, u, v, a, b, c in elements if v == 1 and a ==  0])
         for partition, elements in grouped_info_list
     ]
-    num_partitions = len(grouped_info_list)
-    num_rows = math.ceil(math.sqrt(num_partitions))
-    num_cols = math.ceil(num_partitions / num_rows)
+    num_rows = 3
+    num_cols = len(grouped_info_list)
     bandwidth_values = [
-        ("dgx2q", 900 * 2**30),
-        ("hgx2q", 900 * 2**30)
-    ]
+                    ("dgx2q", 900 * 2**30),
+                    ("hgx2q", 900 * 2**30),
+                    ("accel", 900 * 2**30)
+                ]
 
     _, axes = plt.subplots(num_rows, num_cols, figsize=(10, 8), sharex=True, sharey=True)
     for i, (partition, elements) in enumerate(grouped_info_list):
-        row_idx = i // num_cols
-        col_idx = i % num_cols
-        # Prepare data for plotting
-        x_values = [f"{element[0]}x{element[1]}" for element in elements]
-        y_values = [element[7] for element in elements]
-        size = [int(size.split('x')[0]) for size in x_values]
-        size = size[:5]
-        for string, value in bandwidth_values:
-            if partition == string:
-                # Extract information from the sorted list
-                memory_operations = [2, 3, 4, 5]
-                y_values_1 = [(memory_operations[0] * s * s * 8 * 10000) / value for s in size]
-                y_values_2 = [(memory_operations[1] * s * s * 8 * 10000) / value for s in size]
-                y_values_3 = [(memory_operations[2] * s * s * 8 * 10000) / value for s in size]
-                y_values_4 = [(memory_operations[3] * s * s * 8 * 10000) / value for s in size]
-                # Plot the first two lines on the left y-axis
-                if num_cols > 1:
-                    axes[row_idx, col_idx].plot(x_values[:5], y_values_1, label='Memory Operations = 2', color='blue', marker='o')
-                    axes[row_idx, col_idx].plot(x_values[:5], y_values_2, label='Memory Operations = 3', color='lightblue', marker='o')
-                    axes[row_idx, col_idx].plot(x_values[:5], y_values_3, label='Memory Operations = 6', color='lightblue', marker='s')
-                    axes[row_idx, col_idx].plot(x_values[:5], y_values_4, label='Memory Operations = 7', color='blue', marker='s')
-                    axes[row_idx, col_idx].fill_between(x_values, y_values_1, y_values_4, color='lightgray', alpha=0.5)
-                else:
-                    axes[row_idx].plot(x_values[:5], y_values_1, label='Memory Operations = 2', color='blue', marker='o')
-                    axes[row_idx].plot(x_values[:5], y_values_2, label='Memory Operations = 3', color='lightblue', marker='o')
-                    axes[row_idx].plot(x_values[:5], y_values_3, label='Memory Operations = 6', color='lightblue', marker='s')
-                    axes[row_idx].plot(x_values[:5], y_values_4, label='Memory Operations = 7', color='blue', marker='s')
-                    axes[row_idx].fill_between(x_values[:5], y_values_1, y_values_4, color='lightgray', alpha=0.5)
-        if num_cols > 1:
-            axes[row_idx, col_idx].plot(x_values[:5], y_values, label=partition, color="red", marker='x')
-            axes[row_idx, col_idx].set_title(f"Partition: {elements[0][6]}")
-            axes[row_idx, col_idx].set_ylabel("Time (s)")
-            axes[row_idx, col_idx].legend()
-        else:
-            axes[row_idx].plot(x_values[:5], y_values[:5], label=partition, color="red", marker='x')
-            axes[row_idx].plot(x_values[5:10], y_values[5:10], label=partition, color="red", marker='x')
-            axes[row_idx].plot(x_values[10:15], y_values[10:15], label=partition, color="red", marker='x')
-            axes[row_idx].set_title(f"Partition: dgx2q")
-            axes[row_idx].set_ylabel("Time (s)")
-            axes[row_idx].legend()
+        x_values = [f"{element[0]}x{element[1]}x{element[2]}" for element in elements]
+        x_values = list(dict.fromkeys(x_values))
+        y_values = [element[-1] for element in elements]
+    
+        for j in range(num_rows):
+            new_y_values = [y_values[i+j] for i in range(0, len(y_values), num_rows)]
+            for string, value in bandwidth_values:
+                if partition == string:
+                    # Extract information from the sorted list
+                    memory_operations = [2, 3, 4, 5, 6, 7]
+                    unique_combinations = sorted(set((element[0], element[1], element[2]) for element in elements), key=lambda x: (x[0], x[1], x[2]))
+                    y_values_1 = [(memory_operations[0] * x * y * z * 8 * 10000) / value for x, y, z in unique_combinations]
+                    y_values_2 = [(memory_operations[1] * x * y * z * 8 * 10000) / value for x, y, z in unique_combinations]
+                    y_values_3 = [(memory_operations[2] * x * y * z * 8 * 10000) / value for x, y, z in unique_combinations]
+                    y_values_4 = [(memory_operations[3] * x * y * z * 8 * 10000) / value for x, y, z in unique_combinations]
+                    y_values_5 = [(memory_operations[4] * x * y * z * 8 * 10000) / value for x, y, z in unique_combinations]
+                    y_values_6 = [(memory_operations[5] * x * y * z * 8 * 10000) / value for x, y, z in unique_combinations]
+                    # Plot the first two lines on the left y-axis
+                    if(num_cols > 1):
+                        axes[j, i].plot(x_values, y_values_1, label='Memory Operations = 2', color='blue', marker='o')
+                        axes[j, i].plot(x_values, y_values_2, label='Memory Operations = 3', color='lightblue', marker='o')
+                        axes[j, i].plot(x_values, y_values_3, label='Memory Operations = 4', color='lightgreen', marker='o')
+                        axes[j, i].plot(x_values, y_values_4, label='Memory Operations = 5', color='lightgreen', marker='s')
+                        axes[j, i].plot(x_values, y_values_5, label='Memory Operations = 6', color='lightblue', marker='s')
+                        axes[j, i].plot(x_values, y_values_6, label='Memory Operations = 7', color='blue', marker='s')
+                        axes[j, i].fill_between(x_values, y_values_1, y_values_6, color='lightgray', alpha=0.5)
+                    else:
+                        axes[j].plot(x_values, y_values_1, label='Memory Operations = 2', color='blue', marker='o')
+                        axes[j].plot(x_values, y_values_2, label='Memory Operations = 3', color='lightblue', marker='o')
+                        axes[j].plot(x_values, y_values_3, label='Memory Operations = 4', color='lightgreen', marker='o')
+                        axes[j].plot(x_values, y_values_4, label='Memory Operations = 5', color='lightgreen', marker='s')
+                        axes[j].plot(x_values, y_values_5, label='Memory Operations = 6', color='lightblue', marker='s')
+                        axes[j].plot(x_values, y_values_6, label='Memory Operations = 7', color='blue', marker='s')
+                        axes[j].fill_between(x_values, y_values_1, y_values_6, color='lightgray', alpha=0.5)
+            if num_cols > 1:
+                axes[j, i].plot(x_values, new_y_values, label=partition, color="red", marker='x')
+                axes[j, i].set_title(f"Partition: {partition}")
+                axes[j, i].set_ylabel("Time (s)")
+                axes[j, i].legend()
+            else:
+                axes[j].plot(x_values, new_y_values, label=partition, color="red", marker='x')
+                axes[j].set_title(f"Partition: dgx2q")
+                axes[j].set_ylabel("Time (s)")
+                axes[j].legend()
     # Rotate x-axis labels for better visibility
     for ax in plt.gcf().get_axes():
         ax.grid(axis='y')  # Add gridlines along the y-axis for each subplot
         ax.tick_params(axis='x', rotation=45)
     plt.tight_layout()
+    plt.subplots_adjust(top=0.9)
+    plt.suptitle("Estimated GPU Computation Time vs Real GPU Computation Time")
     plt.show()
 
 
@@ -429,8 +403,8 @@ grouped_info_list_gpu = group_by_string(info_list_gpu)
 
 # Plot the info_list
 
-#plot_info_cpu(grouped_info_list_cpu)
-#plot_info_gpu(grouped_info_list_ngpu)
+plot_info_cpu(grouped_info_list_cpu)
+plot_info_gpu(grouped_info_list_ngpu)
 plot_overlap_gpu(grouped_info_list_gpu)
 plot_estimate_gpu(grouped_info_list_gpu)
-#plot_bandwidth_gpu(grouped_info_list_gpu)
+plot_bandwidth_gpu(grouped_info_list_gpu)

@@ -17,4 +17,3 @@ Call Stack (most recent call first):
     STREAM_ARRAY_SIZE
 
 [0m
-Error: no kernel image is available for execution on the device
