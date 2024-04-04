@@ -67,7 +67,7 @@ Hgx2q is the more powerfull partition and is also made up of its own machine cal
 - [x] GPU 2d 1 GPU
 - [x] GPU 2d
 - [x] GPU 3d 1 GPU
-- [ ] GPU 3d
+- [x] GPU 3d
 
 ## Nodes
 - [x] CPU to CPU
