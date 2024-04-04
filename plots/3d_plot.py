@@ -154,17 +154,14 @@ def plot_info_gpu(grouped_info_list):
             else:
                 x_values_tmp = x_values
 
-            if gpu_number == 1:
-                print("Steg 1")
+            """ if gpu_number == 1:
                 bandwidth_values = [
                     ("dgx2q", 900 * 2**30),
                     ("hgx2q", 900 * 2**30),
                     ("accel", 900 * 2**30)
                 ]
                 for string, value in bandwidth_values:
-                    print("Steg 2")
                     if partition == string:
-                        print("Steg 3")
                         # Extract information from the sorted list
                         memory_operations = [2, 3, 4, 5, 6, 7]
                         unique_combinations = sorted(set((element[0], element[1], element[2]) for element in elements), key=lambda x: (x[0], x[1], x[2]))
@@ -174,7 +171,6 @@ def plot_info_gpu(grouped_info_list):
                         y_values_4 = [(memory_operations[3] * x * y * z * 8 * 10000) / value for x, y, z in unique_combinations]
                         y_values_5 = [(memory_operations[4] * x * y * z * 8 * 10000) / value for x, y, z in unique_combinations]
                         y_values_6 = [(memory_operations[5] * x * y * z * 8 * 10000) / value for x, y, z in unique_combinations]
-                        print(unique_combinations)
                         # Plot the first two lines on the left y-axis
                         if(num_cols > 1):
                             axes[row_idx, col_idx].plot(x_values, y_values_1, label='Memory Operations = 2', color='blue', marker='o')
@@ -191,7 +187,7 @@ def plot_info_gpu(grouped_info_list):
                             axes[row_idx].plot(x_values, y_values_4, label='Memory Operations = 5', color='lightgreen', marker='s')
                             axes[row_idx].plot(x_values, y_values_5, label='Memory Operations = 6', color='lightblue', marker='s')
                             axes[row_idx].plot(x_values, y_values_6, label='Memory Operations = 7', color='blue', marker='s')
-                            axes[row_idx].fill_between(x_values, y_values_1, y_values_6, color='lightgray', alpha=0.5)
+                            axes[row_idx].fill_between(x_values, y_values_1, y_values_6, color='lightgray', alpha=0.5) """
 
             if(num_cols > 1):
                 axes[row_idx, col_idx].plot(x_values_tmp, y_values[j], label=f'Number of GPUs = {gpu_number}', marker='o')
@@ -208,7 +204,6 @@ def plot_info_gpu(grouped_info_list):
     for ax in plt.gcf().get_axes():
         ax.grid(axis='y')  # Add gridlines along the y-axis for each subplot
         ax.tick_params(axis='x', rotation=45)
-
     plt.tight_layout()
     plt.show()
 
@@ -272,7 +267,9 @@ def plot_overlap_gpu(grouped_info_list):
                 ax2.legend(loc='upper right')
                 ax2.set_ylabel("Percentage Difference")
         
-      
+    for ax in plt.gcf().get_axes():
+        ax.grid(axis='y')  # Add gridlines along the y-axis for each subplot
+        ax.tick_params(axis='x', rotation=45)
     plt.xlabel("Matrix Size")
     plt.suptitle("Overlap by GPU Type")
     plt.tight_layout()  
@@ -323,6 +320,9 @@ def plot_estimate_gpu(grouped_info_list):
                 axes[row].legend(loc='upper left')
                 axes[row].set_ylabel("Time (s)")
 
+    for ax in plt.gcf().get_axes():
+        ax.grid(axis='y')  # Add gridlines along the y-axis for each subplot
+        ax.tick_params(axis='x', rotation=45)
     plt.xlabel("Matrix Size")
     plt.suptitle("Overlap by GPU Type")
     plt.tight_layout()  
@@ -428,8 +428,8 @@ grouped_info_list_gpu = group_by_string(info_list_gpu)
 
 # Plot the info_list
 
-#plot_info_cpu(grouped_info_list_cpu)
+plot_info_cpu(grouped_info_list_cpu)
 plot_info_gpu(grouped_info_list_ngpu)
-#plot_overlap_gpu(grouped_info_list_gpu)
-#plot_estimate_gpu(grouped_info_list_gpu)
+plot_overlap_gpu(grouped_info_list_gpu)
+plot_estimate_gpu(grouped_info_list_gpu)
 #plot_bandwidth_gpu(grouped_info_list_gpu)
