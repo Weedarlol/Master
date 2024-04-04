@@ -222,6 +222,7 @@ def plot_overlap_gpu(grouped_info_list):
         x_values = list(dict.fromkeys(x_values))
         y_values = [[] for _ in range(num_rows*num_cols*2)]
         for element in elements:
+            print(element)
             if element[5] == 0:
                 y_values[element[3]*2-4].append(element[8])
             else:
@@ -428,8 +429,8 @@ grouped_info_list_gpu = group_by_string(info_list_gpu)
 
 # Plot the info_list
 
-plot_info_cpu(grouped_info_list_cpu)
-plot_info_gpu(grouped_info_list_ngpu)
+#plot_info_cpu(grouped_info_list_cpu)
+#plot_info_gpu(grouped_info_list_ngpu)
 plot_overlap_gpu(grouped_info_list_gpu)
 plot_estimate_gpu(grouped_info_list_gpu)
 #plot_bandwidth_gpu(grouped_info_list_gpu)
