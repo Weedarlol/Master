@@ -70,14 +70,33 @@ void full_calculation_overlap(double **data_gpu, double **data_gpu_tmp, int widt
             cudaErrorHandle(cudaMemcpy(data_cpu, data_gpu_tmp[0] + width*height, width*height*sizeof(double), cudaMemcpyDeviceToHost));
         }
 
+        
+
         if(rank == 0){
-            MPI_Send(&data_cpu[0],            width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD);
-            MPI_Recv(&data_cpu[width*height], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myStatus[0]);
+            MPI_Isend(&data_tmp[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[0]);
+            MPI_Irecv(&data_tmp[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[1]); 
+
+            MPI_Waitall(2, myRequest, myStatus);
+        }
+        else if(rank == size-1){
+            MPI_Irecv(&data_tmp[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank*2-2]); 
+            MPI_Isend(&data_tmp[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank*2-1]); 
+
+            MPI_Waitall(2, &myRequest[rank*2-2], myStatus);
         }
         else{
-            MPI_Recv(&data_cpu[width*height], width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myStatus[1]);  
-            MPI_Send(&data_cpu[0],            width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD);  
+            MPI_Irecv(&data_tmp[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank*2-2]);
+            MPI_Isend(&data_tmp[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank*2-1]); 
+
+            MPI_Isend(&data_tmp[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[rank*2]);
+            MPI_Irecv(&data_tmp[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[rank*2+1]);
+
+            MPI_Waitall(4, &myRequest[rank*2 - 2], myStatus);
         }
+
+        MPI_Barrier(MPI_COMM_WORLD);
+
+
 
         if(rank == 0){
             cudaErrorHandle(cudaSetDevice(gpus-1));

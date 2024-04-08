@@ -18,7 +18,7 @@ def extract_info_from_file(filename):
     if match_name and match_content:
         # Extract information from the matched groups
         width, height, depth, gpu, iterations, compare, overlap, test, create_grid, y_string = match_name.groups()
-        width, height, depth, gpu, iterations, compare, overlap, test, create_matrix = map(int, (width, height, depth, gpu, iterations, compare, overlap, test, create_grid))
+        width, height, depth, gpu, iterations, compare, overlap, test, create_grid = map(int, (width, height, depth, gpu, iterations, compare, overlap, test, create_grid))
         time = float(match_content.group(1))
         return width, height, depth, gpu, iterations, overlap, test, y_string, time
     else:

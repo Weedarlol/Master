@@ -14,7 +14,7 @@ DEPTH = 128
 ITERATIONS = 10000
 
 # Chooses which partition to run at. Only one at a time
-PARTITION = dgx2q
+PARTITION = hgx2q
 
 # Enables or disables overlap, 0 = no overlap, 1 = overlap
 OVERLAP = 1

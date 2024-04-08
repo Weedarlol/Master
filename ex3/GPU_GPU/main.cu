@@ -6,14 +6,23 @@
 #include "programs/cuda_functions.h"
 #include <nvtx3/nvToolsExt.h>
 
-void fillValues3D(double *mat, int width, int height, int depth, double dx, double dy, double dz, int rank) {
+void fillValues3D(double *mat, int width, int height, int depth, double dx, double dy, double dz, int rank, int overlap) {
     double x, y, z;
+    int depth_overlap = 0;
+
+    if(rank < overlap){
+        depth_overlap = rank*(depth-2);
+    }
+    else{
+        depth_overlap = (overlap)*(depth-1);
+        depth_overlap += (rank-overlap)*(depth-2);
+    }
 
     // Assuming the data in the matrix is stored contiguously in memory
     memset(mat, 0, width * height * depth * sizeof(double));
 
     for (int i = 1; i < depth-1; i++) {
-        z = (i + rank * (depth - 2)) * dz; // z coordinate
+        z = (i + depth_overlap) * dz; // z coordinate
         for (int j = 1; j < height - 1; j++) {
             y = j * dy; // z coordinate
             for (int k = 1; k < width - 1; k++) {
@@ -69,11 +78,18 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
-    MPI_Request myRequest[2];
-    MPI_Status myStatus[2];
+    MPI_Request myRequest[(size-1)*2];
+    MPI_Status myStatus[(size-1)*2];
 
 
-    int depth_node = depth_node/size + nodes - 1;
+    int depth_node = (depth-2)/size;
+    int depth_overlap = (depth-2)%size;
+    if(depth_overlap > rank){
+        depth_node += 3;
+    }
+    else{
+        depth_node += 2;
+    }
 
     int total = width*height*depth_node;
     int overlap_calc = overlap*(width-2)*(height-2);
@@ -112,7 +128,7 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     cudaErrorHandle(cudaMallocHost(&data_gpu,      gpus*sizeof(double*)));
     cudaErrorHandle(cudaMallocHost(&data_gpu_tmp,  gpus*sizeof(double*)));
 
-    fillValues3D(data, width, height, depth_node, dx, dy, dz, rank);
+    fillValues3D(data, width, height, depth_node, dx, dy, dz, rank, depth_overlap);
 
     for(int g = 0; g < gpus; g++){
         cudaErrorHandle(cudaSetDevice(g));
@@ -180,13 +196,26 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     if(rank == 0){
         MPI_Isend(&data[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[0]);
         MPI_Irecv(&data[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[1]); 
+
+        MPI_Waitall(2, myRequest, myStatus);
+    }
+    else if(rank == size-1){
+        MPI_Irecv(&data[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank*2-2]); 
+        MPI_Isend(&data[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank*2-1]); 
+
+        MPI_Waitall(2, &myRequest[rank*2-2], myStatus);
     }
     else{
-        MPI_Irecv(&data[0],            width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[0]); 
-        MPI_Isend(&data[width*height], width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[1]); 
+        MPI_Irecv(&data[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank*2-2]);
+        MPI_Isend(&data[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank*2-1]); 
+
+        MPI_Isend(&data[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[rank*2]);
+        MPI_Irecv(&data[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[rank*2+1]);
+
+        MPI_Waitall(4, &myRequest[rank*2 - 2], myStatus);
     }
 
-    MPI_Waitall(2, myRequest, myStatus);
+    MPI_Barrier(MPI_COMM_WORLD);
     
     if(gpus < 2){
         printf("You are running on less than 2 gpus, to be able to communicate between gpus you are required to compute on more than 1 gpu.\n");
@@ -261,56 +290,49 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
 
 
     // Used to compare the grid to the grid which only the CPU created
-    if(compare == 1){
-        double* data_compare = (double*)malloc(width * height * depth* sizeof(double));
-        FILE *fptr;
-        char filename[100];
-        sprintf(filename, "../CPU_3d/grids/CPUGrid%d_%d_%d.txt", width, height, depth);
-
-        printf("Comparing the grids\n");
-
-        fptr = fopen(filename, "r");
-        if (fptr == NULL) {
-            printf("Error opening file.\n");
-            exit(EXIT_FAILURE);
-        }
-
-        // Read grid values from the file
-        for(int i = 0; i < depth; i++){
-            for (int j = 0; j < height; j++) {
-                for (int k = 0; k < width; k++) {
-                    if (fscanf(fptr, "%lf", &data_compare[k + j * width + i * width * height]) != 1) {
-                        printf("Error reading from file.\n");
-                        fclose(fptr);
-                        free(data_compare);
-                        exit(EXIT_FAILURE);
+    if(rank == 0){
+        if(compare == 1){
+            double* data_compare = (double*)malloc(width * height * depth* sizeof(double));
+            FILE *fptr;
+            char filename[100];
+            sprintf(filename, "../CPU_3d/grids/CPUGrid%d_%d_%d.txt", width, height, depth);
+            printf("Comparing the grids\n");
+            fptr = fopen(filename, "r");
+            if (fptr == NULL) {
+                printf("Error opening file.\n");
+                exit(EXIT_FAILURE);
+            }
+            // Read grid values from the file
+            for(int i = 0; i < depth; i++){
+                for (int j = 0; j < height; j++) {
+                    for (int k = 0; k < width; k++) {
+                        if (fscanf(fptr, "%lf", &data_compare[k + j * width + i * width * height]) != 1) {
+                            printf("Error reading from file.\n");
+                            fclose(fptr);
+                            free(data_compare);
+                            exit(EXIT_FAILURE);
+                        }
                     }
                 }
             }
-        }
-        
-
-        fclose(fptr);
-
-        for(int i = 0; i < depth; i++){
-            for (int j = 0; j < height; j++) {
-                for (int k = 0; k < width; k++) {
-                    if (fabs(data_combined[k + j * width + i * width * height] - data_compare[k + j * width + i * width * height]) > 1e-15)  {
-                        printf("Mismatch found at position (width = %d, height = %d, depth = %d) (data = %.16f, data_compare = %.16f)\n", k, j, i, data_combined[k + j * width + i * width * height], data_compare[k + j * width + i * width * height]);
-                        free(data_compare);
-                        exit(EXIT_FAILURE);
+            fclose(fptr);
+            for(int i = 0; i < depth; i++){
+                for (int j = 0; j < height; j++) {
+                    for (int k = 0; k < width; k++) {
+                        if (fabs(data_combined[k + j * width + i * width * height] - data_compare[k + j * width + i * width * height]) > 1e-15)  {
+                            printf("Mismatch found at position (width = %d, height = %d, depth = %d) (data = %.16f, data_compare = %.16f)\n", k, j, i, data_combined[k + j * width + i * width * height], data_compare[k + j * width + i * width * height]);
+                            free(data_compare);
+                            exit(EXIT_FAILURE);
+                        }
                     }
                 }
             }
+            printf("All elements match!\n");
+            // Free allocated memory
+            free(data_compare);
         }
-
-
-        printf("All elements match!\n");
-        
-
-        // Free allocated memory
-        free(data_compare);
     }
+    
 
 
 

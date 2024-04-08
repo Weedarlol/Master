@@ -5,14 +5,23 @@
 #include <string.h>
 #include <stdlib.h>
 
-void fillValues3D(double *mat, int width, int height, int depth, double dx, double dy, double dz, int rank) {
+void fillValues3D(double *mat, int width, int height, int depth, double dx, double dy, double dz, int rank, int overlap) {
     double x, y, z;
+    int depth_overlap = 0;
+
+    if(rank < overlap){
+        depth_overlap = rank*(depth-2);
+    }
+    else{
+        depth_overlap = (overlap)*(depth-1);
+        depth_overlap += (rank-overlap)*(depth-2);
+    }
 
     // Assuming the data in the matrix is stored contiguously in memory
     memset(mat, 0, width * height * depth * sizeof(double));
 
     for (int i = 1; i < depth-1; i++) {
-        z = (i + rank * (depth - 2)) * dz; // z coordinate
+        z = (i + depth_overlap) * dz; // z coordinate
         for (int j = 1; j < height - 1; j++) {
             y = j * dy; // z coordinate
             for (int k = 1; k < width - 1; k++) {
@@ -42,8 +51,8 @@ int main(int argc, char *argv[]) {
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
-    MPI_Request myRequest[size];
-    MPI_Status myStatus[size];
+    MPI_Request myRequest[(size-1)*2];
+    MPI_Status myStatus[(size-1)*2];
 
     if (argc != 6) {
         printf("Wrong number of inputs\n Required inputs: %s <Width> <Height> <Depth> <Iterations> <Node> <Compare>", argv[0]); // Programname
@@ -65,8 +74,6 @@ int main(int argc, char *argv[]) {
         depth_node += 2;
     }
 
-    printf("%i, %i\n", rank, depth_node);
-
     double dx = 2.0 / (width - 1);
     double dy = 2.0 / (height - 1);
     double dz = 2.0 / (depth - 1);
@@ -80,32 +87,40 @@ int main(int argc, char *argv[]) {
     data_tmp = (double*)malloc(width*height*depth_node*sizeof(double));
 
     /* initialization */
-    fillValues3D(data, width, height, depth_node, dx, dy, dz, rank);
+    fillValues3D(data, width, height, depth_node, dx, dy, dz, rank, depth_overlap);
+
 
     start = clock();
     double division = 1/6.0;
 
     if(rank == 0){
-        MPI_Isend(&data[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[rank]);
-        MPI_Irecv(&data[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[rank+1]); 
+        MPI_Isend(&data[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[0]);
+        MPI_Irecv(&data[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[1]); 
+
+        MPI_Waitall(2, myRequest, myStatus);
     }
     else if(rank == size-1){
-        MPI_Irecv(&data[0],            width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank-1]); 
-        MPI_Isend(&data[width*height], width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank]); 
+        MPI_Irecv(&data[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank*2-2]); 
+        MPI_Isend(&data[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank*2-1]); 
+
+        MPI_Waitall(2, &myRequest[rank*2-2], myStatus);
     }
     else{
-        MPI_Irecv(&data[0],            width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank-1]);
-        MPI_Isend(&data[width*height], width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank]); 
+        MPI_Irecv(&data[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank*2-2]);
+        MPI_Isend(&data[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank*2-1]); 
 
-        MPI_Isend(&data[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[rank]);
-        MPI_Irecv(&data[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[rank+1]);
+        MPI_Isend(&data[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[rank*2]);
+        MPI_Irecv(&data[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[rank*2+1]);
+
+        MPI_Waitall(4, &myRequest[rank*2 - 2], myStatus);
     }
 
-    MPI_Waitall(size, myRequest, myStatus);
+    MPI_Barrier(MPI_COMM_WORLD);
+
 
     /* Performing Jacobian grid Calculation */
     // Performing a number of iterations while statement is not satisfied
-    /* while(iter > 0){
+    while(iter > 0){
         for(int i = 1; i < depth_node - 1; i++){
             for(int j = 1; j < height - 1; j++){
                 for(int k = 1; k < width - 1; k++) {
@@ -119,36 +134,42 @@ int main(int argc, char *argv[]) {
         }
 
         if(rank == 0){
-            MPI_Isend(&data_tmp[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[rank]);
-            MPI_Irecv(&data_tmp[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[rank+1]); 
+            MPI_Isend(&data_tmp[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[0]);
+            MPI_Irecv(&data_tmp[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[1]); 
+
+            MPI_Waitall(2, myRequest, myStatus);
         }
         else if(rank == size-1){
-            MPI_Irecv(&data_tmp[0],            width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank-1]); 
-            MPI_Isend(&data_tmp[width*height], width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank]); 
+            MPI_Irecv(&data_tmp[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank*2-2]); 
+            MPI_Isend(&data_tmp[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank*2-1]); 
+
+            MPI_Waitall(2, &myRequest[rank*2-2], myStatus);
         }
         else{
-            MPI_Irecv(&data_tmp[0],            width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank-1]);
-            MPI_Isend(&data_tmp[width*height], width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank]); 
+            MPI_Irecv(&data_tmp[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank*2-2]);
+            MPI_Isend(&data_tmp[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank*2-1]); 
 
-            MPI_Isend(&data_tmp[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[rank]);
-            MPI_Irecv(&data_tmp[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[rank+1]);
+            MPI_Isend(&data_tmp[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[rank*2]);
+            MPI_Irecv(&data_tmp[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[rank*2+1]);
+
+            MPI_Waitall(4, &myRequest[rank*2 - 2], myStatus);
         }
 
-        MPI_Waitall(size, myRequest, myStatus);
+        MPI_Barrier(MPI_COMM_WORLD);
 
         double *data_tmp_swap = data_tmp;
         data_tmp = data;
         data = data_tmp_swap;
 
         iter--;
-    } */
+    }
 
 
     end = clock();
     printf("Time(event) - %.5f s\n", ((double) (end - start)) / CLOCKS_PER_SEC);
 
 
-    /* double *data_combined = NULL;
+    double *data_combined = NULL;
     if(rank == 0){
         data_combined = (double*)malloc(width * height * depth * sizeof(double));
         MPI_Gather(&data[0],            width*height*(depth_node-1), MPI_DOUBLE, data_combined, width*height*(depth_node-1), MPI_DOUBLE, 0, MPI_COMM_WORLD);
@@ -157,12 +178,12 @@ int main(int argc, char *argv[]) {
         MPI_Gather(&data[width*height], width*height*(depth_node-2), MPI_DOUBLE, NULL,          0,                           MPI_DOUBLE, 0, MPI_COMM_WORLD);
     }
     else{
-        MPI_Gather(&data[width*height], width*height*(depth_node-1), MPI_DOUBLE, NULL,          0,                           MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    } */
+        MPI_Gather(&data[width*height], width*height*(depth_node-2), MPI_DOUBLE, NULL,          0,                           MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    }
 
 
 
-    /* if(compare == 1){
+    if(compare == 1){
         if(rank == 0){
             double* data_compare = (double*)malloc(width * height * depth* sizeof(double));
             FILE *fptr;
@@ -217,7 +238,7 @@ int main(int argc, char *argv[]) {
             free(data_compare);
         } 
     }
- */
+
     
 
 

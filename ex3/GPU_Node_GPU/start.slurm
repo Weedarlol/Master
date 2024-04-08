@@ -1,17 +1,8 @@
 #!/bin/bash
 set -e
 
-# Common flags for nvcc
-NVCCFLAGS="-rdc=true"
-
-# Directory for your library (adjust this to the actual path)
-LIBDIR="/cm/shared/modulefiles/openmpi4/gcc/4.1.5"
-
 # List of source files
 SOURCES="main.cu programs/jacobi.cu programs/cuda_functions.cu programs/scenarios.cu" 
-
-# Object files derived from sources
-OBJECTS=$(echo "$SOURCES" | sed 's/\.cu/\.o/g')
 
 # Gets the first element which indicates the partition type
 PARTITION="$1"
@@ -58,7 +49,6 @@ for SCENARIO in "$@"; do
 #!/bin/bash
 
 #SBATCH --job-name=${SCENARIO}_${PARTITION}
-#SBATCH --account=ec12
 #SBATCH --mem-per-gpu=4G
 #SBATCH -p ${PARTITION}
 #SBATCH -N ${NODES}                                   # Antall Noder

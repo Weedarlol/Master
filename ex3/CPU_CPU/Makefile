@@ -10,7 +10,7 @@ NODES = 1
 ITERATIONS = 10000
 
 # If you want to compare the final resulting grid with the grid created by the CPU.
-COMPARE = 0
+COMPARE = 1
 
 # Chooses which partition to run at. Only one at a time
 PARTITION = hgx2q
@@ -42,4 +42,4 @@ clean_all:
 	rm -rf slurm* out_* output/* error/*
 
 cancel:
-	scancel -u ec-vidarlol
+	scancel -u vidarlol

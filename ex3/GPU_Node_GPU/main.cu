@@ -8,14 +8,23 @@
 #include <nvtx3/nvToolsExt.h>
 
 
-void fillValues3D(double *mat, int width, int height, int depth, double dx, double dy, double dz, int rank) {
+void fillValues3D(double *mat, int width, int height, int depth, double dx, double dy, double dz, int rank, int overlap) {
     double x, y, z;
+    int depth_overlap = 0;
+
+    if(rank < overlap){
+        depth_overlap = rank*(depth-2);
+    }
+    else{
+        depth_overlap = (overlap)*(depth-1);
+        depth_overlap += (rank-overlap)*(depth-2);
+    }
 
     // Assuming the data in the matrix is stored contiguously in memory
     memset(mat, 0, width * height * depth * sizeof(double));
 
     for (int i = 1; i < depth-1; i++) {
-        z = (i + rank * (depth - 2)) * dz; // z coordinate
+        z = (i + depth_overlap) * dz; // z coordinate
         for (int j = 1; j < height - 1; j++) {
             y = j * dy; // z coordinate
             for (int k = 1; k < width - 1; k++) {
@@ -67,9 +76,16 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     */
 
 
-    MPI_Request myRequest[2];
-    MPI_Status myStatus[2];
-    int depth_node = depth/size;
+    MPI_Request myRequest[(size-1)*2];
+    MPI_Status myStatus[(size-1)*2];
+    int depth_node = (depth-2)/size;
+    int depth_overlap = (depth-2)%size;
+    if(depth_overlap > rank){
+        depth_node += 3;
+    }
+    else{
+        depth_node += 2;
+    }
 
     printf("Depth %i, rank %i\n", depth, rank);
     printf("Depth_node %i, rank %i\n", depth_node, rank);
@@ -113,7 +129,7 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     cudaErrorHandle(cudaMallocHost(&data_gpu,      gpus*sizeof(double*)));
     cudaErrorHandle(cudaMallocHost(&data_gpu_tmp,  gpus*sizeof(double*)));
 
-    fillValues3D(data, width, height, depth_node, dx, dy, dz, rank);
+    fillValues3D(data, width, height, depth_node, dx, dy, dz, rank, overlap_calc);
 
     for(int g = 0; g < gpus; g++){
         cudaErrorHandle(cudaSetDevice(g));
@@ -184,13 +200,26 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     if(rank == 0){
         MPI_Isend(&data[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[0]);
         MPI_Irecv(&data[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[1]); 
+
+        MPI_Waitall(2, myRequest, myStatus);
+    }
+    else if(rank == size-1){
+        MPI_Irecv(&data[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank*2-2]); 
+        MPI_Isend(&data[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank*2-1]); 
+
+        MPI_Waitall(2, &myRequest[rank*2-2], myStatus);
     }
     else{
-        MPI_Irecv(&data[0],            width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[0]); 
-        MPI_Isend(&data[width*height], width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[1]); 
+        MPI_Irecv(&data[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank*2-2]);
+        MPI_Isend(&data[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank*2-1]); 
+
+        MPI_Isend(&data[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[rank*2]);
+        MPI_Irecv(&data[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[rank*2+1]);
+
+        MPI_Waitall(4, &myRequest[rank*2 - 2], myStatus);
     }
 
-    MPI_Waitall(2, myRequest, myStatus);
+    MPI_Barrier(MPI_COMM_WORLD);
     
     if(gpus < 2){
         printf("You are running on less than 2 gpus, to be able to communicate between gpus you are required to compute on more than 1 gpu.\n");
