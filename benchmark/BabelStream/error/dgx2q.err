@@ -11,10 +11,3 @@ Call Stack (most recent call first):
   CMakeLists.txt:196 (setup)
 
 [0m
-[33mCMake Warning:
-  Manually-specified variables were not used by the project:
-
-    STREAM_ARRAY_SIZE
-
-[0m
-Error: no kernel image is available for execution on the device

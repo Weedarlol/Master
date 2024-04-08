@@ -1,0 +1,12 @@
+Depth 128, rank 1
+Depth_node 63, rank 1
+Depth 128, rank 0
+Depth_node 63, rank 0
+1 61
+0 61
+Rank = 0
+Rank = 1
+Time(event) - 11.71977 s
+Time(event) - 11.71978 s
+Comparing the grids
+Mismatch found at position (width = 1, height = 1, depth = 1) (data = 0.0000000007335633, data_compare = 0.0000000005826213)

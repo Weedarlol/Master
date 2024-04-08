@@ -107,7 +107,7 @@ def plot_overlap_gpu(grouped_info_list):
 
     num_rows = 3
     num_cols = len(grouped_info_list)
-    _, axes = plt.subplots(num_rows, num_cols, figsize=(10, 8), sharex=True)
+    _, axes = plt.subplots(num_rows, num_cols, figsize=(10, 8))
 
     for i, (partition, elements) in enumerate(grouped_info_list):
         x_values = [f"{element[0]}x{element[1]}" for element in elements]
@@ -134,10 +134,10 @@ def plot_overlap_gpu(grouped_info_list):
                     x_values = x_values[:len(y_values[row*2])]
                 elif len(y_values[row*2+1]) < len(x_values):
                     x_values = x_values[:len(y_values[row*2+1])]
-                axes[row, i].plot(x_values, y_values[row*2], label='Overlap')
+                axes[row, i].plot(x_values, y_values[row*2], label='No Overlap')
                 axes[row, i].plot(x_values, y_values[row*2+1], label='Overlap')
                 axes[row, i].set_title(f"{partition} - GPUs: {row+2}")
-                axes[row, i].legend()
+                axes[row, i].legend(loc='upper left')
                 axes[row, i].set_ylabel("Time (s)")
                 ax2 = axes[row, i].twinx()
                 ax2.plot(x_values, percentage_diff[row][:len(x_values)], marker='^', color='g', linestyle='-', label='Percentage Difference')
@@ -171,7 +171,7 @@ def plot_overlap_gpu(grouped_info_list):
 
 def plot_estimate_gpu(grouped_info_list):
     grouped_info_list = [
-        (partition, [(x, y, z, w, u, v-2 if v > 0 else v, a, b) for x, y, z, w, u, v, a, b in elements if u == 1])
+        (partition, [(x, y, z, w, u, v-2 if v > 0 else v, a, b) for x, y, z, w, u, v, a, b in elements if u == 1 and x == y])
         for partition, elements in grouped_info_list
     ]
 
@@ -222,15 +222,17 @@ def plot_estimate_gpu(grouped_info_list):
 
 def plot_bandwidth_gpu(grouped_info_list):
     grouped_info_list = [
-        (partition, [(x, y, z, w, u, v, a, b) for x, y, z, w, u, v, a, b in elements if u == 1 and v == 0])
+        (partition, [(x, y, z, w, u, v, a, b) for x, y, z, w, u, v, a, b in elements if u == 0 and v == 0 and x == y])
         for partition, elements in grouped_info_list
     ]
-    num_rows = 3
+    num_rows = 1
     num_cols = len(grouped_info_list)
     bandwidth_values = [
         ("dgx2q", 871.29 * 2**30),
         ("hgx2q", 1702.88 * 2**30)
     ]
+
+    print(num_cols)
 
     _, axes = plt.subplots(num_rows, num_cols, figsize=(10, 8), sharex=True, sharey=True)
     for i, (partition, elements) in enumerate(grouped_info_list):
@@ -240,39 +242,25 @@ def plot_bandwidth_gpu(grouped_info_list):
         second_integers = [int(x.split('x')[1]) for x in x_values]
         y_values = [element[-1] for element in elements]
 
-        for j in range(num_rows):
-            new_y_values = [y_values[i+j] for i in range(0, len(y_values), num_rows)]
-            for string, value in bandwidth_values:
-                if partition == string:
-                    # Extract information from the sorted list
-                    memory_operations = [2, 3, 4, 5]
-                    y_values_1 = [(memory_operations[0] * a * b * 8 * 10000) / value for a, b in zip(first_integers, second_integers)]
-                    y_values_2 = [(memory_operations[1] * a * b * 8 * 10000) / value for a, b in zip(first_integers, second_integers)]
-                    y_values_3 = [(memory_operations[2] * a * b * 8 * 10000) / value for a, b in zip(first_integers, second_integers)]
-                    y_values_4 = [(memory_operations[3] * a * b * 8 * 10000) / value for a, b in zip(first_integers, second_integers)]
-                    # Plot the first two lines on the left y-axis
-                    if num_cols > 1:
-                        axes[j, i].plot(x_values, y_values_1, label='Memory Operations = 2', color='blue', marker='o')
-                        axes[j, i].plot(x_values, y_values_2, label='Memory Operations = 3', color='lightblue', marker='o')
-                        axes[j, i].plot(x_values, y_values_3, label='Memory Operations = 4', color='lightblue', marker='s')
-                        axes[j, i].plot(x_values, y_values_4, label='Memory Operations = 5', color='blue', marker='s')
-                        axes[j, i].fill_between(x_values, y_values_1, y_values_4, color='lightgray', alpha=0.5)
-                    else:
-                        axes[j].plot(x_values, y_values_1, label='Memory Operations = 2', color='blue', marker='o')
-                        axes[j].plot(x_values, y_values_2, label='Memory Operations = 3', color='lightblue', marker='o')
-                        axes[j].plot(x_values, y_values_3, label='Memory Operations = 4', color='lightblue', marker='s')
-                        axes[j].plot(x_values, y_values_4, label='Memory Operations = 5', color='blue', marker='s')
-                        axes[j].fill_between(x_values, y_values_1, y_values_4, color='lightgray', alpha=0.5)
-            if num_cols > 1:
-                axes[j, i].plot(x_values, new_y_values, label=partition, color="red", marker='x')
-                axes[j, i].set_title(f"Partition: {elements[0][6]}")
-                axes[j, i].set_ylabel("Time (s)")
-                axes[j, i].legend()
-            else:
-                axes[j].plot(x_values, new_y_values, label=partition, color="red", marker='x')
-                axes[j].set_title(f"Partition: {elements[0][6]}")
-                axes[j].set_ylabel("Time (s)")
-                axes[j].legend()
+        for string, value in bandwidth_values:
+            if partition == string:
+                # Extract information from the sorted list
+                memory_operations = [2, 3, 4, 5]
+                y_values_1 = [(memory_operations[0] * a * b * 8 * 10000) / value for a, b in zip(first_integers, second_integers)]
+                y_values_2 = [(memory_operations[1] * a * b * 8 * 10000) / value for a, b in zip(first_integers, second_integers)]
+                y_values_3 = [(memory_operations[2] * a * b * 8 * 10000) / value for a, b in zip(first_integers, second_integers)]
+                y_values_4 = [(memory_operations[3] * a * b * 8 * 10000) / value for a, b in zip(first_integers, second_integers)]
+                axes[i].plot(x_values, y_values_1, label='Memory Operations = 2', color='blue', marker='o')
+                axes[i].plot(x_values, y_values_2, label='Memory Operations = 3', color='lightblue', marker='o')
+                axes[i].plot(x_values, y_values_3, label='Memory Operations = 4', color='lightblue', marker='s')
+                axes[i].plot(x_values, y_values_4, label='Memory Operations = 5', color='blue', marker='s')
+                axes[i].fill_between(x_values, y_values_1, y_values_4, color='lightgray', alpha=0.5)
+
+        axes[i].plot(x_values, y_values, label=partition, color="red", marker='x')
+        axes[i].set_title(f"Partition: {partition}")
+        axes[i].set_ylabel("Time (s)")
+        axes[i].legend()
+
     # Rotate x-axis labels for better visibility
     for ax in plt.gcf().get_axes():
         ax.grid(axis='y')  # Add gridlines along the y-axis for each subplot
@@ -305,17 +293,19 @@ info_list_cpu = process_files(folder_path_ex3_cpu, info_list_cpu)
 info_list_cpu = process_files(folder_path_fox_cpu, info_list_cpu)
 info_list_gpu = []
 info_list_gpu = process_files(folder_path_ex3_gpu, info_list_gpu)
-#info_list_gpu = process_files(folder_path_ex3_1gpu, info_list_gpu)
+info_list_1gpu = []
+info_list_1gpu = process_files(folder_path_ex3_1gpu, info_list_1gpu)
+info_list_1gpu = process_files(folder_path_fox_1gpu, info_list_1gpu)
+
 
 
 # Call the function to group the info_list by the string
 grouped_info_list_cpu = group_by_string(info_list_cpu)
 grouped_info_list_gpu = group_by_string(info_list_gpu)
+grouped_info_list_1gpu = group_by_string(info_list_1gpu)
 
-
-# Plot the info_list
 
 #plot_info_cpu(grouped_info_list_cpu)
 #plot_overlap_gpu(grouped_info_list_gpu)
-#plot_estimate_gpu(grouped_info_list_gpu)
-plot_bandwidth_gpu(grouped_info_list_gpu)
+plot_estimate_gpu(grouped_info_list_gpu)
+#plot_bandwidth_gpu(grouped_info_list_1gpu)

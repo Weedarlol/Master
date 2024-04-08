@@ -182,7 +182,7 @@ def plot_overlap_gpu(grouped_info_list):
 
     num_rows = 3
     num_cols = len(grouped_info_list)
-    _, axes = plt.subplots(num_rows, num_cols, figsize=(10, 8), sharex=True, sharey=True)
+    _, axes = plt.subplots(num_rows, num_cols, figsize=(10, 8))
 
     for i, (partition, elements) in enumerate(grouped_info_list):
         x_values = [f"{element[0]}x{element[1]}x{element[2]}" for element in elements]
@@ -209,7 +209,7 @@ def plot_overlap_gpu(grouped_info_list):
                     x_values = x_values[:len(y_values[row*2])]
                 elif len(y_values[row*2+1]) < len(x_values):
                     x_values = x_values[:len(y_values[row*2+1])]
-                axes[row, i].plot(x_values, y_values[row*2], label='Overlap')
+                axes[row, i].plot(x_values, y_values[row*2], label='No Overlap')
                 axes[row, i].plot(x_values, y_values[row*2+1], label='Overlap')
                 axes[row, i].legend()
                 axes[row, i].set_ylabel("Time (s)")
@@ -245,7 +245,7 @@ def plot_overlap_gpu(grouped_info_list):
 
 def plot_estimate_gpu(grouped_info_list):
     grouped_info_list = [
-        (partition, [(x, y, z, w, u, v, a-2 if a > 0 else a, b, c) for x, y, z, w, u, v, a, b, c in elements if v == 1])
+        (partition, [(x, y, z, w, u, v, a-2 if a > 0 else a, b, c) for x, y, z, w, u, v, a, b, c in elements])
         for partition, elements in grouped_info_list
     ]
 
@@ -258,10 +258,17 @@ def plot_estimate_gpu(grouped_info_list):
         x_values = list(dict.fromkeys(x_values))
 
         y_values = [[] for _ in range(num_rows*3)]
+        combined = [[] for _ in range(num_rows*3)]
+        percentage = [[] for _ in range(num_rows*3)]
         
+        for element in elements:
+            if element[5] == 1:
+                y_values[(element[3] - 2) * 3 + element[6]].append(element[8])
+            else:
+                combined[(element[3] - 2) * 3 + element[6]].append(element[8])
 
         for element in elements:
-            y_values[(element[3] - 2) * 3 + element[6]].append(element[8])
+            percentage[(element[3] - 2) * 3 + element[6]].append((a - b) / b * 100 for a, b in zip(y_values, combined))
 
         if(num_cols > 1):
             for row in range(num_rows):
@@ -269,12 +276,18 @@ def plot_estimate_gpu(grouped_info_list):
                     x_values = x_values[:len(y_values[row*3])]
                 elif len(y_values[row*3+1]) < len(x_values):
                     x_values = x_values[:len(y_values[row*3+1])]
-                axes[row, i].plot(x_values, y_values[row*3], label='Full time')
+                axes[row, i].plot(x_values, y_values[row*3], label='Overlap')
+                axes[row, i].plot(x_values, combined[row*3], label='No Overlap')
                 axes[row, i].plot(x_values, y_values[row*3+1], label='Only Computation')
                 axes[row, i].plot(x_values, y_values[row*3+2], label='Only Communication')
+                axes[row, i].plot(x_values, [x + y for x, y in zip(y_values[row*3+2], y_values[row*3+1])], label='Computation + Communication')
                 axes[row, i].set_title(f"{partition} - GPUs: {row+2}")
                 axes[row, i].legend()
                 axes[row, i].set_ylabel("Time (s)")
+                ax2 = axes[row, i].twinx()
+                ax2.plot(x_values, percentage[row*3], marker='^', color='g', linestyle='-', label='Percentage Difference')
+                ax2.legend(loc='upper right')
+                ax2.set_ylabel("Percentage Difference")
         else:
             for row in range(num_rows):
                 if len(y_values[row*2]) < len(x_values):
@@ -403,8 +416,7 @@ grouped_info_list_gpu = group_by_string(info_list_gpu)
 
 # Plot the info_list
 
-plot_info_cpu(grouped_info_list_cpu)
-plot_info_gpu(grouped_info_list_ngpu)
-plot_overlap_gpu(grouped_info_list_gpu)
+#plot_info_cpu(grouped_info_list_cpu)
+#plot_overlap_gpu(grouped_info_list_gpu)
 plot_estimate_gpu(grouped_info_list_gpu)
-plot_bandwidth_gpu(grouped_info_list_gpu)
+#plot_bandwidth_gpu(grouped_info_list_gpu)
