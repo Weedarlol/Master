@@ -62,7 +62,7 @@ def group_by_string(info_list):
     grouped_info_list = [(string, elements) for string, elements in grouped_info.items()]
     return grouped_info_list
 
-def plot_info_cpu(grouped_info_list):
+def plot_info_cpu(grouped_info_list, save_option):
     grouped_info_list = [
         (partition, [(x, y, z, w, u, v, a, b, c) for x, y, z, w, u, v, a, b, c in elements if v == 0])
         for partition, elements in grouped_info_list
@@ -119,9 +119,11 @@ def plot_info_cpu(grouped_info_list):
     plt.tight_layout()
     plt.suptitle("Estimated CPU Computation Time vs Real CPU Computation Time")
     plt.subplots_adjust(top=0.9)
+    if save_option == "yes":
+        plt.savefig('output_figures/3d_CPU_Computation_Time.png')
     plt.show()
 
-def plot_info_gpu(grouped_info_list):
+def plot_info_gpu(grouped_info_list, save_option):
     grouped_info_list = [
         (partition, [(x, y, z, w, u, v, a, b, c) for x, y, z, w, u, v, a, b, c in elements if a == 0 and v == 1])
         for partition, elements in grouped_info_list
@@ -172,9 +174,11 @@ def plot_info_gpu(grouped_info_list):
     plt.tight_layout()
     plt.suptitle("GPU Computation time, Overlap versus No Overlap")
     plt.subplots_adjust(top=0.9)
+    if save_option == "yes":
+        plt.savefig('output_figures/3d_CPU_Computation_Time.png')
     plt.show()
 
-def plot_overlap_gpu(grouped_info_list):
+def plot_overlap_gpu(grouped_info_list, save_option):
     grouped_info_list = [
         (partition, [(x, y, z, w, u, v, a, b, c) for x, y, z, w, u, v, a, b, c in elements if a == 0])
         for partition, elements in grouped_info_list
@@ -241,9 +245,11 @@ def plot_overlap_gpu(grouped_info_list):
     plt.suptitle("GPU Computation time, Overlap versus No Overlap")
     plt.subplots_adjust(top=0.9)
     plt.tight_layout()  
+    if save_option == "yes":
+        plt.savefig('output_figures/3d_GPU_Overlap_vs_No_Overlap.png')
     plt.show()
 
-def plot_estimate_gpu(grouped_info_list):
+def plot_estimate_gpu(grouped_info_list, save_option):
     grouped_info_list = [
         (partition, [(x, y, z, w, u, v, a-2 if a > 0 else a, b, c) for x, y, z, w, u, v, a, b, c in elements])
         for partition, elements in grouped_info_list
@@ -267,8 +273,10 @@ def plot_estimate_gpu(grouped_info_list):
             else:
                 combined[(element[3] - 2) * 3 + element[6]].append(element[8])
 
-        for element in elements:
-            percentage[(element[3] - 2) * 3 + element[6]].append((a - b) / b * 100 for a, b in zip(y_values, combined))
+        for j in range(len(y_values)):
+            for a, b in zip(y_values[i], combined[i]):
+                percentage[j].append((a - b) / b * 100)
+
 
         if(num_cols > 1):
             for row in range(num_rows):
@@ -308,9 +316,11 @@ def plot_estimate_gpu(grouped_info_list):
     plt.suptitle("GPU computation time difference: Total, Computation and Communication")
     plt.subplots_adjust(top=0.9)
     plt.tight_layout()  
+    if save_option == "yes":
+        plt.savefig('output_figures/3d_GPU_Total_Computation_Communication.png')
     plt.show()
 
-def plot_bandwidth_gpu(grouped_info_list):
+def plot_bandwidth_gpu(grouped_info_list, save_option):
     grouped_info_list = [
         (partition, [(x, y, z, w, u, v, a, b, c) for x, y, z, w, u, v, a, b, c in elements if v == 1 and a ==  0])
         for partition, elements in grouped_info_list
@@ -360,12 +370,14 @@ def plot_bandwidth_gpu(grouped_info_list):
                         axes[j].plot(x_values, y_values_6, label='Memory Operations = 7', color='blue', marker='s')
                         axes[j].fill_between(x_values, y_values_1, y_values_6, color='lightgray', alpha=0.5)
             if num_cols > 1:
-                axes[j, i].plot(x_values, new_y_values, label=partition, color="red", marker='x')
+                print(x_values)
+                print(y_values)
+                axes[j, i].plot(x_values, y_values, label=partition, color="red", marker='x')
                 axes[j, i].set_title(f"Partition: {partition}")
                 axes[j, i].set_ylabel("Time (s)")
                 axes[j, i].legend()
             else:
-                axes[j].plot(x_values, new_y_values, label=partition, color="red", marker='x')
+                axes[j].plot(x_values, y_values, label=partition, color="red", marker='x')
                 axes[j].set_title(f"Partition: dgx2q")
                 axes[j].set_ylabel("Time (s)")
                 axes[j].legend()
@@ -376,6 +388,8 @@ def plot_bandwidth_gpu(grouped_info_list):
     plt.tight_layout()
     plt.subplots_adjust(top=0.9)
     plt.suptitle("Estimated GPU Computation Time vs Real GPU Computation Time")
+    if save_option == "yes":
+        plt.savefig('output_figures/3d_GPU_Estimated_vs_Real.png')
     plt.show()
 
 
@@ -383,40 +397,38 @@ def plot_bandwidth_gpu(grouped_info_list):
 
 
 
-folder_path_ex3_cpu = "../ex3/CPU_3d/output"
-folder_path_fox_cpu = "../fox/CPU_3d/output"
+#folder_path_ex3_cpu = "../ex3/CPU_3d/output"
+#folder_path_fox_cpu = "../fox/CPU_3d/output"
 
-folder_path_ex3_gpu = "../ex3/GPU_3d/output"
-folder_path_ex3_1gpu = "../ex3/GPU_3d_1GPU/output"
-folder_path_fox_gpu = "../fox/GPU_3d/output"
-folder_path_fox_1gpu = "../fox/GPU_3d_1GPU/output"
+#folder_path_ex3_gpu = "../../ex3/GPU_3d/output"
+#folder_path_ex3_1gpu = "../ex3/GPU_3d_1GPU/output"
+#folder_path_fox_gpu = "../../fox/GPU_3d/output"
+#folder_path_fox_1gpu = "../fox/GPU_3d_1GPU/output"
 
 # Contains information about CPU
-info_list_cpu = []
-info_list_cpu = process_files(folder_path_ex3_cpu, info_list_cpu)
-info_list_cpu = process_files(folder_path_fox_cpu, info_list_cpu)
+#info_list_cpu = []
+#info_list_cpu = process_files(folder_path_ex3_cpu, info_list_cpu)
+#info_list_cpu = process_files(folder_path_fox_cpu, info_list_cpu)
 # Contains information about all GPUs
-info_list_ngpu = []
-info_list_ngpu = process_files(folder_path_ex3_gpu, info_list_ngpu)
-info_list_ngpu = process_files(folder_path_ex3_1gpu, info_list_ngpu)
-info_list_ngpu = process_files(folder_path_fox_gpu, info_list_ngpu)
-info_list_ngpu = process_files(folder_path_fox_1gpu, info_list_ngpu)
+#info_list_ngpu = []
+#info_list_ngpu = process_files(folder_path_ex3_gpu, info_list_ngpu)
+#info_list_ngpu = process_files(folder_path_ex3_1gpu, info_list_ngpu)
+#info_list_ngpu = process_files(folder_path_fox_gpu, info_list_ngpu)
+#info_list_ngpu = process_files(folder_path_fox_1gpu, info_list_ngpu)
 # Contains information of GPUs with n > 1
-info_list_gpu = []
-info_list_gpu = process_files(folder_path_ex3_gpu, info_list_gpu)
-info_list_gpu = process_files(folder_path_fox_gpu, info_list_gpu)
+#info_list_gpu = []
+#info_list_gpu = process_files(folder_path_ex3_gpu, info_list_gpu)
+#info_list_gpu = process_files(folder_path_fox_gpu, info_list_gpu)
 
 # Call the function to group the info_list by the string
-grouped_info_list_cpu = group_by_string(info_list_cpu)
-grouped_info_list_ngpu = group_by_string(info_list_ngpu)
-grouped_info_list_gpu = group_by_string(info_list_gpu)
+#grouped_info_list_cpu = group_by_string(info_list_cpu)
+#grouped_info_list_ngpu = group_by_string(info_list_ngpu)
+#grouped_info_list_gpu = group_by_string(info_list_gpu)
 
 
 
-
-# Plot the info_list
 
 #plot_info_cpu(grouped_info_list_cpu)
 #plot_overlap_gpu(grouped_info_list_gpu)
-plot_estimate_gpu(grouped_info_list_gpu)
+#plot_estimate_gpu(grouped_info_list_gpu, "no")
 #plot_bandwidth_gpu(grouped_info_list_gpu)

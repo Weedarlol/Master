@@ -42,7 +42,7 @@ def group_by_string(info_list):
     return grouped_info_list
 
 
-def plot_info_cpu(grouped_info_list):
+def plot_info_cpu(grouped_info_list, save_option):
     grouped_info_list = [
         (partition, [(x, y, z, w, u, v, a, b) for x, y, z, w, u, v, a, b in elements if v == 0])
         for partition, elements in grouped_info_list
@@ -95,11 +95,13 @@ def plot_info_cpu(grouped_info_list):
     plt.tight_layout()
     plt.suptitle("Estimated CPU Computation Time vs Real CPU Computation Time")
     plt.subplots_adjust(top=0.9)
+    if save_option == "yes":
+        plt.savefig('output_figures/2d_CPU_Computation_Time.png')
     plt.show()
 
 
 
-def plot_overlap_gpu(grouped_info_list):
+def plot_overlap_gpu(grouped_info_list, save_option):
     grouped_info_list = [
         (partition, [(x, y, z, w, u, v, a, b) for x, y, z, w, u, v, a, b in elements if v == 0])
         for partition, elements in grouped_info_list
@@ -160,16 +162,20 @@ def plot_overlap_gpu(grouped_info_list):
                 ax2.legend(loc='upper right')
                 ax2.set_ylabel("Percentage Difference")
         
-      
+    for ax in plt.gcf().get_axes():
+        ax.grid(axis='y')  # Add gridlines along the y-axis for each subplot
+        ax.tick_params(axis='x', rotation=45)
     plt.xlabel("Matrix Size")
     plt.suptitle("GPU Computation time, Overlap versus No Overlap")
     plt.subplots_adjust(top=0.9)
     plt.tight_layout()  
+    if save_option == "yes":
+        plt.savefig('output_figures/2d_GPU_Overlap_vs_No_Overlap.png')
     plt.show()
 
 
 
-def plot_estimate_gpu(grouped_info_list):
+def plot_estimate_gpu(grouped_info_list, save_option):
     grouped_info_list = [
         (partition, [(x, y, z, w, u, v-2 if v > 0 else v, a, b) for x, y, z, w, u, v, a, b in elements if u == 1 and x == y])
         for partition, elements in grouped_info_list
@@ -213,14 +219,19 @@ def plot_estimate_gpu(grouped_info_list):
                 axes[row].legend(loc='upper left')
                 axes[row].set_ylabel("Time (s)")
 
+    for ax in plt.gcf().get_axes():
+        ax.grid(axis='y')  # Add gridlines along the y-axis for each subplot
+        ax.tick_params(axis='x', rotation=45)
     plt.xlabel("Matrix Size")
     plt.suptitle("GPU computation time difference: Total, Computation and Communication")
     plt.subplots_adjust(top=0.9)
     plt.tight_layout()  
+    if save_option == "yes":
+        plt.savefig('output_figures/2d_GPU_Total_Computation_Communication.png')
     plt.show()
 
 
-def plot_bandwidth_gpu(grouped_info_list):
+def plot_bandwidth_gpu(grouped_info_list, save_option):
     grouped_info_list = [
         (partition, [(x, y, z, w, u, v, a, b) for x, y, z, w, u, v, a, b in elements if u == 0 and v == 0 and x == y])
         for partition, elements in grouped_info_list
@@ -268,6 +279,8 @@ def plot_bandwidth_gpu(grouped_info_list):
     plt.tight_layout()
     plt.subplots_adjust(top=0.9)
     plt.suptitle("Estimated GPU Computation Time vs Real GPU Computation Time")
+    if save_option == "yes":
+        plt.savefig('output_figures/2d_GPU_Estimated_vs_Real.png')
     plt.show()
 
 
@@ -279,7 +292,7 @@ def plot_bandwidth_gpu(grouped_info_list):
 
 
 
-folder_path_ex3_cpu = "../ex3/CPU_2d/output"
+""" folder_path_ex3_cpu = "../ex3/CPU_2d/output"
 folder_path_fox_cpu = "../fox/CPU_2d/output"
 
 folder_path_ex3_gpu = "../ex3/GPU_2d/output"
@@ -305,7 +318,7 @@ grouped_info_list_gpu = group_by_string(info_list_gpu)
 grouped_info_list_1gpu = group_by_string(info_list_1gpu)
 
 
-#plot_info_cpu(grouped_info_list_cpu)
-#plot_overlap_gpu(grouped_info_list_gpu)
+plot_info_cpu(grouped_info_list_cpu)
+plot_overlap_gpu(grouped_info_list_gpu)
 plot_estimate_gpu(grouped_info_list_gpu)
-#plot_bandwidth_gpu(grouped_info_list_1gpu)
+plot_bandwidth_gpu(grouped_info_list_1gpu) """
