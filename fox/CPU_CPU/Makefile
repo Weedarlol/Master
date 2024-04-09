@@ -4,7 +4,7 @@ HEIGHT = 128
 DEPTH = 128
 
 # How many nodes to run the program on
-NODES = 1
+NODES = 2
 
 # Number of max iterations to run for the scenario
 ITERATIONS = 10000
