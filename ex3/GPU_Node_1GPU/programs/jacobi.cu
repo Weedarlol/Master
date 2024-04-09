@@ -12,34 +12,21 @@ __device__ void calc(double *data_gpu, double *data_gpu_tmp, int iter, int index
 
     double division = 1.0/6;
 
-    // Calculating Jacobian Matrix
-    while(iter > 0){
-        // Calculates each element except the border
-        for(int i = 0; i < amountPerThread; i++){
-            int index = index_start + i*thread_size;
-            int x = index % (width - 2) + 1;
-            int y = (index / (width - 2)) % (height - 2) + 1;
-            int z = index / ((width - 2) * (height - 2)) + 1;
-            index = x + y*width + z*width*height;
+    for(int i = 0; i < amountPerThread; i++){
+        int index = index_start + i*thread_size;
+        int x = index % (width - 2) + 1;
+        int y = (index / (width - 2)) % (height - 2) + 1;
+        int z = index / ((width - 2) * (height - 2)) + 1;
+        index = x + y*width + z*width*height;
 
-            data_gpu_tmp[index] = division * (
-                data_gpu[index + 1]            + data_gpu[index - 1] +
-                data_gpu[index + width]        + data_gpu[index - width] +
-                data_gpu[index + width*height] + data_gpu[index - width*height]);
-        } 
-
-        // Changes pointers
-        double *data_tmp_cha = data_gpu_tmp;
-        data_gpu_tmp = data_gpu;
-        data_gpu = data_tmp_cha;
-
-        iter--;
-
-        grid_g.sync();
-    }
+        data_gpu_tmp[index] = division * (
+            data_gpu[index + 1]            + data_gpu[index - 1] +
+            data_gpu[index + width]        + data_gpu[index - width] +
+            data_gpu[index + width*height] + data_gpu[index - width*height]);
+    } 
 }
 
-__global__ void jacobi(double *data_gpu, double *data_gpu_tmp, int width, int height, int depth, int iter){
+__global__ void jacobi(double *data_gpu, double *data_gpu_tmp, int width, int height, int depth_node, int iter){
     /*
     Variables      | Type      | Description
     grid_g         | grid_group| Creates a group compromising of all the threads
@@ -53,7 +40,7 @@ __global__ void jacobi(double *data_gpu, double *data_gpu_tmp, int width, int he
     cg::grid_group grid_g = cg::this_grid();
     int thread_size = grid_g.num_threads();
     int thread = grid_g.thread_rank();
-    int jacobiSize = (width - 2) * (height - 2) * (depth - 2);
+    int jacobiSize = (width - 2) * (height - 2) * (depth_node - 2);
     int amountPerThread = jacobiSize / thread_size;
     int leftover = jacobiSize % thread_size;
 

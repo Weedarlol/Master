@@ -17,6 +17,7 @@ void full_calculation_overlap(double **data_gpu, double **data_gpu_tmp, int widt
     cudaStream_t streams[gpus][2];
     cudaEvent_t events[gpus][4], startevent, stopevent;
     initializeStreamsAndEvents(gpus, streams, events, &startevent, &stopevent);
+    int size = 2;
     MPI_Request myRequest[2];
     MPI_Status myStatus[2];
 
@@ -43,14 +44,13 @@ void full_calculation_overlap(double **data_gpu, double **data_gpu_tmp, int widt
         }
 
         // Step 2
-        // Transfer 2 slice of the matrix
+        // GPU to GPU Communication!
         for(int g = 1; g < gpus; g++){
             cudaErrorHandle(cudaSetDevice(g));
             cudaErrorHandle(cudaStreamWaitEvent(streams[g][0], events[g][0]));
             cudaErrorHandle(cudaMemcpyPeerAsync(data_gpu_tmp[g-1] + (slices_device[g-1]-1)*width*height, g-1, data_gpu_tmp[g] + width*height, g, width*height*sizeof(double), streams[g][0]));
             cudaErrorHandle(cudaEventRecord(events[g][2], streams[g][0]));
         }
-        // Transfers n-2 slice of the matrix
         for(int g = 0; g < gpus-1; g++){
             cudaErrorHandle(cudaSetDevice(g));
             cudaErrorHandle(cudaStreamWaitEvent(streams[g][0], events[g][0]));
@@ -60,7 +60,7 @@ void full_calculation_overlap(double **data_gpu, double **data_gpu_tmp, int widt
 
 
 
-
+        // CPU to CPU communication
         if(rank == 0){
             cudaErrorHandle(cudaSetDevice(gpus-1));
             cudaErrorHandle(cudaMemcpy(data_cpu, data_gpu_tmp[gpus-1] + (slices_device[gpus-1]-2)*width*height, width*height*sizeof(double), cudaMemcpyDeviceToHost));
@@ -69,35 +69,28 @@ void full_calculation_overlap(double **data_gpu, double **data_gpu_tmp, int widt
             cudaErrorHandle(cudaSetDevice(0));
             cudaErrorHandle(cudaMemcpy(data_cpu, data_gpu_tmp[0] + width*height, width*height*sizeof(double), cudaMemcpyDeviceToHost));
         }
-
-        
-
         if(rank == 0){
-            MPI_Isend(&data_tmp[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[0]);
-            MPI_Irecv(&data_tmp[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[1]); 
+            MPI_Isend(&data_gpu_tmp[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[0]);
+            MPI_Irecv(&data_gpu_tmp[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[1]); 
 
             MPI_Waitall(2, myRequest, myStatus);
         }
         else if(rank == size-1){
-            MPI_Irecv(&data_tmp[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank*2-2]); 
-            MPI_Isend(&data_tmp[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank*2-1]); 
+            MPI_Irecv(&data_gpu_tmp[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank*2-2]); 
+            MPI_Isend(&data_gpu_tmp[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank*2-1]); 
 
             MPI_Waitall(2, &myRequest[rank*2-2], myStatus);
         }
         else{
-            MPI_Irecv(&data_tmp[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank*2-2]);
-            MPI_Isend(&data_tmp[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank*2-1]); 
+            MPI_Irecv(&data_gpu_tmp[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank*2-2]);
+            MPI_Isend(&data_gpu_tmp[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank*2-1]); 
 
-            MPI_Isend(&data_tmp[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[rank*2]);
-            MPI_Irecv(&data_tmp[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[rank*2+1]);
+            MPI_Isend(&data_gpu_tmp[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[rank*2]);
+            MPI_Irecv(&data_gpu_tmp[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[rank*2+1]);
 
             MPI_Waitall(4, &myRequest[rank*2 - 2], myStatus);
         }
-
         MPI_Barrier(MPI_COMM_WORLD);
-
-
-
         if(rank == 0){
             cudaErrorHandle(cudaSetDevice(gpus-1));
             cudaErrorHandle(cudaMemcpy(data_gpu_tmp[gpus-1] + (slices_device[gpus-1]-1)*width*height, data_cpu +  width*height, width*height*sizeof(double), cudaMemcpyHostToDevice));
