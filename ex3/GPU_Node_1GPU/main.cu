@@ -95,40 +95,27 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     int threadSize = blockDim.x*blockDim.y*blockDim.z*gridDim.x*gridDim.y*gridDim.z;
 
     // Creates an array with indexes for the GPU
-    int *device_nr;
-    cudaErrorHandle(cudaMallocHost(&device_nr, gpus*sizeof(int*)));
-    device_nr[0] = 0;
+    int *device_nr = 0;
 
     // Finds number of slices for each GPU on each node and allocates them
     int slices_total = depth_node-2;
     int slices_per_device = slices_total/gpus;
     int slices_leftover = slices_total%gpus;
-    int *slices_device, *slices_compute_device, *slices_starting_index;
-    cudaErrorHandle(cudaMallocHost(&slices_device, gpus*sizeof(int*)));
-    cudaErrorHandle(cudaMallocHost(&slices_starting_index, gpus*sizeof(int*)));
-    cudaErrorHandle(cudaMallocHost(&slices_compute_device, gpus*sizeof(int*)));
+    int slices_device, slices_compute_device, slices_starting_index;
 
     // Calculate the number of slices for each device
-    slices_device[0] = slices_per_device + 2;
-    slices_compute_device[0] = slices_per_device - (2*overlap);
-    slices_starting_index[0] = 0;
+    slices_device = slices_per_device + 2;
+    slices_compute_device = slices_per_device - (2*overlap);
+    slices_starting_index = 0;
 
     // Initialising CPU and GPU grids
-    double *data;
-    double **data_gpu, **data_gpu_tmp;
-    cudaErrorHandle(cudaMallocHost(&data,          total*sizeof(double)));
-    cudaErrorHandle(cudaMallocHost(&data_gpu,      gpus*sizeof(double*)));
-    cudaErrorHandle(cudaMallocHost(&data_gpu_tmp,  gpus*sizeof(double*)));
+    double *data, *data_gpu, *data_gpu_tmp;
+    cudaErrorHandle(cudaMallocHost(&data, total*sizeof(double)));
+    cudaErrorHandle(cudaMalloc(&data_gpu, total*sizeof(double)));
+    cudaErrorHandle(cudaMalloc(&data_gpu_tmp, total*sizeof(double)));
 
     // Fills grids for each node depending on rank
     fillValues3D(data, width, height, depth_node, dx, dy, dz, rank, overlap_calc);
-
-    cudaErrorHandle(cudaMalloc(&data_gpu[0],     total*sizeof(double)));
-    cudaErrorHandle(cudaMalloc(&data_gpu_tmp[0], total*sizeof(double)));
-
-    printf("Depth_node %i, depth = %i, slices_per_device = %i, slices_compute_device = %i, slices_device = %i, Total = %i vs Perfm = %i\n", depth_node, depth, slices_per_device, slices_compute_device[0], slices_device[0], total, width*height*slices_device[0]);
-    printf("Rank = %i, thread_size = %i, jacobiSize = %i, amountPerThread = %i, leftover = %i\n", rank, 32*32*16, (width - 2) * (height - 2) * (depth_node - 2), (width - 2) * (height - 2) * (depth_node - 2) / (32*32*16), (width - 2) * (height - 2) * (depth_node - 2) % (32*32*16));
-
 
     // Sends border slices to neighboring nodes,
     if(rank == 0){
@@ -145,7 +132,8 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
 
     cudaErrorHandle(cudaDeviceSynchronize());
     // Sends the grid from the CPU memory to GPU memory
-    cudaErrorHandle(cudaMemcpy(data_gpu[0], data, width*height*slices_device[0]*sizeof(double), cudaMemcpyHostToDevice));
+    cudaErrorHandle(cudaMemcpy(data_gpu, data, total*sizeof(double), cudaMemcpyHostToDevice));
+    cudaErrorHandle(cudaMemset(data_gpu_tmp, 0, total*sizeof(double)));
 
 
 
@@ -158,21 +146,12 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
 
 
     
-    for(int g = 0; g < gpus; g++){
-        cudaErrorHandle(cudaSetDevice(g));
-        cudaErrorHandle(cudaDeviceSynchronize());
-    }
+    cudaErrorHandle(cudaDeviceSynchronize());
 
     // Copies data back from GPU memory into CPU memory
-    for(int g = 0; g < gpus; g++){
-        cudaErrorHandle(cudaSetDevice(g));
-        cudaErrorHandle(cudaMemcpyAsync(data + (slices_starting_index[g]+1)*width*height, data_gpu[g] + width*height, (slices_compute_device[g]+2*overlap)*width*height*sizeof(double), cudaMemcpyDeviceToHost));
-    }
+    cudaErrorHandle(cudaMemcpyAsync(data, data_gpu, total*sizeof(double), cudaMemcpyDeviceToHost));
 
-    for(int g = 0; g < gpus; g++){
-        cudaErrorHandle(cudaSetDevice(g));
-        cudaErrorHandle(cudaDeviceSynchronize());
-    }
+    cudaErrorHandle(cudaDeviceSynchronize());
 
     // Combines the different node grid data all into Node 1 memory, so we can compare to original grid
     double *data_combined = NULL;
@@ -183,6 +162,19 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     else{
         MPI_Gather(&data[width*height], width*height*(depth_node-1), MPI_DOUBLE, NULL, 0, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     }
+
+    /* if(rank == 0){
+        for(int i = 0; i < 5; i++){
+            for(int j = 0; j < 128; j++){
+                for(int k = 0; k < 20; k++){
+                    printf("%.8f, ", data_combined[k + j*width + i*width*height]);
+                }
+                printf("\n");
+            }
+            printf("\n");
+        }
+    } */
+    
 
     // Used to compare the grid to the grid which only the CPU created
     if(rank == 0){
