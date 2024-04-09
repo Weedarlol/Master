@@ -1,0 +1,30 @@
+Starting job 497467 on gpu-9 at Sat Apr 6 02:22:35 CEST 2024
+
+Time(event) - 7.82551 s
+Comparing the grids
+Error opening file.
+
+Task and CPU usage stats:
+JobID           JobName  AllocCPUS   NTasks     MinCPU MinCPUTask     AveCPU    Elapsed ExitCode 
+------------ ---------- ---------- -------- ---------- ---------- ---------- ---------- -------- 
+497467       width1024+          1                                             00:00:23      0:0 
+497467.batch      batch          1        1   00:00:21          0   00:00:21   00:00:23      0:0 
+497467.exte+     extern          1        1   00:00:00          0   00:00:00   00:00:23      0:0 
+
+Memory usage stats:
+JobID            MaxRSS MaxRSSTask     AveRSS MaxPages   MaxPagesTask   AvePages 
+------------ ---------- ---------- ---------- -------- -------------- ---------- 
+497467                                                                           
+497467.batch       424K          0       424K        0              0          0 
+497467.exte+          0          0          0        0              0          0 
+
+Disk usage stats:
+JobID         MaxDiskRead MaxDiskReadTask    AveDiskRead MaxDiskWrite MaxDiskWriteTask   AveDiskWrite 
+------------ ------------ --------------- -------------- ------------ ---------------- -------------- 
+497467                                                                                                
+497467.batch            0               0              0        0.00M                0          0.00M 
+497467.exte+        0.01M               0          0.01M        0.00M                0          0.00M 
+
+GPU usage stats:
+
+Job 497467 completed at Sat Apr 6 02:22:57 CEST 2024

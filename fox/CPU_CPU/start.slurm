@@ -3,8 +3,6 @@ set -e
 
 # List of source files
 SOURCES="main.c"
-OBJECTS_DIR="../../functions/"
-GLOBAL_FUNCTIONS_OBJECT="global_functions_fox.o"
 
 
 
@@ -42,6 +40,8 @@ for SCENARIO in "$@"; do
 #SBATCH -p ${PARTITION}
 #SBATCH -N ${NODES}
 #SBATCH -n ${NODES}
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=1
 #SBATCH -t 14:00:00
 #SBATCH --output=output/${SCENARIO}_${PARTITION}.out
 #SBATCH --error=error/${SCENARIO}_${PARTITION}.err
@@ -50,7 +50,7 @@ module purge
 module load GCC/11.3.0
 module load OpenMPI/4.1.4-GCC-11.3.0
 
-nvcc $SOURCES $OBJECTS_DIR/$GLOBAL_FUNCTIONS_OBJECT -o out_${SCENARIO}_${PARTITION} -I$CPATH -L$LD_LIBRARY_PATH -lmpi -O3
+nvcc $SOURCES -o out_${SCENARIO}_${PARTITION} -I$CPATH -L$LD_LIBRARY_PATH -lmpi -O3
 
 mpirun -n 2 ./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5
 
