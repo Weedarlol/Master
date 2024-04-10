@@ -1,12 +1,4 @@
-main.cu(95): warning #177-D: variable "threadSize" was declared but never referenced
-
-main.cu(98): warning #177-D: variable "device_nr" was declared but never referenced
-
-main.cu(103): warning #177-D: variable "slices_leftover" was declared but never referenced
-
-main.cu(104): warning #550-D: variable "slices_compute_device" was set but never used
-
-main.cu(104): warning #550-D: variable "slices_starting_index" was set but never used
+main.cu(153): warning #177-D: variable "data_transfer" was declared but never referenced
 
 --------------------------------------------------------------------------
 By default, for Open MPI 4.0 and later, infiniband ports on a device
@@ -25,6 +17,6 @@ WARNING: There was an error initializing an OpenFabrics device.
   Local host:   g001
   Local device: mlx5_0
 --------------------------------------------------------------------------
-[g001:2771116] 1 more process has sent help message help-mpi-btl-openib.txt / ib port not selected
-[g001:2771116] Set MCA parameter "orte_base_help_aggregate" to 0 to see all help / error messages
-[g001:2771116] 1 more process has sent help message help-mpi-btl-openib.txt / error in device init
+[g001:744173] 3 more processes have sent help message help-mpi-btl-openib.txt / ib port not selected
+[g001:744173] Set MCA parameter "orte_base_help_aggregate" to 0 to see all help / error messages
+[g001:744173] 3 more processes have sent help message help-mpi-btl-openib.txt / error in device init

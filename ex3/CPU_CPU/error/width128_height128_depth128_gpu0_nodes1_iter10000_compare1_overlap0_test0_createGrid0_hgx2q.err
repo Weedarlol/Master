@@ -15,30 +15,30 @@ WARNING: There was an error initializing an OpenFabrics device.
   Local host:   g002
   Local device: mlx5_1
 --------------------------------------------------------------------------
+[g002:3754251] 3 more processes have sent help message help-mpi-btl-openib.txt / ib port not selected
+[g002:3754251] Set MCA parameter "orte_base_help_aggregate" to 0 to see all help / error messages
+[g002:3754251] 3 more processes have sent help message help-mpi-btl-openib.txt / error in device init
 free(): invalid pointer
-[g002:1997583] *** Process received signal ***
-[g002:1997583] Signal: Aborted (6)
-[g002:1997583] Signal code:  (-6)
-[g002:1997583] [ 0] /lib/x86_64-linux-gnu/libc.so.6(+0x42520)[0x1555468d8520]
-[g002:1997583] [ 1] /lib/x86_64-linux-gnu/libc.so.6(pthread_kill+0x12c)[0x15554692c9fc]
-[g002:1997583] [ 2] /lib/x86_64-linux-gnu/libc.so.6(raise+0x16)[0x1555468d8476]
-[g002:1997583] [ 3] /lib/x86_64-linux-gnu/libc.so.6(abort+0xd3)[0x1555468be7f3]
-[g002:1997583] [ 4] /lib/x86_64-linux-gnu/libc.so.6(+0x89676)[0x15554691f676]
-[g002:1997583] [ 5] /lib/x86_64-linux-gnu/libc.so.6(+0xa0cfc)[0x155546936cfc]
-[g002:1997583] [ 6] /lib/x86_64-linux-gnu/libc.so.6(+0xa2a44)[0x155546938a44]
-[g002:1997583] [ 7] /lib/x86_64-linux-gnu/libc.so.6(free+0x73)[0x15554693b453]
-[g002:1997583] [ 8] out_width128_height128_depth128_gpu0_nodes1_iter10000_compare1_overlap0_test0_createGrid0_hgx2q[0x401c1c]
-[g002:1997583] [ 9] /lib/x86_64-linux-gnu/libc.so.6(+0x29d90)[0x1555468bfd90]
-[g002:1997583] [10] /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x80)[0x1555468bfe40]
-[g002:1997583] [11] out_width128_height128_depth128_gpu0_nodes1_iter10000_compare1_overlap0_test0_createGrid0_hgx2q[0x402025]
-[g002:1997583] *** End of error message ***
-[g002:1997579] 4 more processes have sent help message help-mpi-btl-openib.txt / ib port not selected
-[g002:1997579] Set MCA parameter "orte_base_help_aggregate" to 0 to see all help / error messages
-[g002:1997579] 4 more processes have sent help message help-mpi-btl-openib.txt / error in device init
+[g002:3754264] *** Process received signal ***
+[g002:3754264] Signal: Aborted (6)
+[g002:3754264] Signal code:  (-6)
+[g002:3754264] [ 0] /lib/x86_64-linux-gnu/libc.so.6(+0x42520)[0x1555468d8520]
+[g002:3754264] [ 1] /lib/x86_64-linux-gnu/libc.so.6(pthread_kill+0x12c)[0x15554692c9fc]
+[g002:3754264] [ 2] /lib/x86_64-linux-gnu/libc.so.6(raise+0x16)[0x1555468d8476]
+[g002:3754264] [ 3] /lib/x86_64-linux-gnu/libc.so.6(abort+0xd3)[0x1555468be7f3]
+[g002:3754264] [ 4] /lib/x86_64-linux-gnu/libc.so.6(+0x89676)[0x15554691f676]
+[g002:3754264] [ 5] /lib/x86_64-linux-gnu/libc.so.6(+0xa0cfc)[0x155546936cfc]
+[g002:3754264] [ 6] /lib/x86_64-linux-gnu/libc.so.6(+0xa2a44)[0x155546938a44]
+[g002:3754264] [ 7] /lib/x86_64-linux-gnu/libc.so.6(free+0x73)[0x15554693b453]
+[g002:3754264] [ 8] out_width128_height128_depth128_gpu0_nodes1_iter10000_compare1_overlap0_test0_createGrid0_hgx2q[0x401c1c]
+[g002:3754264] [ 9] /lib/x86_64-linux-gnu/libc.so.6(+0x29d90)[0x1555468bfd90]
+[g002:3754264] [10] /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x80)[0x1555468bfe40]
+[g002:3754264] [11] out_width128_height128_depth128_gpu0_nodes1_iter10000_compare1_overlap0_test0_createGrid0_hgx2q[0x402025]
+[g002:3754264] *** End of error message ***
 --------------------------------------------------------------------------
 Primary job  terminated normally, but 1 process returned
 a non-zero exit code. Per user-direction, the job has been aborted.
 --------------------------------------------------------------------------
 --------------------------------------------------------------------------
-mpirun noticed that process rank 0 with PID 1997583 on node g002 exited on signal 6 (Aborted).
+mpirun noticed that process rank 0 with PID 3754264 on node g002 exited on signal 6 (Aborted).
 --------------------------------------------------------------------------

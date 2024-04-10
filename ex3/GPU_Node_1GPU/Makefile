@@ -2,13 +2,13 @@
 # Creates a list of values for GPU allocation, max 3 integers when running with nsys nvprof
 # Example  = 2 3 4
 GPU_COUNTS = 1
-NODES = 1
+NODES = 2 3 4 5 6
 
 
 # Define different matrix sizes
-WIDTH = 128
-HEIGHT = 128
-DEPTH = 128
+WIDTH = 1024
+HEIGHT = 1024
+DEPTH = 1024
 
 # Number of max iterations to run for the scenario
 ITERATIONS = 10000
@@ -29,7 +29,8 @@ TEST = 0
 RUN_IDENTIFIERS = $(foreach width,$(WIDTH), \
 					$(foreach height,$(HEIGHT), \
 					$(foreach depth,$(DEPTH),$ \
-					width$(width)_height$(height)_depth$(depth)_gpu1_nodes$(NODES)_iter$(ITERATIONS)_compare$(COMPARE)_overlap0_test0_createGrid0)))
+					$(foreach node,$(NODES),$ \
+					width$(width)_height$(height)_depth$(depth)_gpu1_nodes$(node)_iter$(ITERATIONS)_compare$(COMPARE)_overlap0_test0_createGrid0))))
 
 
 submit:

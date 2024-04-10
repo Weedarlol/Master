@@ -76,8 +76,8 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     */
 
    // Creates MPI requests
-    MPI_Request myRequest[(size-1)*2];
-    MPI_Status myStatus[(size-1)*2];
+    MPI_Request myRequest[4];
+    MPI_Status myStatus[4];
 
     // Finds number of slices per node
     int depth_node = (depth-2)/size;
@@ -91,22 +91,7 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
 
     // Finds number of elements and threads per node
     int total = width*height*depth_node;
-    int overlap_calc = overlap*(width-2)*(height-2);
     int threadSize = blockDim.x*blockDim.y*blockDim.z*gridDim.x*gridDim.y*gridDim.z;
-
-    // Creates an array with indexes for the GPU
-    int *device_nr = 0;
-
-    // Finds number of slices for each GPU on each node and allocates them
-    int slices_total = depth_node-2;
-    int slices_per_device = slices_total/gpus;
-    int slices_leftover = slices_total%gpus;
-    int slices_device, slices_compute_device, slices_starting_index;
-
-    // Calculate the number of slices for each device
-    slices_device = slices_per_device + 2;
-    slices_compute_device = slices_per_device - (2*overlap);
-    slices_starting_index = 0;
 
     // Initialising CPU and GPU grids
     double *data, *data_gpu, *data_gpu_tmp;
@@ -115,20 +100,25 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     cudaErrorHandle(cudaMalloc(&data_gpu_tmp, total*sizeof(double)));
 
     // Fills grids for each node depending on rank
-    fillValues3D(data, width, height, depth_node, dx, dy, dz, rank, overlap_calc);
+    fillValues3D(data, width, height, depth_node, dx, dy, dz, rank, depth_overlap);
 
     // Sends border slices to neighboring nodes,
     if(rank == 0){
         MPI_Isend(&data[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[0]);
         MPI_Irecv(&data[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[1]); 
-        MPI_Waitall(2, myRequest, myStatus);
     }
     else if(rank == size-1){
-        MPI_Irecv(&data[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank*2-2]); 
-        MPI_Isend(&data[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank*2-1]); 
-        MPI_Waitall(2, &myRequest[rank*2-2], myStatus);
+        MPI_Irecv(&data[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[0]); 
+        MPI_Isend(&data[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[1]); 
     }
-    MPI_Barrier(MPI_COMM_WORLD);
+    else{
+        MPI_Irecv(&data[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[0]);
+        MPI_Isend(&data[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[1]); 
+
+        MPI_Isend(&data[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[2]);
+        MPI_Irecv(&data[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[3]);
+    }
+    MPI_Waitall(rank == 0 || rank == size - 1 ? 2 : 4, myRequest, myStatus);
 
     cudaErrorHandle(cudaDeviceSynchronize());
     // Sends the grid from the CPU memory to GPU memory
@@ -136,11 +126,15 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     cudaErrorHandle(cudaMemset(data_gpu_tmp, 0, total*sizeof(double)));
 
 
+    int jacobiSize = (width - 2) * (height - 2) * (depth_node - 2);
+    int elementsPerThread = jacobiSize / threadSize;
+    int leftover = jacobiSize % threadSize;
+
 
     // Creates an array where its elements are features in cudaLaunchCooperativeKernel
-    void *kernelArgs[] = {&data_gpu, &data_gpu_tmp, &width, &height, &depth_node, &iter};
+    void *kernelArgs[] = {&data_gpu, &data_gpu_tmp, &width, &height, &depth_node, &iter, &threadSize, &jacobiSize, &elementsPerThread, &leftover};
 
-    full_calculation(data_gpu, data_gpu_tmp, width, height, depth_node, iter, slices_device, rank, gridDim, blockDim, kernelArgs);
+    full_calculation(data_gpu, data_gpu_tmp, width, height, depth_node, iter, rank, size, gridDim, blockDim, kernelArgs);
 
 
 
@@ -154,27 +148,73 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     cudaErrorHandle(cudaDeviceSynchronize());
 
     // Combines the different node grid data all into Node 1 memory, so we can compare to original grid
-    double *data_combined = NULL;
-    if(rank == 0){
-        data_combined = (double*)malloc(width * height * depth * sizeof(double));
-        MPI_Gather(&data[0],            width*height*(depth_node-1), MPI_DOUBLE, data_combined, width*height*(depth_node-1), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    double *data_combined;
+    cudaErrorHandle(cudaMallocHost(&data_combined, width*height*depth*sizeof(double)));
+    int data_transfer = width*height*(depth_node-2);
+    int displacement[size];
+    int counts[size];
+    if(rank < depth_overlap){
+        for(int i = 0; i < size; i++){
+            if(i < depth_overlap){
+                displacement[i] = i*width*height*(depth_node-2);
+                counts[i] = width*height*(depth_node-2);
+            }
+            else if(i == depth_overlap){
+                displacement[i] = i*width*height*(depth_node-2);
+                counts[i] = width*height*(depth_node-3);
+            }
+            else{
+                displacement[i] = depth_overlap*width*height*(depth_node-2) + (i - depth_overlap)*width*height*(depth_node-3);
+                counts[i] = width*height*(depth_node-3);
+            }
+        }
     }
     else{
-        MPI_Gather(&data[width*height], width*height*(depth_node-1), MPI_DOUBLE, NULL, 0, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        for(int i = 0; i < size; i++){
+            if(i < depth_overlap){
+                displacement[i] = i*width*height*(depth_node-1);
+                counts[i] = width*height*(depth_node-1);
+            }
+            else if(i == depth_overlap){
+                displacement[i] = i*width*height*(depth_node-1);
+                counts[i] = width*height*(depth_node-2);
+            }
+            else{
+                displacement[i] = depth_overlap*width*height*(depth_node-1) + (i - depth_overlap)*width*height*(depth_node-2);
+                counts[i] = width*height*(depth_node-2);
+            }
+        }
+    }
+    
+
+    if (rank == 1) {
+        data_combined = (double*)malloc(width*height*depth * sizeof(double));
+        /* printf("displacement = [");
+        for(int i = 0; i < size; i++){
+            printf("%i, ", displacement[i]);
+        }
+        printf("]\ncounts = [");
+        for(int i = 0; i < size; i++){
+            printf("%i, ", counts[i]);
+        }
+        printf("]\n"); */
     }
 
-    /* if(rank == 0){
+    MPI_Allgatherv(&data[width*height], width*height*(depth_node-2), MPI_DOUBLE, 
+                data_combined + width * height, counts, displacement, MPI_DOUBLE, MPI_COMM_WORLD);
+
+
+    /* if(rank == 2){
         for(int i = 0; i < 5; i++){
             for(int j = 0; j < 128; j++){
                 for(int k = 0; k < 20; k++){
-                    printf("%.8f, ", data_combined[k + j*width + i*width*height]);
+                    printf("%.8f, ", data[k + j*width + i*width*height]);
                 }
                 printf("\n");
             }
             printf("\n");
         }
     } */
-    
 
     // Used to compare the grid to the grid which only the CPU created
     if(rank == 0){

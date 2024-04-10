@@ -34,7 +34,7 @@ for SCENARIO in "$@"; do
 #SBATCH -p ${PARTITION}
 #SBATCH -N ${NODES}                                   # Antall Noder
 #SBATCH -t 14:00:00
-#SBATCH --ntasks-per-node=5                   # Antall tasks en kjørere på hver node, 1 Task = 1 MPI
+#SBATCH --ntasks-per-node=4                   # Antall tasks en kjørere på hver node, 1 Task = 1 MPI
 #SBATCH --cpus-per-task=1                     # Antall CPUer en vil allokere, er 64 cores per CPU, så kan i teorien bare trenge å øke dene når -n > 64
 #SBATCH --gres=gpu:0                          # Antall GPUer en allokerer per job, så totale antall GPU. NUM_GPUS*NODES
 #SBATCH --gpus-per-task=0                          # Antall GPUer en allokerer per task, så totale antall GPU delt på antall noder. NUM_GPUS
@@ -50,7 +50,7 @@ module load openmpi4/gcc/4.1.5
 
 nvcc main.c -o out_${SCENARIO}_${PARTITION} -I$CPATH -L$LD_LIBRARY_PATH /cm/shared/apps/openmpi4/gcc/4.1.5/lib/libmpi.so -lnccl -O3
 
-mpirun -np 5  out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5
+mpirun -np 4  out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5
 
 exit 0
 
