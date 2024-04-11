@@ -17,8 +17,8 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort =
     }
 }
 
-void initializeStreamsAndEvents(int gpus, cudaStream_t streams[][2], cudaEvent_t events[][4], cudaEvent_t *startevent, cudaEvent_t *stopevent);
+void initializeStreamsAndEvents(cudaStream_t streams[2], cudaEvent_t events[4], cudaEvent_t *startevent, cudaEvent_t *stopevent);
 
-void freeStreamsAndEvents(int gpus, cudaStream_t streams[][2], cudaEvent_t events[][4], cudaEvent_t *startevent, cudaEvent_t *stopevent);
+void freeStreamsAndEvents(cudaStream_t streams[2], cudaEvent_t events[4], cudaEvent_t *startevent, cudaEvent_t *stopevent);
 
 #endif // CUDA_UTILS_H

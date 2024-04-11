@@ -76,8 +76,9 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     */
 
 
-    MPI_Request myRequest[(size-1)*2];
-    MPI_Status myStatus[(size-1)*2];
+    MPI_Request myRequest[4];
+
+    MPI_Status myStatus[4];
     int depth_node = (depth-2)/size;
     int depth_overlap = (depth-2)%size;
     if(depth_overlap > rank){
@@ -86,9 +87,6 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     else{
         depth_node += 2;
     }
-
-    printf("Depth %i, rank %i\n", depth, rank);
-    printf("Depth_node %i, rank %i\n", depth_node, rank);
 
     int total = width*height*depth_node;
     int overlap_calc = overlap*(width-2)*(height-2);
@@ -104,7 +102,6 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     // Ignores first and last slice
     int slices_total = depth_node-2;
 
-    printf("%i %i\n", rank, slices_total);
     int slices_per_device = slices_total/gpus;
     int slices_leftover = slices_total%gpus;
     int *slices_device, *slices_compute_device, *slices_starting_index;
@@ -129,7 +126,7 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     cudaErrorHandle(cudaMallocHost(&data_gpu,      gpus*sizeof(double*)));
     cudaErrorHandle(cudaMallocHost(&data_gpu_tmp,  gpus*sizeof(double*)));
 
-    fillValues3D(data, width, height, depth_node, dx, dy, dz, rank, overlap_calc);
+    fillValues3D(data, width, height, depth_node, dx, dy, dz, rank, depth_overlap);
 
     for(int g = 0; g < gpus; g++){
         cudaErrorHandle(cudaSetDevice(g));
@@ -195,31 +192,22 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
         kernelCollMid[g] = kernelArgs;
     }
 
-    printf("Rank = %i\n", rank);
-
     if(rank == 0){
         MPI_Isend(&data[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[0]);
         MPI_Irecv(&data[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[1]); 
-
-        MPI_Waitall(2, myRequest, myStatus);
     }
     else if(rank == size-1){
-        MPI_Irecv(&data[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank*2-2]); 
-        MPI_Isend(&data[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank*2-1]); 
-
-        MPI_Waitall(2, &myRequest[rank*2-2], myStatus);
+        MPI_Irecv(&data[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[0]); 
+        MPI_Isend(&data[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[1]); 
     }
     else{
-        MPI_Irecv(&data[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank*2-2]);
-        MPI_Isend(&data[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[rank*2-1]); 
+        MPI_Irecv(&data[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[0]);
+        MPI_Isend(&data[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[1]); 
 
-        MPI_Isend(&data[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[rank*2]);
-        MPI_Irecv(&data[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[rank*2+1]);
-
-        MPI_Waitall(4, &myRequest[rank*2 - 2], myStatus);
+        MPI_Isend(&data[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[2]);
+        MPI_Irecv(&data[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[3]);
     }
-
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Waitall(rank == 0 || rank == size - 1 ? 2 : 4, myRequest, myStatus);
     
     if(gpus < 2){
         printf("You are running on less than 2 gpus, to be able to communicate between gpus you are required to compute on more than 1 gpu.\n");
@@ -227,36 +215,12 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     else{
         if(overlap == 1){
             if(test == 0){
-                full_calculation_overlap(data_gpu, data_gpu_tmp, width, height, depth_node, iter, gpus, rank, slices_device, gridDim, blockDim, kernelCollEdge, kernelCollMid);
-            }
-            else if(test == 1){
-                no_kernel_overlap(data_gpu, data_gpu_tmp, width, height, depth_node, iter, gpus, rank, slices_device, gridDim, blockDim, kernelCollEdge, kernelCollMid);
-            }
-            else if(test == 2){
-                no_communication_overlap(data_gpu, data_gpu_tmp, width, height, depth_node, iter, gpus, rank, slices_device, gridDim, blockDim, kernelCollEdge, kernelCollMid);
-            }
-            else if(test == 3){
-                only_calculation_overlap(data_gpu, data_gpu_tmp, width, height, depth_node, iter, gpus, rank, slices_device, gridDim, blockDim, kernelCollEdge, kernelCollMid);
-            }
-            else if(test == 4){
-                only_communication_overlap(data_gpu, data_gpu_tmp, width, height, depth_node, iter, gpus, rank, slices_device, gridDim, blockDim, kernelCollEdge, kernelCollMid);
+                full_calculation_overlap(data_gpu, data_gpu_tmp, width, height, depth_node, iter, gpus, rank, size, slices_device, gridDim, blockDim, kernelCollEdge, kernelCollMid);
             }
         }
         else{
             if(test == 0){
-                full_calculation_nooverlap(data_gpu, data_gpu_tmp, width, height, depth_node, iter, gpus, rank, slices_device, gridDim, blockDim, kernelCollMid);
-            }
-            else if(test == 1){
-                no_kernel_nooverlap(data_gpu, data_gpu_tmp, width, height, depth_node, iter, gpus, rank, slices_device, gridDim, blockDim, kernelCollMid);
-            }
-            else if(test == 2){
-                no_communication_nooverlap(data_gpu, data_gpu_tmp, width, height, depth_node, iter, gpus, rank, slices_device, gridDim, blockDim, kernelCollMid);
-            }
-            else if(test == 3){
-                only_calculation_nooverlap(data_gpu, data_gpu_tmp, width, height, depth_node, iter, gpus, rank, slices_device, gridDim, blockDim, kernelCollMid);
-            }
-            else if(test == 4){
-                only_communication_nooverlap(data_gpu, data_gpu_tmp, width, height, depth_node, iter, gpus, rank, slices_device, gridDim, blockDim, kernelCollMid);
+                full_calculation_nooverlap(data_gpu, data_gpu_tmp, width, height, depth_node, iter, gpus, rank, size, slices_device, gridDim, blockDim, kernelCollMid);
             }
         }
     }
@@ -282,15 +246,51 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
         cudaErrorHandle(cudaDeviceSynchronize());
     }
 
-    double *data_combined = NULL;
-    if(rank == 0){
-        data_combined = (double*)malloc(width * height * depth * sizeof(double));
-
-        MPI_Gather(&data[0],            width*height*(depth_node-1), MPI_DOUBLE, data_combined, width*height*(depth_node-1), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    double *data_combined;
+    cudaErrorHandle(cudaMallocHost(&data_combined, width*height*depth*sizeof(double)));
+    int data_transfer = width*height*(depth_node-2);
+    int displacement[size];
+    int counts[size];
+    if(rank < depth_overlap){
+        for(int i = 0; i < size; i++){
+            if(i < depth_overlap){
+                displacement[i] = i*width*height*(depth_node-2);
+                counts[i] = width*height*(depth_node-2);
+            }
+            else if(i == depth_overlap){
+                displacement[i] = i*width*height*(depth_node-2);
+                counts[i] = width*height*(depth_node-3);
+            }
+            else{
+                displacement[i] = depth_overlap*width*height*(depth_node-2) + (i - depth_overlap)*width*height*(depth_node-3);
+                counts[i] = width*height*(depth_node-3);
+            }
+        }
     }
     else{
-        MPI_Gather(&data[width*height], width*height*(depth_node-1), MPI_DOUBLE, NULL,          0,                           MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        for(int i = 0; i < size; i++){
+            if(i < depth_overlap){
+                displacement[i] = i*width*height*(depth_node-1);
+                counts[i] = width*height*(depth_node-1);
+            }
+            else if(i == depth_overlap){
+                displacement[i] = i*width*height*(depth_node-1);
+                counts[i] = width*height*(depth_node-2);
+            }
+            else{
+                displacement[i] = depth_overlap*width*height*(depth_node-1) + (i - depth_overlap)*width*height*(depth_node-2);
+                counts[i] = width*height*(depth_node-2);
+            }
+        }
     }
+    
+    if (rank == 1) {
+        data_combined = (double*)malloc(width*height*depth * sizeof(double));
+    }
+
+    MPI_Allgatherv(&data[width*height], width*height*(depth_node-2), MPI_DOUBLE, 
+                data_combined + width * height, counts, displacement, MPI_DOUBLE, MPI_COMM_WORLD);
+
 
 
     if(rank == 0){

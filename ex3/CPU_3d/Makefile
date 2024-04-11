@@ -1,7 +1,7 @@
 # Define different grid sizes
-WIDTH = 129
-HEIGHT = 128
-DEPTH = 128
+WIDTH = 1024
+HEIGHT = 1024
+DEPTH = 768
 
 # Number of max iterations to run for the scenario
 ITERATIONS = 10000
@@ -9,7 +9,7 @@ ITERATIONS = 10000
 # Chooses which partition to run at.
 PARTITION = hgx2q
 
-CREATEGRID = 1
+CREATEGRID = 0
 
 # Create a list of run identifiers for all combinations
 RUN_IDENTIFIERS = $(foreach width,$(WIDTH), \

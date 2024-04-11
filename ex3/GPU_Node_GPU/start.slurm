@@ -23,11 +23,7 @@ for SCENARIO in "$@"; do
     OVERLAP=$(echo $SCENARIO | awk -F'overlap' '{print $2}' | awk -F'_' '{print $1}')
     TEST=$(echo $SCENARIO | awk -F'test' '{print $2}')
 
-    NODES=1
-    NUM_GPUS=2
-    TASKS_PER_NODE=2
-
-    TOTAL_GPUS=$((NUM_GPUS * NODES * TASKS_PER_NODE))
+    TOTAL_GPUS=$((NUM_GPUS * NODES))
 
     echo "$TOTAL_GPUS"
 
@@ -51,9 +47,9 @@ for SCENARIO in "$@"; do
 #SBATCH --job-name=${SCENARIO}_${PARTITION}
 #SBATCH --mem-per-gpu=4G
 #SBATCH -p ${PARTITION}
-#SBATCH -N ${NODES}                                   # Antall Noder
+#SBATCH -N 1                                   # Antall Noder
 #SBATCH -t 14:00:00
-#SBATCH --ntasks-per-node=${TASKS_PER_NODE}                   # Antall tasks en kjørere på hver node, 1 Task = 1 MPI
+#SBATCH --ntasks-per-node=${NODES}                   # Antall tasks en kjørere på hver node, 1 Task = 1 MPI
 #SBATCH --cpus-per-task=1                     # Antall CPUer en vil allokere, er 64 cores per CPU, så kan i teorien bare trenge å øke dene når -n > 64
 #SBATCH --gres=gpu:${TOTAL_GPUS}                          # Antall GPUer en allokerer per job, så totale antall GPU. NUM_GPUS*NODES
 #SBATCH --gpus-per-task=${NUM_GPUS}                           # Antall GPUer en allokerer per task, så totale antall GPU delt på antall noder. NUM_GPUS
@@ -68,9 +64,9 @@ module load cuda11.8/toolkit/11.8.0
 module load openmpi4/gcc/4.1.5
 
 
-nvcc $NVCCFLAGS $SOURCES -o out_${SCENARIO}_${PARTITION} -I$CPATH -L$LD_LIBRARY_PATH /cm/shared/apps/openmpi4/gcc/4.1.5/lib/libmpi.so -lnccl -O3
+nvcc $SOURCES -o out_${SCENARIO}_${PARTITION} -I$CPATH -L$LD_LIBRARY_PATH /cm/shared/apps/openmpi4/gcc/4.1.5/lib/libmpi.so -lnccl -O3
 
-mpirun -np ${TASKS_PER_NODE}  out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5 $VAR6 $VAR7 $VAR8 $VAR9
+mpirun -np ${NODES}  out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5 $VAR6 $VAR7 $VAR8 $VAR9
 
 
 

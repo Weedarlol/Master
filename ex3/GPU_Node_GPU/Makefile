@@ -26,7 +26,14 @@ COMPARE = 1
 TEST = 0
 
 # Create a list of run identifiers for all combinations
-RUN_IDENTIFIERS = $(foreach width,$(WIDTH),$(foreach height,$(HEIGHT),$(foreach depth,$(DEPTH),$(foreach gpu,$(GPU_COUNTS),$(foreach overlap,$(OVERLAP),$(foreach test,$(TEST),width$(width)_height$(height)_depth$(depth)_gpu$(gpu)_nodes$(NODES)_iter$(ITERATIONS)_compare$(COMPARE)_overlap$(overlap)_test$(test)_createGrid0))))))
+RUN_IDENTIFIERS = $(foreach width,$(WIDTH), \
+					$(foreach height,$(HEIGHT), \
+					$(foreach depth,$(DEPTH), \
+					$(foreach gpu,$(GPU_COUNTS), \
+					$(foreach node,$(NODES),$ \
+					$(foreach overlap,$(OVERLAP), \
+					$(foreach test,$(TEST), \
+					width$(width)_height$(height)_depth$(depth)_gpu$(gpu)_nodes$(NODES)_iter$(ITERATIONS)_compare$(COMPARE)_overlap$(overlap)_test$(test)_createGrid0)))))))
 
 
 submit:

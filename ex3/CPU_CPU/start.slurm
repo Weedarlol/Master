@@ -13,9 +13,9 @@ for SCENARIO in "$@"; do
     HEIGHT=$(echo $SCENARIO | awk -F'height' '{print $2}' | awk -F'_' '{print $1}')
     DEPTH=$(echo $SCENARIO | awk -F'depth' '{print $2}' | awk -F'_' '{print $1}')
     NODES=$(echo $SCENARIO | awk -F'nodes' '{print $2}' | awk -F'_' '{print $1}')
-    NUM_GPUS=$(echo $SCENARIO | awk -F'gpu' '{print $2}' | awk -F'_' '{print $1}')
     ITERATIONS=$(echo $SCENARIO | awk -F'iter' '{print $2}' | awk -F'_' '{print $1}')
     COMPARE=$(echo $SCENARIO | awk -F'compare' '{print $2}' | awk -F'_' '{print $1}')
+    OVERLAP=$(echo $SCENARIO | awk -F'overlap' '{print $2}' | awk -F'_' '{print $1}')
 
     # Define the variable values
     VAR1=$WIDTH # Width
@@ -23,6 +23,7 @@ for SCENARIO in "$@"; do
     VAR3=$DEPTH
     VAR4=$ITERATIONS  # Iterations
     VAR5=$COMPARE
+    VAR6=$OVERLAP
 
     # Create a temporary Slurm script for this scenario
     TEMP_SCRIPT="slurm_script_${SCENARIO}_${PARTITION}.sh"
@@ -32,13 +33,10 @@ for SCENARIO in "$@"; do
 
 #SBATCH --job-name=${SCENARIO}_${PARTITION}
 #SBATCH -p ${PARTITION}
-#SBATCH -N ${NODES}                                   # Antall Noder
+#SBATCH -N 1                                   # Antall Noder
 #SBATCH -t 14:00:00
-#SBATCH --ntasks-per-node=4                   # Antall tasks en kjørere på hver node, 1 Task = 1 MPI
+#SBATCH --ntasks-per-node=${NODES}                   # Antall tasks en kjørere på hver node, 1 Task = 1 MPI
 #SBATCH --cpus-per-task=1                     # Antall CPUer en vil allokere, er 64 cores per CPU, så kan i teorien bare trenge å øke dene når -n > 64
-#SBATCH --gres=gpu:0                          # Antall GPUer en allokerer per job, så totale antall GPU. NUM_GPUS*NODES
-#SBATCH --gpus-per-task=0                          # Antall GPUer en allokerer per task, så totale antall GPU delt på antall noder. NUM_GPUS
-#SBATCH --gpus=0                                    # Antall GPUer en allokerer per node. NUM_GPUS
 #SBATCH --output=output/${SCENARIO}_${PARTITION}.out
 #SBATCH --error=error/${SCENARIO}_${PARTITION}.err
 
@@ -50,7 +48,7 @@ module load openmpi4/gcc/4.1.5
 
 nvcc main.c -o out_${SCENARIO}_${PARTITION} -I$CPATH -L$LD_LIBRARY_PATH /cm/shared/apps/openmpi4/gcc/4.1.5/lib/libmpi.so -lnccl -O3
 
-mpirun -np 4  out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5
+mpirun -np ${NODES}  out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5 $VAR6
 
 exit 0
 

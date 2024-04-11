@@ -11,7 +11,7 @@ void fillValues3D(double *mat, int width, int height, int depth, double dx, doub
     memset(mat, 0, height * width * depth * sizeof(double));
 
     for (int i = 1; i < depth-1; i++) {
-        z = (i + rank * (depth - 2)) * dz; // z coordinate
+        z = i * dz; // z coordinate
         for (int j = 1; j < height - 1; j++) {
             y = j * dy; // z coordinate
             for (int k = 1; k < width - 1; k++) {

@@ -91,6 +91,7 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
 
     // Finds number of elements and threads per node
     int total = width*height*depth_node;
+    int overlap_calc = overlap*(width-2)*(height-2);
     int threadSize = blockDim.x*blockDim.y*blockDim.z*gridDim.x*gridDim.y*gridDim.z;
 
     // Initialising CPU and GPU grids
@@ -126,15 +127,27 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     cudaErrorHandle(cudaMemset(data_gpu_tmp, 0, total*sizeof(double)));
 
 
-    int jacobiSize = (width - 2) * (height - 2) * (depth_node - 2);
+    int jacobiSize = (width - 2) * (height - 2) * (depth_node - 2 - 2*overlap);
     int elementsPerThread = jacobiSize / threadSize;
     int leftover = jacobiSize % threadSize;
+    int elementsPerThreadOverlap = ((width-2)*(height-2))/threadSize;
+    int leftoverOverlap = ((width-2)*(height-2))%threadSize;
+
+
 
 
     // Creates an array where its elements are features in cudaLaunchCooperativeKernel
-    void *kernelArgs[] = {&data_gpu, &data_gpu_tmp, &width, &height, &depth_node, &iter, &threadSize, &jacobiSize, &elementsPerThread, &leftover};
+    void *kernelMid[] = {&data_gpu, &data_gpu_tmp, &width, &height, &threadSize, &elementsPerThread, &leftover, &overlap_calc};
+    void *kernelEdge[] = {&data_gpu, &data_gpu_tmp, &width, &height, &depth_node, &threadSize, &elementsPerThreadOverlap, &leftoverOverlap};
 
-    full_calculation(data_gpu, data_gpu_tmp, width, height, depth_node, iter, rank, size, gridDim, blockDim, kernelArgs);
+    if(overlap == 1){
+        full_calculation_overlap(data_gpu, data_gpu_tmp, width, height, depth_node, iter, rank, size, gridDim, blockDim, kernelMid, kernelEdge);
+    }
+    else{
+        full_calculation_nooverlap(data_gpu, data_gpu_tmp, width, height, depth_node, iter, rank, size, gridDim, blockDim, kernelMid);
+    }
+
+
 
 
 
@@ -150,7 +163,6 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     // Combines the different node grid data all into Node 1 memory, so we can compare to original grid
     double *data_combined;
     cudaErrorHandle(cudaMallocHost(&data_combined, width*height*depth*sizeof(double)));
-    int data_transfer = width*height*(depth_node-2);
     int displacement[size];
     int counts[size];
     if(rank < depth_overlap){
@@ -189,32 +201,11 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
 
     if (rank == 1) {
         data_combined = (double*)malloc(width*height*depth * sizeof(double));
-        /* printf("displacement = [");
-        for(int i = 0; i < size; i++){
-            printf("%i, ", displacement[i]);
-        }
-        printf("]\ncounts = [");
-        for(int i = 0; i < size; i++){
-            printf("%i, ", counts[i]);
-        }
-        printf("]\n"); */
     }
 
     MPI_Allgatherv(&data[width*height], width*height*(depth_node-2), MPI_DOUBLE, 
                 data_combined + width * height, counts, displacement, MPI_DOUBLE, MPI_COMM_WORLD);
 
-
-    /* if(rank == 2){
-        for(int i = 0; i < 5; i++){
-            for(int j = 0; j < 128; j++){
-                for(int k = 0; k < 20; k++){
-                    printf("%.8f, ", data[k + j*width + i*width*height]);
-                }
-                printf("\n");
-            }
-            printf("\n");
-        }
-    } */
 
     // Used to compare the grid to the grid which only the CPU created
     if(rank == 0){
