@@ -37,6 +37,7 @@ void full_calculation_overlap(double *data_gpu, double *data_gpu_tmp, int width,
 
 
         cudaErrorHandle(cudaStreamWaitEvent(streams[0], events[0]));
+        cudaErrorHandle(cudaStreamWaitEvent(streams[1], events[0]));
 
         if(rank == 0){
             cudaErrorHandle(cudaMemcpy(data_cpu, data_gpu_tmp + (depth_node-2)*width*height, width*height*sizeof(double), cudaMemcpyDeviceToHost));
@@ -91,9 +92,13 @@ void full_calculation_overlap(double *data_gpu, double *data_gpu_tmp, int width,
         data_gpu = data_gpu_tmp;
         data_gpu_tmp = data_change;
         
-        void *temp = kernelMid[0];
+        void *temp_mid = kernelMid[0];
         kernelMid[0] = kernelMid[1];
-        kernelMid[1] = temp;
+        kernelMid[1] = temp_mid;
+
+        void *temp_edge= kernelEdge[0];
+        kernelEdge[0] = kernelEdge[1];
+        kernelEdge[1] = temp_edge;
 
         iter--;
     }

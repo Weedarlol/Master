@@ -19,7 +19,7 @@ OVERLAP = 1
 TEST = 0
 
 # Chooses which partition to run at. Only one at a time
-PARTITION = hgx2q
+PARTITION = dgx2q
 
 # Create a list of run identifiers for all combinations
 RUN_IDENTIFIERS = $(foreach width,$(WIDTH), \
