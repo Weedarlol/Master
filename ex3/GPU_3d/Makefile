@@ -1,7 +1,7 @@
 # Define different matrix sizes
 WIDTH = 1024
 HEIGHT = 1024
-DEPTH = 1024
+DEPTH = 768
 
 # Creates a list of values for GPU allocation, max 3 integers when running with nsys nvprof
 GPU_COUNTS = 2 3 4

@@ -1,0 +1,17 @@
+main.cu(250): warning #177-D: variable "data_transfer" was declared but never referenced
+
+programs/scenarios.cu(263): error: identifier "kernelMid" is undefined
+
+1 error detected in the compilation of "programs/scenarios.cu".
+--------------------------------------------------------------------------
+mpirun was unable to find the specified executable file, and therefore
+did not launch the job.  This error was first reported for process
+rank 0; it may have occurred for other processes as well.
+
+NOTE: A common cause for this error is misspelling a mpirun command
+      line parameter option (remember that mpirun interprets the first
+      unrecognized command line token as the executable).
+
+Node:       g001
+Executable: out_width128_height128_depth128_gpu2_nodes2_iter10000_compare1_overlap1_test0_createGrid0_dgx2q
+--------------------------------------------------------------------------

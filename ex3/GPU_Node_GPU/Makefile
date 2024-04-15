@@ -2,7 +2,7 @@
 # Creates a list of values for GPU allocation, max 3 integers when running with nsys nvprof
 # Example  = 2 3 4
 GPU_COUNTS = 2
-NODES = 1
+NODES = 2
 
 
 # Define different matrix sizes

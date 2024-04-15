@@ -1,10 +1,10 @@
 
 # Define different matrix sizes
-WIDTH = 128
-HEIGHT = 128
-DEPTH = 128
+WIDTH = 256
+HEIGHT = 256
+DEPTH = 256
 
-NODES = 2
+NODES = 3
 
 # Number of max iterations to run for the scenario
 ITERATIONS = 10000
@@ -13,7 +13,7 @@ ITERATIONS = 10000
 COMPARE = 1
 
 # Enables or disables overlap, 0 = no overlap, 1 = full overlap, 2 = CPU to CPU overlap. 3 = GPU to CPU overlap
-OVERLAP = 1
+OVERLAP = 0 1
 
 # 0 = full calculation, 1 = No kernel, 2 = No communication, 3 = only calculation, 4 = only communication
 TEST = 0

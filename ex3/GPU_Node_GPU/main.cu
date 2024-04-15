@@ -77,7 +77,6 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
 
 
     MPI_Request myRequest[4];
-
     MPI_Status myStatus[4];
     int depth_node = (depth-2)/size;
     int depth_overlap = (depth-2)%size;
