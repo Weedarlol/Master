@@ -6,9 +6,9 @@ NODES = 2
 
 
 # Define different matrix sizes
-WIDTH = 128
-HEIGHT = 128
-DEPTH = 128
+WIDTH = 512
+HEIGHT = 512
+DEPTH = 512
 
 # Number of max iterations to run for the scenario
 ITERATIONS = 10000
@@ -17,7 +17,7 @@ ITERATIONS = 10000
 PARTITION = dgx2q
 
 # Enables or disables overlap, 0 = no overlap, 1 = overlap
-OVERLAP = 1
+OVERLAP = 0 1
 
 # If you want to compare the final resulting matrix with the matrix created by the CPU. (CPU has to computed it first and created its own textfile containing its matrix called "CPUMatrix%i_%i.txt" where %i are the width and height)
 COMPARE = 1
@@ -42,29 +42,17 @@ submit:
 	)
 
 
-# View rules (On local computer)
-plot:
-	python3 plot_graphs.py
-	
 
+# View rules
 JobName:
-	sacct --format="JobID,JobName%100"
-
-
+	sacct --format="JobID,JobName%60"
 
 # Clean rules
 clean:
 	rm -rf slurm* out_*
 
-cleann:
-	rm -rf output/* error/*
-
-cleannn:
+clean_all:
 	rm -rf slurm* out_* output/* error/*
-
-
-
-
 
 cancel:
 	scancel -u vidaro

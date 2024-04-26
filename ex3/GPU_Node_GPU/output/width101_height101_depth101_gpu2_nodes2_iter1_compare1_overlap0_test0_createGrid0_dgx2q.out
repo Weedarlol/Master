@@ -1,0 +1,10 @@
+width = 101, height = 101, depth_node = 51, iter = 1, gpus = 2, rank = 1, size = 2
+Rank = 1, slices_device[0] = 27
+Rank = 1, slices_device[1] = 26
+width = 101, height = 101, depth_node = 52, iter = 1, gpus = 2, rank = 0, size = 2
+Rank = 0, slices_device[0] = 27
+Rank = 0, slices_device[1] = 27
+Time(event) - 0.56408 s
+Time(event) - 0.56397 s
+Comparing the grids
+Mismatch found at position (width = 1, height = 1, depth = 1) (data = 0.0002475610005539, data_compare = 0.0002470724954692)

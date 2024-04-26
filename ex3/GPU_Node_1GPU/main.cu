@@ -199,12 +199,12 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     }
     
 
-    if (rank == 1) {
+    if (rank == 0) {
         data_combined = (double*)malloc(width*height*depth * sizeof(double));
     }
 
-    MPI_Allgatherv(&data[width*height], width*height*(depth_node-2), MPI_DOUBLE, 
-                data_combined + width * height, counts, displacement, MPI_DOUBLE, MPI_COMM_WORLD);
+    MPI_Gatherv(&data[width*height], width*height*(depth_node-2), MPI_DOUBLE, 
+                data_combined + width * height, counts, displacement, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
 
     // Used to compare the grid to the grid which only the CPU created

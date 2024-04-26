@@ -97,7 +97,6 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
         device_nr[g] = g;
     }
 
-
     // Ignores first and last slice
     int slices_total = depth_node-2;
 
@@ -110,15 +109,11 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     // Calculate the number of slices for each device
     for (int g = 0; g < gpus; g++) {
         int extra_slice = (g < slices_leftover) ? 1 : 0;
-  
         slices_device[g] = slices_per_device + extra_slice + 2;
-
-        slices_compute_device[g] = slices_per_device + extra_slice - (2*overlap); // -2 as we are computing in 2 parts, 1 with point dependent on ghostpoints,and one without
-
+        slices_compute_device[g] = slices_per_device + extra_slice - (2*overlap);
         slices_starting_index[g] = g * slices_per_device + min(g, slices_leftover);
     }
 
-    // Initialiserer og allokerer Matrise på CPU
     double *data;
     double **data_gpu, **data_gpu_tmp;
     cudaErrorHandle(cudaMallocHost(&data,          total*sizeof(double)));
@@ -136,12 +131,6 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
         cudaErrorHandle(cudaSetDevice(g));
         cudaErrorHandle(cudaMalloc(&data_gpu[g],     width*height*slices_device[g]*sizeof(double)));
         cudaErrorHandle(cudaMalloc(&data_gpu_tmp[g], width*height*slices_device[g]*sizeof(double)));
-    }
-
-
-    for(int g = 0; g < gpus; g++){
-        cudaErrorHandle(cudaSetDevice(g));
-        cudaErrorHandle(cudaMemcpy(data_gpu[g], data+slices_starting_index[g]*width*height, slices_device[g]*width*height*sizeof(double), cudaMemcpyHostToDevice));
     }
 
     int *threadInformation;
@@ -207,7 +196,16 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
         MPI_Irecv(&data[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[3]);
     }
     MPI_Waitall(rank == 0 || rank == size - 1 ? 2 : 4, myRequest, myStatus);
-    
+
+
+    for(int g = 0; g < gpus; g++){
+        cudaErrorHandle(cudaSetDevice(g));
+        cudaErrorHandle(cudaMemcpy(data_gpu[g], data+slices_starting_index[g]*width*height, slices_device[g]*width*height*sizeof(double), cudaMemcpyHostToDevice));
+    }
+
+    /* printf("depth_node %i, gpus = %i, rank %i, size = %i, slices_device = %i\n", depth_node, gpus, rank, size, slices_device);
+    printf("threadinformation[0] = %i, threadinformation[1] = %i, threadinformation[2] = %i, threadinformation[3] = %i\n\n", threadInformation[0], threadInformation[1], threadInformation[2], threadInformation[3]);
+     */
     if(gpus < 2){
         printf("You are running on less than 2 gpus, to be able to communicate between gpus you are required to compute on more than 1 gpu.\n");
     }
@@ -225,10 +223,6 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     }
 
 
-
-
-
-
     
     for(int g = 0; g < gpus; g++){
         cudaErrorHandle(cudaSetDevice(g));
@@ -244,6 +238,7 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
         cudaErrorHandle(cudaSetDevice(g));
         cudaErrorHandle(cudaDeviceSynchronize());
     }
+    cudaErrorHandle(cudaSetDevice(0));
 
     double *data_combined;
     cudaErrorHandle(cudaMallocHost(&data_combined, width*height*depth*sizeof(double)));
@@ -283,7 +278,7 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
         }
     }
     
-    if (rank == 1) {
+    if (rank == 0) {
         data_combined = (double*)malloc(width*height*depth * sizeof(double));
     }
 
@@ -336,11 +331,7 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
                     }
                 }
             }
-
-
             printf("All elements match!\n");
-            
-
             // Free allocated memory
             free(data_compare);
         }

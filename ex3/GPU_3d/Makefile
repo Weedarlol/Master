@@ -1,7 +1,7 @@
 # Define different matrix sizes
 WIDTH = 1024
 HEIGHT = 1024
-DEPTH = 768
+DEPTH = 1024
 
 # Creates a list of values for GPU allocation, max 3 integers when running with nsys nvprof
 GPU_COUNTS = 2 3 4
@@ -19,7 +19,7 @@ OVERLAP = 0 1
 TEST = 0 3 4
 
 # Chooses which partition to run at. Only one at a time
-PARTITION = dgx2q
+PARTITION = hgx2q
 
 
 # Create a list of run identifiers for all combinations

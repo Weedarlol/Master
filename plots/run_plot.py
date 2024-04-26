@@ -5,7 +5,7 @@ from threedimentional import threedimentional_plot
 # Define available plots
 available_plots = {
     '2d': ['CPU Computation time vs Theoretical Time', 'Overlap vs No Overlap', 'Computational time: Communication vs Computation', 'GPU Computation time vs Theoretical Time'],  # List your 2D plot options here
-    '3d': ['CPU Computation time vs Theoretical Time', 'Overlap vs No Overlap', 'Computational time: Communication vs Computation', 'GPU Computation time vs Theoretical Time']   # List your 3D plot options here
+    '3d': ['CPU Computation time vs Theoretical Time', 'CPU Computation, Nodes', 'Overlap vs No Overlap', 'Computational time: Communication vs Computation', 'GPU Computation time vs Theoretical Time']   # List your 3D plot options here
 }
 
 def load_previous_settings():
@@ -92,6 +92,7 @@ def save_plots(plots):
         folder_path_ex3_gpu = "../ex3/GPU_3d/output"
         folder_path_ex3_1gpu = "../ex3/GPU_3d_1GPU/output"
         folder_path_fox_gpu = "../fox/GPU_3d/output"
+        folder_path_ex3_cpu_cpu = "../ex3/CPU_CPU/output"
         folder_path_fox_1gpu = "../fox/GPU_3d_1GPU/output"
         
         for plot in plots[1:]:
@@ -101,6 +102,12 @@ def save_plots(plots):
                 info_list_cpu = threedimentional_plot.process_files(folder_path_fox_cpu, info_list_cpu)
                 grouped_info_list_cpu = threedimentional_plot.group_by_string(info_list_cpu)
                 threedimentional_plot.plot_info_cpu(grouped_info_list_cpu, save_option)
+            elif plot == "CPU Computation, Nodes":
+                if not info_list_gpu_allocated:
+                    info_list_cpu = []
+                    info_list_cpu = threedimentional_plot.process_files(folder_path_ex3_cpu_cpu, info_list_cpu)
+                    grouped_info_list_cpu = threedimentional_plot.group_by_string(info_list_cpu)
+                threedimentional_plot.plot_info_cpu_cpu(grouped_info_list_cpu, save_option)
             elif plot == "Overlap vs No Overlap":
                 if not info_list_gpu_allocated:
                     info_list_gpu = []

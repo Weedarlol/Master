@@ -41,14 +41,20 @@ for SCENARIO in "$@"; do
 #!/bin/bash
 
 #SBATCH --job-name=${SCENARIO}_${PARTITION}
-#SBATCH -p ${PARTITION}
-#SBATCH -N 1                                   # Antall Noder
 #SBATCH -t 14:00:00
-#SBATCH --ntasks-per-node=${NODES}                   # Antall tasks en kjørere på hver node, 1 Task = 1 MPI
 #SBATCH --cpus-per-task=1                     # Antall CPUer en vil allokere, er 64 cores per CPU, så kan i teorien bare trenge å øke dene når -n > 64
-#SBATCH --gres=gpu:${NODES}                          # Antall GPUer en allokerer per job, så totale antall GPU. NUM_GPUS*NODES
+#SBATCH --output=output/${SCENARIO}_${PARTITION}.out
+#SBATCH --error=error/${SCENARIO}_${PARTITION}.err
+
+
+#SBATCH -p ${PARTITION}
+#SBATCH -N ${NODES}                                    # Antall Noder
+#SBATCH -n ${NODES}                            # Total number of tasks (processes)
+#SBATCH -t 14:00:00
+#SBATCH --ntasks-per-node=1                   # Antall tasks en kjørere på hver node, 1 Task = 1 MPI
+#SBATCH --cpus-per-task=1                     # Antall CPUer en vil allokere, er 64 cores per CPU, så kan i teorien bare trenge å øke dene når -n > 64
+#SBATCH --gres=gpu:1                          # Antall GPUer en allokerer per job, så totale antall GPU. NUM_GPUS*NODES
 #SBATCH --gpus-per-task=1                           # Antall GPUer en allokerer per task, så totale antall GPU delt på antall noder. NUM_GPUS
-#SBATCH --gpus=${NODES}                                    # Antall GPUer en allokerer per node. NUM_GPUS
 #SBATCH --output=output/${SCENARIO}_${PARTITION}.out
 #SBATCH --error=error/${SCENARIO}_${PARTITION}.err
 
@@ -61,7 +67,7 @@ module load openmpi4/gcc/4.1.5
 
 nvcc $SOURCES -o out_${SCENARIO}_${PARTITION} -I$CPATH -L$LD_LIBRARY_PATH /cm/shared/apps/openmpi4/gcc/4.1.5/lib/libmpi.so -lnccl -O3
 
-mpirun -np ${NODES}  out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5 $VAR6 $VAR7 $VAR8 $VAR9
+mpirun --mca btl_openib_allow_ib true -np ${NODES}  out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5 $VAR6 $VAR7 $VAR8 $VAR9
 
 
 

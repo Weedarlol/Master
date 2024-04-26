@@ -1,10 +1,10 @@
 # Define different grid sizes
-WIDTH = 1024
-HEIGHT = 1024
-DEPTH = 1024
+WIDTH = 256
+HEIGHT = 256
+DEPTH = 128
 
 # How many nodes to run the program on
-NODES = 2 3 4 5 6
+NODES = 2
 
 # Number of max iterations to run for the scenario
 ITERATIONS = 10000
@@ -12,10 +12,10 @@ ITERATIONS = 10000
 # If you want to compare the final resulting grid with the grid created by the CPU.
 COMPARE = 1
 
-OVERLAP = 0 1
+OVERLAP = 0
 
 # Chooses which partition to run at. Only one at a time
-PARTITION = hgx2q
+PARTITION = a100q
 
 
 # Create a list of run identifiers for all combinations

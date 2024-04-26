@@ -1,0 +1,9 @@
+depth_node 65, gpus = 2, rank 0, size = 2, slices_device = 497025536
+depth_node 65, gpus = 2, rank 1, size = 2, slices_device = 396362240
+threadinformation[0] = 31, threadinformation[1] = 128, threadinformation[2] = 30, threadinformation[3] = 636
+
+threadinformation[0] = 31, threadinformation[1] = 128, threadinformation[2] = 30, threadinformation[3] = 636
+
+Time(event) - 0.19956 s
+Time(event) - 0.22690 s
+Comparing the grids

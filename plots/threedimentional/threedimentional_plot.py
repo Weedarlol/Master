@@ -123,6 +123,19 @@ def plot_info_cpu(grouped_info_list, save_option):
         plt.savefig('output_figures/3d_CPU_Computation_Time.png')
     plt.show()
 
+def plot_info_cpu_cpu(grouped_info_list, save_option):
+    grouped_info_list = [
+        (partition, [(x, y, z, w, u, v, a, b, c) for x, y, z, w, u, v, a, b, c in elements if v == 0])
+        for partition, elements in grouped_info_list
+    ]
+
+    num_partitions = len(grouped_info_list) + 1
+    num_rows = math.ceil(math.sqrt(num_partitions))
+    num_cols = math.ceil(num_partitions / num_rows)
+    _, axes = plt.subplots(num_rows, num_cols, figsize=(10, 8), sharex=True, sharey=True)
+    
+    
+
 def plot_info_gpu(grouped_info_list, save_option):
     grouped_info_list = [
         (partition, [(x, y, z, w, u, v, a, b, c) for x, y, z, w, u, v, a, b, c in elements if a == 0 and v == 1])
@@ -180,7 +193,7 @@ def plot_info_gpu(grouped_info_list, save_option):
 
 def plot_overlap_gpu(grouped_info_list, save_option):
     grouped_info_list = [
-        (partition, [(x, y, z, w, u, v, a, b, c) for x, y, z, w, u, v, a, b, c in elements if a == 0])
+        (partition, [(x, y, z, w, u, v, a, b, c) for x, y, z, w, u, v, a, b, c in elements if a == 0 and x >= 512])
         for partition, elements in grouped_info_list
     ]
 
@@ -263,48 +276,37 @@ def plot_estimate_gpu(grouped_info_list, save_option):
         x_values = [f"{element[0]}x{element[1]}x{element[2]}" for element in elements]
         x_values = list(dict.fromkeys(x_values))
 
-        y_values = [[] for _ in range(num_rows*3)]
-        combined = [[] for _ in range(num_rows*3)]
-        percentage = [[] for _ in range(num_rows*3)]
+        y_value_overlap = [[] for _ in range(num_rows*3)]
+        y_value_no_overlap = [[] for _ in range(num_rows*3)]
         
         for element in elements:
             if element[5] == 1:
-                y_values[(element[3] - 2) * 3 + element[6]].append(element[8])
+                y_value_overlap[(element[3] - 2) * 3 + element[6]].append(element[8])
             else:
-                combined[(element[3] - 2) * 3 + element[6]].append(element[8])
-
-        for j in range(len(y_values)):
-            for a, b in zip(y_values[i], combined[i]):
-                percentage[j].append((a - b) / b * 100)
-
+                y_value_no_overlap[(element[3] - 2) * 3 + element[6]].append(element[8])
 
         if(num_cols > 1):
             for row in range(num_rows):
-                if len(y_values[row*3]) < len(x_values):
-                    x_values = x_values[:len(y_values[row*3])]
-                elif len(y_values[row*3+1]) < len(x_values):
-                    x_values = x_values[:len(y_values[row*3+1])]
-                axes[row, i].plot(x_values, y_values[row*3], label='Overlap')
-                axes[row, i].plot(x_values, combined[row*3], label='No Overlap')
-                axes[row, i].plot(x_values, y_values[row*3+1], label='Only Computation')
-                axes[row, i].plot(x_values, y_values[row*3+2], label='Only Communication')
-                axes[row, i].plot(x_values, [x + y for x, y in zip(y_values[row*3+2], y_values[row*3+1])], label='Computation + Communication')
+                if len(y_value_overlap[row*3]) < len(x_values):
+                    x_values = x_values[:len(y_value_overlap[row*3])]
+                elif len(y_value_overlap[row*3+1]) < len(x_values):
+                    x_values = x_values[:len(y_value_overlap[row*3+1])]
+                axes[row, i].plot(x_values, y_value_overlap[row*3], label='Overlap', color="red")
+                axes[row, i].plot(x_values, y_value_no_overlap[row*3], label='No Overlap', color="blue")
+                axes[row, i].fill_between(x_values, [x + y for x, y in zip(y_value_overlap[row*3+2], y_value_overlap[row*3+1])], color='moccasin', label="Communication + Computation")
+                axes[row, i].fill_between(x_values, y_value_overlap[row*3+1], color='gray', label='Only Computation')
                 axes[row, i].set_title(f"{partition} - GPUs: {row+2}")
                 axes[row, i].legend()
                 axes[row, i].set_ylabel("Time (s)")
-                ax2 = axes[row, i].twinx()
-                ax2.plot(x_values, percentage[row*3], marker='^', color='g', linestyle='-', label='Percentage Difference')
-                ax2.legend(loc='upper right')
-                ax2.set_ylabel("Percentage Difference")
         else:
             for row in range(num_rows):
-                if len(y_values[row*2]) < len(x_values):
-                    x_values = x_values[:len(y_values[row*2])]
-                elif len(y_values[row*2+1]) < len(x_values):
-                    x_values = x_values[:len(y_values[row*2+1])]
-                axes[row].plot(x_values, y_values[row], label='Full time')
-                axes[row].plot(x_values, y_values[row + 1*num_rows], label='Only Computation')
-                axes[row].plot(x_values, y_values[row + 2*num_rows], label='Only Communication')
+                if len(y_value_overlap[row*2]) < len(x_values):
+                    x_values = x_values[:len(y_value_overlap[row*2])]
+                elif len(y_value_overlap[row*2+1]) < len(x_values):
+                    x_values = x_values[:len(y_value_overlap[row*2+1])]
+                axes[row].plot(x_values, y_value_overlap[row], label='Full time')
+                axes[row].plot(x_values, y_value_overlap[row + 1*num_rows], label='Only Computation')
+                axes[row].plot(x_values, y_value_overlap[row + 2*num_rows], label='Only Communication')
                 axes[row].set_title(f"{partition} - GPUs: {row+2}")
                 axes[row].legend(loc='upper left')
                 axes[row].set_ylabel("Time (s)")
@@ -313,12 +315,65 @@ def plot_estimate_gpu(grouped_info_list, save_option):
         ax.grid(axis='y')  # Add gridlines along the y-axis for each subplot
         ax.tick_params(axis='x', rotation=45)
     plt.xlabel("Matrix Size")
-    plt.suptitle("GPU computation time difference: Total, Computation and Communication")
+    plt.suptitle("GPU computation time difference: Total, Computation and Communication. Overlap")
     plt.subplots_adjust(top=0.9)
     plt.tight_layout()  
     if save_option == "yes":
         plt.savefig('output_figures/3d_GPU_Total_Computation_Communication.png')
     plt.show()
+
+
+    _, axes = plt.subplots(num_rows, num_cols, figsize=(10, 8), sharex=True, sharey=False)
+
+    for i, (partition, elements) in enumerate(grouped_info_list):
+        x_values = [f"{element[0]}x{element[1]}x{element[2]}" for element in elements]
+        x_values = list(dict.fromkeys(x_values))
+
+        y_value_overlap = [[] for _ in range(num_rows*3)]
+        y_value_no_overlap = [[] for _ in range(num_rows*3)]
+        
+        for element in elements:
+            if element[5] == 1:
+                y_value_overlap[(element[3] - 2) * 3 + element[6]].append(element[8])
+            else:
+                y_value_no_overlap[(element[3] - 2) * 3 + element[6]].append(element[8])
+
+        if(num_cols > 1):
+            for row in range(num_rows):
+                if len(y_value_overlap[row*3]) < len(x_values):
+                    x_values = x_values[:len(y_value_overlap[row*3])]
+                elif len(y_value_overlap[row*3+1]) < len(x_values):
+                    x_values = x_values[:len(y_value_overlap[row*3+1])]
+                axes[row, i].plot(x_values, y_value_overlap[row*3], label='Overlap', color="red")
+                axes[row, i].plot(x_values, y_value_no_overlap[row*3], label='No Overlap', color="blue")
+                axes[row, i].fill_between(x_values, [x + y for x, y in zip(y_value_no_overlap[row*3+2], y_value_no_overlap[row*3+1])], color='moccasin', label="Communication + Computation")
+                axes[row, i].fill_between(x_values, y_value_no_overlap[row*3+1], color='gray', label='Only Computation')
+                axes[row, i].set_title(f"{partition} - GPUs: {row+2}")
+                axes[row, i].legend()
+                axes[row, i].set_ylabel("Time (s)")
+        else:
+            for row in range(num_rows):
+                if len(y_value_overlap[row*2]) < len(x_values):
+                    x_values = x_values[:len(y_value_overlap[row*2])]
+                elif len(y_value_overlap[row*2+1]) < len(x_values):
+                    x_values = x_values[:len(y_value_overlap[row*2+1])]
+                axes[row].plot(x_values, y_value_overlap[row], label='Full time')
+                axes[row].plot(x_values, y_value_overlap[row + 1*num_rows], label='Only Computation')
+                axes[row].plot(x_values, y_value_overlap[row + 2*num_rows], label='Only Communication')
+                axes[row].set_title(f"{partition} - GPUs: {row+2}")
+                axes[row].legend(loc='upper left')
+                axes[row].set_ylabel("Time (s)")
+
+    for ax in plt.gcf().get_axes():
+        ax.grid(axis='y')  # Add gridlines along the y-axis for each subplot
+        ax.tick_params(axis='x', rotation=45)
+    plt.xlabel("Matrix Size")
+    plt.suptitle("GPU computation time difference: Total, Computation and Communication. No overlap")
+    plt.subplots_adjust(top=0.9)
+    plt.tight_layout()  
+    if save_option == "yes":
+        plt.savefig('output_figures/3d_GPU_Total_Computation_Communication.png')
+    plt.show()   
 
 def plot_bandwidth_gpu(grouped_info_list, save_option):
     grouped_info_list = [
@@ -391,44 +446,3 @@ def plot_bandwidth_gpu(grouped_info_list, save_option):
     if save_option == "yes":
         plt.savefig('output_figures/3d_GPU_Estimated_vs_Real.png')
     plt.show()
-
-
-
-
-
-
-#folder_path_ex3_cpu = "../ex3/CPU_3d/output"
-#folder_path_fox_cpu = "../fox/CPU_3d/output"
-
-#folder_path_ex3_gpu = "../../ex3/GPU_3d/output"
-#folder_path_ex3_1gpu = "../ex3/GPU_3d_1GPU/output"
-#folder_path_fox_gpu = "../../fox/GPU_3d/output"
-#folder_path_fox_1gpu = "../fox/GPU_3d_1GPU/output"
-
-# Contains information about CPU
-#info_list_cpu = []
-#info_list_cpu = process_files(folder_path_ex3_cpu, info_list_cpu)
-#info_list_cpu = process_files(folder_path_fox_cpu, info_list_cpu)
-# Contains information about all GPUs
-#info_list_ngpu = []
-#info_list_ngpu = process_files(folder_path_ex3_gpu, info_list_ngpu)
-#info_list_ngpu = process_files(folder_path_ex3_1gpu, info_list_ngpu)
-#info_list_ngpu = process_files(folder_path_fox_gpu, info_list_ngpu)
-#info_list_ngpu = process_files(folder_path_fox_1gpu, info_list_ngpu)
-# Contains information of GPUs with n > 1
-#info_list_gpu = []
-#info_list_gpu = process_files(folder_path_ex3_gpu, info_list_gpu)
-#info_list_gpu = process_files(folder_path_fox_gpu, info_list_gpu)
-
-# Call the function to group the info_list by the string
-#grouped_info_list_cpu = group_by_string(info_list_cpu)
-#grouped_info_list_ngpu = group_by_string(info_list_ngpu)
-#grouped_info_list_gpu = group_by_string(info_list_gpu)
-
-
-
-
-#plot_info_cpu(grouped_info_list_cpu)
-#plot_overlap_gpu(grouped_info_list_gpu)
-#plot_estimate_gpu(grouped_info_list_gpu, "no")
-#plot_bandwidth_gpu(grouped_info_list_gpu)

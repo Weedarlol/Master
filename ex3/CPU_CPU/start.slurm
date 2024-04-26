@@ -33,9 +33,10 @@ for SCENARIO in "$@"; do
 
 #SBATCH --job-name=${SCENARIO}_${PARTITION}
 #SBATCH -p ${PARTITION}
-#SBATCH -N 1                                   # Antall Noder
+#SBATCH -N ${NODES}                                    # Antall Noder
+#SBATCH -n ${NODES}                            # Total number of tasks (processes)
 #SBATCH -t 14:00:00
-#SBATCH --ntasks-per-node=${NODES}                   # Antall tasks en kjørere på hver node, 1 Task = 1 MPI
+#SBATCH --ntasks-per-node=1                   # Antall tasks en kjørere på hver node, 1 Task = 1 MPI
 #SBATCH --cpus-per-task=1                     # Antall CPUer en vil allokere, er 64 cores per CPU, så kan i teorien bare trenge å øke dene når -n > 64
 #SBATCH --output=output/${SCENARIO}_${PARTITION}.out
 #SBATCH --error=error/${SCENARIO}_${PARTITION}.err
@@ -46,9 +47,9 @@ module load gcc11/11.3.0
 module load cuda11.8/toolkit/11.8.0
 module load openmpi4/gcc/4.1.5
 
-nvcc main.c -o out_${SCENARIO}_${PARTITION} -I$CPATH -L$LD_LIBRARY_PATH /cm/shared/apps/openmpi4/gcc/4.1.5/lib/libmpi.so -lnccl -O3
+nvcc main.c -o out_${SCENARIO}_${PARTITION} -I$CPATH -L$LD_LIBRARY_PATH /cm/shared/apps/openmpi4/gcc/4.1.5/lib/libmpi.so -O3
 
-mpirun -np ${NODES}  out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5 $VAR6
+mpirun --mca btl_openib_allow_ib true -x OMPI_MCA_pmpi_profiling=1 -n ${NODES} out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5 $VAR6
 
 exit 0
 

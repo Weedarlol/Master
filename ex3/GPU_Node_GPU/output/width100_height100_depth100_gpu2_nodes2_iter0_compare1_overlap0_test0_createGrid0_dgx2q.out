@@ -1,0 +1,12 @@
+To few selected iterations
+To few selected iterations
+width = 100, height = 100, depth_node = 51, iter = 0, gpus = 2, rank = 0, size = 2
+Rank = 0, slices_device[0] = 27
+Rank = 0, slices_device[1] = 26
+width = 100, height = 100, depth_node = 51, iter = 0, gpus = 2, rank = 1, size = 2
+Rank = 1, slices_device[0] = 27
+Rank = 1, slices_device[1] = 26
+Time(event) - 0.00003 s
+Time(event) - 0.00001 s
+Comparing the grids
+All elements match!

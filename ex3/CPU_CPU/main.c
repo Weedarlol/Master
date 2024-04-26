@@ -112,6 +112,7 @@ int main(int argc, char *argv[]) {
     MPI_Waitall(rank == 0 || rank == size - 1 ? 2 : 4, myRequest, myStatus);
 
 
+
     /* Performing Jacobian grid Calculation */
     // Performing a number of iterations while statement is not satisfied
     if(overlap == 0){
@@ -130,7 +131,9 @@ int main(int argc, char *argv[]) {
                 }
                 MPI_Isend(&data_tmp[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[0]);
                 MPI_Irecv(&data_tmp[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[1]); 
-                MPI_Waitall(2, myRequest, myStatus);
+                //MPI_Waitall(2, myRequest, myStatus);
+                /* MPI_Send(&data_tmp[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD);
+                MPI_Recv(&data_tmp[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myStatus[1]);  */
 
                 double *data_tmp_swap = data_tmp;
                 data_tmp = data;
@@ -154,7 +157,9 @@ int main(int argc, char *argv[]) {
                 }
                 MPI_Irecv(&data_tmp[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[0]); 
                 MPI_Isend(&data_tmp[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[1]); 
-                MPI_Waitall(2, myRequest, myStatus);
+                //MPI_Waitall(2, myRequest, myStatus);
+                /* MPI_Recv(&data_tmp[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myStatus[0]); 
+                MPI_Send(&data_tmp[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD); */
 
                 double *data_tmp_swap = data_tmp;
                 data_tmp = data;
@@ -348,17 +353,11 @@ int main(int argc, char *argv[]) {
             }
         }
     }
-    
-    if (rank == 1) {
-        data_combined = (double*)malloc(width*height*depth * sizeof(double));
-    }
-
-    MPI_Allgatherv(&data[width*height], width*height*(depth_node-2), MPI_DOUBLE, 
-                data_combined + width * height, counts, displacement, MPI_DOUBLE, MPI_COMM_WORLD);
-
 
 
     if(compare == 1){
+        MPI_Gatherv(&data[width*height], width*height*(depth_node-2), MPI_DOUBLE, 
+                   &data_combined[width*height], counts, displacement, MPI_DOUBLE, 0, MPI_COMM_WORLD);
         if(rank == 0){
             double* data_compare = (double*)malloc(width * height * depth* sizeof(double));
             FILE *fptr;
@@ -395,8 +394,8 @@ int main(int argc, char *argv[]) {
             for(int i = 0; i < depth_node; i++){
                 for (int j = 0; j < height; j++) {
                     for (int k = 0; k < width; k++) {
-                        if (fabs(data[k + j * width + i * width * height] - data_compare[k + j * width + i * width * height]) > 1e-15)  {
-                            printf("Mismatch found at position (width = %d, height = %d, depth = %d) (data_Node = %.16f, data_compare = %.16f)\n", k, j, i, data[k + j * width + i * width * height], data_compare[k + j * width + i * width * height]);
+                        if (fabs(data_combined[k + j * width + i * width * height] - data_compare[k + j * width + i * width * height]) > 1e-15)  {
+                            printf("Mismatch found at position (width = %d, height = %d, depth = %d) (data_Node = %.16f, data_compare = %.16f)\n", k, j, i, data_combined[k + j * width + i * width * height], data_compare[k + j * width + i * width * height]);
                             free(data_compare);
                             MPI_Finalize();
                             exit(EXIT_FAILURE);

@@ -1,13 +1,13 @@
 # Define different grid sizes
 WIDTH = 1024
 HEIGHT = 1024
-DEPTH = 768
+DEPTH = 512
 
 # Number of max iterations to run for the scenario
 ITERATIONS = 10000
 
 # Chooses which partition to run at.
-PARTITION = hgx2q
+PARTITION = a100q
 
 CREATEGRID = 0
 
