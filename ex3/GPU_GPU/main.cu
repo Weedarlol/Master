@@ -225,6 +225,8 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
         }
     }
 
+    printf("sist!\n");
+
 
     
     for(int g = 0; g < gpus; g++){

@@ -48,11 +48,11 @@ for SCENARIO in "$@"; do
 
 #SBATCH --job-name=${SCENARIO}_${PARTITION}
 #SBATCH -p ${PARTITION}
-#SBATCH -N ${NODES}                                   # Antall Noder
+#SBATCH -N 1                                   # Antall Noder
 #SBATCH -t 14:00:00
-#SBATCH --ntasks-per-node=1                   # Antall tasks en kjørere på hver node, 1 Task = 1 MPI
+#SBATCH --ntasks-per-node=2                   # Antall tasks en kjørere på hver node, 1 Task = 1 MPI
 #SBATCH --cpus-per-task=1                     # Antall CPUer en vil allokere, er 64 cores per CPU, så kan i teorien bare trenge å øke dene når -n > 64
-#SBATCH --gres=gpu:2                          # Antall GPUer en allokerer per job, så totale antall GPU. NUM_GPUS*NODES
+#SBATCH --gres=gpu:4                          # Antall GPUer en allokerer per job, så totale antall GPU. NUM_GPUS*NODES
 #SBATCH --gpus-per-task=2                          # Antall GPUer en allokerer per task, så totale antall GPU delt på antall noder. NUM_GPUS
 #SBATCH --gpus=4                                    # Antall GPUer en allokerer per node. NUM_GPUS
 #SBATCH --output=output/${SCENARIO}_${PARTITION}.out

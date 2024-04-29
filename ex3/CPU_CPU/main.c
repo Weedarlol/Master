@@ -91,8 +91,6 @@ int main(int argc, char *argv[]) {
     fillValues3D(data, width, height, depth_node, dx, dy, dz, rank, depth_overlap);
 
 
-    start = clock();
-    double division = 1/6.0;
 
     if(rank == 0){
         MPI_Isend(&data[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[0]);
@@ -111,6 +109,8 @@ int main(int argc, char *argv[]) {
     }
     MPI_Waitall(rank == 0 || rank == size - 1 ? 2 : 4, myRequest, myStatus);
 
+    start = clock();
+    double division = 1/6.0;
 
 
     /* Performing Jacobian grid Calculation */
@@ -129,9 +129,11 @@ int main(int argc, char *argv[]) {
                         }
                     }
                 }
+                /* MPI_Sendrecv(&data_tmp[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0,
+                            &data_tmp[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myStatus[0]); */
                 MPI_Isend(&data_tmp[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[0]);
                 MPI_Irecv(&data_tmp[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[1]); 
-                //MPI_Waitall(2, myRequest, myStatus);
+                MPI_Waitall(2, myRequest, myStatus);
                 /* MPI_Send(&data_tmp[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD);
                 MPI_Recv(&data_tmp[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myStatus[1]);  */
 
@@ -155,9 +157,11 @@ int main(int argc, char *argv[]) {
                         }
                     }
                 }
+                /* MPI_Sendrecv(&data_tmp[width*height], width*height, MPI_DOUBLE, rank-1, 0, 
+                            &data_tmp[0], width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myStatus[0]); */
                 MPI_Irecv(&data_tmp[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[0]); 
                 MPI_Isend(&data_tmp[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[1]); 
-                //MPI_Waitall(2, myRequest, myStatus);
+                MPI_Waitall(2, myRequest, myStatus);
                 /* MPI_Recv(&data_tmp[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myStatus[0]); 
                 MPI_Send(&data_tmp[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD); */
 

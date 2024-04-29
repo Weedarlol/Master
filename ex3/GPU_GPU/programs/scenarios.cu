@@ -236,8 +236,7 @@ void full_calculation_nooverlap(double **data_gpu, double **data_gpu_tmp, int wi
             }
 
 
-            cudaErrorHandle(cudaSetDevice(gpus-1));
-            MPI_Isend(&data_gpu_tmp[gpus-1], 1, MPI_DOUBLE, 1, 0, MPI_COMM_WORLD, &myRequest[0]);
+            MPI_Isend(data_gpu_tmp[0], 1, MPI_DOUBLE, 1, 4, MPI_COMM_WORLD, &myRequest[0]);
 
             MPI_Waitall(1, myRequest, myStatus);
         }
@@ -255,8 +254,7 @@ void full_calculation_nooverlap(double **data_gpu, double **data_gpu_tmp, int wi
             }
             
 
-            cudaErrorHandle(cudaSetDevice(0));
-            MPI_Irecv(&data_gpu_tmp[0], 1, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[0]); 
+            MPI_Irecv(data_gpu_tmp[0], 1, MPI_DOUBLE, rank-1, 4, MPI_COMM_WORLD, &myRequest[0]); 
 
             MPI_Waitall(1, myRequest, myStatus);
             

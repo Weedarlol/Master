@@ -1,0 +1,37 @@
+--------------------------------------------------------------------------
+No OpenFabrics connection schemes reported that they were able to be
+used on a specific port.  As such, the openib BTL (OpenFabrics
+support) will be disabled for this port.
+
+  Local host:           g001
+  Local device:         mlx5_4
+  Local port:           1
+  CPCs attempted:       rdmacm, udcm
+--------------------------------------------------------------------------
+[g001:996717] *** Process received signal ***
+[g001:996717] Signal: Segmentation fault (11)
+[g001:996717] Signal code: Invalid permissions (2)
+[g001:996717] Failing at address: 0x155537a00000
+[g001:996717] [ 0] /lib/x86_64-linux-gnu/libc.so.6(+0x42520)[0x155554ec4520]
+[g001:996717] [ 1] /lib/x86_64-linux-gnu/libc.so.6(+0x1aee40)[0x155555030e40]
+[g001:996717] [ 2] /cm/shared/apps/openmpi4/gcc/4.1.5/lib/libopen-pal.so.40(opal_convertor_pack+0x186)[0x155554d4da56]
+[g001:996717] [ 3] /cm/shared/apps/openmpi4/gcc/4.1.5/lib/openmpi/mca_btl_vader.so(mca_btl_vader_sendi+0x148)[0x155551d46428]
+[g001:996717] [ 4] /cm/shared/apps/openmpi4/gcc/4.1.5/lib/openmpi/mca_pml_ob1.so(+0xbd19)[0x1555515a8d19]
+[g001:996717] [ 5] /cm/shared/apps/openmpi4/gcc/4.1.5/lib/openmpi/mca_pml_ob1.so(mca_pml_ob1_isend+0x521)[0x1555515a99f1]
+[g001:996717] [ 6] /cm/shared/apps/openmpi4/gcc/4.1.5/lib/libmpi.so.40(MPI_Isend+0x12d)[0x155555456f6d]
+[g001:996717] [ 7] out_width128_height128_depth128_gpu2_nodes2_iter10000_compare1_overlap0_test0_createGrid0_dgx2q[0x40eee2]
+[g001:996717] [ 8] out_width128_height128_depth128_gpu2_nodes2_iter10000_compare1_overlap0_test0_createGrid0_dgx2q[0x4061a8]
+[g001:996717] [ 9] out_width128_height128_depth128_gpu2_nodes2_iter10000_compare1_overlap0_test0_createGrid0_dgx2q[0x404d29]
+[g001:996717] [10] /lib/x86_64-linux-gnu/libc.so.6(+0x29d90)[0x155554eabd90]
+[g001:996717] [11] /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x80)[0x155554eabe40]
+[g001:996717] [12] out_width128_height128_depth128_gpu2_nodes2_iter10000_compare1_overlap0_test0_createGrid0_dgx2q[0x404fc5]
+[g001:996717] *** End of error message ***
+--------------------------------------------------------------------------
+Primary job  terminated normally, but 1 process returned
+a non-zero exit code. Per user-direction, the job has been aborted.
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+mpirun noticed that process rank 0 with PID 996717 on node g001 exited on signal 11 (Segmentation fault).
+--------------------------------------------------------------------------
+[g001:996710] 1 more process has sent help message help-mpi-btl-openib-cpc-base.txt / no cpcs for port
+[g001:996710] Set MCA parameter "orte_base_help_aggregate" to 0 to see all help / error messages

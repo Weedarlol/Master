@@ -1,7 +1,7 @@
 # Define different grid sizes
-WIDTH = 256
+WIDTH = 512
 HEIGHT = 256
-DEPTH = 128
+DEPTH = 256
 
 # How many nodes to run the program on
 NODES = 2
