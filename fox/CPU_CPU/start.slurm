@@ -19,7 +19,8 @@ for SCENARIO in "$@"; do
     DEPTH=$(echo $SCENARIO | awk -F'depth' '{print $2}' | awk -F'_' '{print $1}')
     ITERATIONS=$(echo $SCENARIO | awk -F'iter' '{print $2}' | awk -F'_' '{print $1}')
     NODES=$(echo $SCENARIO | awk -F'nodes' '{print $2}' | awk -F'_' '{print $1}')
-    COMPARE=$(echo $SCENARIO | awk -F'compare' '{print $2}')
+    COMPARE=$(echo $SCENARIO | awk -F'compare' '{print $2}' | awk -F'_' '{print $1}')
+    OVERLAP=$(echo $SCENARIO | awk -F'overlap' '{print $2}')
 
     # Define the variable values
     VAR1=$WIDTH # Width
@@ -27,6 +28,7 @@ for SCENARIO in "$@"; do
     VAR3=$DEPTH # Depth
     VAR4=$ITERATIONS  # Iterations
     VAR5=$COMPARE
+    VAR6=$OVERLAP
 
     # Create a temporary Slurm script for this scenario
     TEMP_SCRIPT="slurm_script_${SCENARIO}_${PARTITION}.sh"
@@ -52,7 +54,7 @@ module load OpenMPI/4.1.4-GCC-11.3.0
 
 nvcc $SOURCES -o out_${SCENARIO}_${PARTITION} -I$CPATH -L$LD_LIBRARY_PATH -lmpi -O3
 
-mpirun -n 2 ./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5
+mpirun -n 2 ./out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5 $VAR6
 
 exit 0
 

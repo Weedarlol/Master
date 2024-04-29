@@ -23,6 +23,12 @@ for SCENARIO in "$@"; do
     OVERLAP=$(echo $SCENARIO | awk -F'overlap' '{print $2}' | awk -F'_' '{print $1}')
     TEST=$(echo $SCENARIO | awk -F'test' '{print $2}')
 
+    TOTAL_GPUS=$((NUM_GPUS * NODES))
+
+    echo "$NUM_GPUS"
+    echo "$NODES"
+    echo "$TOTAL_GPUS"
+
     # Define the variable values
     VAR1=$WIDTH # Width
     VAR2=$HEIGHT # Height
@@ -48,18 +54,22 @@ for SCENARIO in "$@"; do
 #SBATCH -t 14:00:00
 #SBATCH --ntasks-per-node=1                   # Antall tasks en kjørere på hver node, 1 Task = 1 MPI
 #SBATCH --cpus-per-task=1                     # Antall CPUer en vil allokere, er 64 cores per CPU, så kan i teorien bare trenge å øke dene når -n > 64
-#SBATCH --gpus-per-node=1                           # Antall GPUer en allokerer per task, så totale antall GPU delt på antall noder. NUM_GPUS
+#SBATCH --gres=gpu:2                          # Antall GPUer en allokerer per job, så totale antall GPU. NUM_GPUS*NODES
+#SBATCH --gpus-per-task=2                          # Antall GPUer en allokerer per task, så totale antall GPU delt på antall noder. NUM_GPUS
+#SBATCH --gpus=4                                    # Antall GPUer en allokerer per node. NUM_GPUS
 #SBATCH --output=output/${SCENARIO}_${PARTITION}.out
 #SBATCH --error=error/${SCENARIO}_${PARTITION}.err
 
 module purge
-module load CUDA/11.7.0
-module load OpenMPI/4.1.4-GCC-11.3.0
+module load slurm/21.08.8
+module load gcc11/11.3.0
+module load cuda12.0/toolkit/12.0.1
+module load openmpi4/gcc/4.1.5
 
 
-nvcc $SOURCES -o out_${SCENARIO}_${PARTITION} -I$CPATH -L$LD_LIBRARY_PATH /cluster/software/EL9/easybuild/software/OpenMPI/4.1.4-GCC-11.3.0/lib/libmpi.so -O3
+nvcc $SOURCES -o out_${SCENARIO}_${PARTITION} -I$CPATH -L$LD_LIBRARY_PATH /cm/shared/apps/openmpi4/gcc/4.1.5/lib/libmpi.so -O3
 
-mpirun -np ${NODES}  out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5 $VAR6 $VAR7 $VAR8 $VAR9
+mpirun --mca btl_openib_allow_ib true -np ${NODES}  out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5 $VAR6 $VAR7 $VAR8 $VAR9
 
 
 

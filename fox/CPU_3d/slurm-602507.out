@@ -1,0 +1,26 @@
+Starting job 602507 on c1-28 at Mon Apr 29 12:04:55 CEST 2024
+
+Submitted batch job 602508
+
+Task and CPU usage stats:
+JobID           JobName  AllocCPUS   NTasks     MinCPU MinCPUTask     AveCPU    Elapsed ExitCode 
+------------ ---------- ---------- -------- ---------- ---------- ---------- ---------- -------- 
+602507       allocation          1                                             00:00:01      0:0 
+602507.batch      batch          1        1   00:00:00          0   00:00:00   00:00:01      0:0 
+602507.exte+     extern          1        1   00:00:00          0   00:00:00   00:00:01      0:0 
+
+Memory usage stats:
+JobID            MaxRSS MaxRSSTask     AveRSS MaxPages   MaxPagesTask   AvePages 
+------------ ---------- ---------- ---------- -------- -------------- ---------- 
+602507                                                                           
+602507.batch       288K          0       288K        0              0          0 
+602507.exte+       204K          0       204K        0              0          0 
+
+Disk usage stats:
+JobID         MaxDiskRead MaxDiskReadTask    AveDiskRead MaxDiskWrite MaxDiskWriteTask   AveDiskWrite 
+------------ ------------ --------------- -------------- ------------ ---------------- -------------- 
+602507                                                                                                
+602507.batch            0               0              0        0.00M                0          0.00M 
+602507.exte+        0.01M               0          0.01M        0.00M                0          0.00M 
+
+Job 602507 completed at Mon Apr 29 12:04:55 CEST 2024

@@ -1,26 +1,26 @@
-Starting job 480350 on gpu-7 at Tue Mar 19 17:03:28 CET 2024
+Starting job 601738 on gpu-9 at Mon Apr 29 11:32:25 CEST 2024
 
-Time(event) - 671.42012 s
+Time(event) - 361.86767 s
 
 Task and CPU usage stats:
 JobID           JobName  AllocCPUS   NTasks     MinCPU MinCPUTask     AveCPU    Elapsed ExitCode 
 ------------ ---------- ---------- -------- ---------- ---------- ---------- ---------- -------- 
-480350       width512_+          1                                             00:11:32      0:0 
-480350.batch      batch          1        1   00:11:23          0   00:11:23   00:11:32      0:0 
-480350.exte+     extern          1        1   00:00:00          0   00:00:00   00:11:32      0:0 
+601738       width512_+          1                                             00:06:05      0:0 
+601738.batch      batch          1        1   00:06:02          0   00:06:02   00:06:05      0:0 
+601738.exte+     extern          1        1   00:00:00          0   00:00:00   00:06:05      0:0 
 
 Memory usage stats:
 JobID            MaxRSS MaxRSSTask     AveRSS MaxPages   MaxPagesTask   AvePages 
 ------------ ---------- ---------- ---------- -------- -------------- ---------- 
-480350                                                                           
-480350.batch    525296K          0    525296K        0              0          0 
-480350.exte+          0          0          0        0              0          0 
+601738                                                                           
+601738.batch    525188K          0    525188K        0              0          0 
+601738.exte+          0          0          0        0              0          0 
 
 Disk usage stats:
 JobID         MaxDiskRead MaxDiskReadTask    AveDiskRead MaxDiskWrite MaxDiskWriteTask   AveDiskWrite 
 ------------ ------------ --------------- -------------- ------------ ---------------- -------------- 
-480350                                                                                                
-480350.batch        5.21M               0          5.21M      553.43M                0        553.43M 
-480350.exte+        0.01M               0          0.01M        0.00M                0          0.00M 
+601738                                                                                                
+601738.batch        5.22M               0          5.22M        0.05M                0          0.05M 
+601738.exte+        0.01M               0          0.01M        0.00M                0          0.00M 
 
-Job 480350 completed at Tue Mar 19 17:14:59 CET 2024
+Job 601738 completed at Mon Apr 29 11:38:30 CEST 2024

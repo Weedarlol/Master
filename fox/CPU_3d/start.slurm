@@ -34,7 +34,7 @@ for SCENARIO in "$@"; do
 
 #SBATCH --job-name=${SCENARIO}_${PARTITION}
 #SBATCH --account=ec12
-#SBATCH --mem-per-cpu=3G
+#SBATCH --mem-per-cpu=4G
 #SBATCH -p ${PARTITION}
 #SBATCH -N 1
 #SBATCH -n 1

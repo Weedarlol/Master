@@ -32,6 +32,7 @@ for SCENARIO in "$@"; do
 #!/bin/bash
 
 #SBATCH --job-name=${SCENARIO}_${PARTITION}
+#SBATCH --account=ec12
 #SBATCH -p ${PARTITION}
 #SBATCH -N ${NODES}                                    # Antall Noder
 #SBATCH -n ${NODES}                            # Total number of tasks (processes)

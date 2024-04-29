@@ -3,8 +3,8 @@
 #include <time.h>
 #include <mpi.h>
 
-#include "programs/cuda_functions.h"
 #include "programs/scenarios.h"
+#include "programs/cuda_functions.h"
 #include <nvtx3/nvToolsExt.h>
 
 
@@ -75,11 +75,9 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
 
     */
 
-   // Creates MPI requests
+
     MPI_Request myRequest[4];
     MPI_Status myStatus[4];
-
-    // Finds number of slices per node
     int depth_node = (depth-2)/size;
     int depth_overlap = (depth-2)%size;
     if(depth_overlap > rank){
@@ -89,21 +87,101 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
         depth_node += 2;
     }
 
-    // Finds number of elements and threads per node
     int total = width*height*depth_node;
     int overlap_calc = overlap*(width-2)*(height-2);
     int threadSize = blockDim.x*blockDim.y*blockDim.z*gridDim.x*gridDim.y*gridDim.z;
 
-    // Initialising CPU and GPU grids
-    double *data, *data_gpu, *data_gpu_tmp;
-    cudaErrorHandle(cudaMallocHost(&data, total*sizeof(double)));
-    cudaErrorHandle(cudaMalloc(&data_gpu, total*sizeof(double)));
-    cudaErrorHandle(cudaMalloc(&data_gpu_tmp, total*sizeof(double)));
+    int *device_nr;
+    cudaErrorHandle(cudaMallocHost(&device_nr, gpus*sizeof(int*)));
+    for(int g = 0; g < gpus; g++){
+        device_nr[g] = g;
+    }
 
-    // Fills grids for each node depending on rank
+    // Ignores first and last slice
+    int slices_total = depth_node-2;
+
+    int slices_per_device = slices_total/gpus;
+    int slices_leftover = slices_total%gpus;
+    int *slices_device, *slices_compute_device, *slices_starting_index;
+    cudaErrorHandle(cudaMallocHost(&slices_device, gpus*sizeof(int*)));
+    cudaErrorHandle(cudaMallocHost(&slices_starting_index, gpus*sizeof(int*)));
+    cudaErrorHandle(cudaMallocHost(&slices_compute_device, gpus*sizeof(int*)));
+    // Calculate the number of slices for each device
+    for (int g = 0; g < gpus; g++) {
+        int extra_slice = (g < slices_leftover) ? 1 : 0;
+        slices_device[g] = slices_per_device + extra_slice + 2;
+        slices_compute_device[g] = slices_per_device + extra_slice - (2*overlap);
+        slices_starting_index[g] = g * slices_per_device + min(g, slices_leftover);
+    }
+
+    double *data;
+    double **data_gpu, **data_gpu_tmp;
+    cudaErrorHandle(cudaMallocHost(&data,          total*sizeof(double)));
+    cudaErrorHandle(cudaMallocHost(&data_gpu,      gpus*sizeof(double*)));
+    cudaErrorHandle(cudaMallocHost(&data_gpu_tmp,  gpus*sizeof(double*)));
+
     fillValues3D(data, width, height, depth_node, dx, dy, dz, rank, depth_overlap);
 
-    // Sends border slices to neighboring nodes,
+    for(int g = 0; g < gpus; g++){
+        cudaErrorHandle(cudaSetDevice(g));
+        cudaErrorHandle(cudaDeviceSynchronize());
+    }
+
+    for(int g = 0; g < gpus; g++){
+        cudaErrorHandle(cudaSetDevice(g));
+        cudaErrorHandle(cudaMalloc(&data_gpu[g],     width*height*slices_device[g]*sizeof(double)));
+        cudaErrorHandle(cudaMalloc(&data_gpu_tmp[g], width*height*slices_device[g]*sizeof(double)));
+    }
+
+    int *threadInformation;
+    cudaErrorHandle(cudaMallocHost(&threadInformation, 6*sizeof(int)));
+    threadInformation[0] = ((slices_compute_device[0])     *(width-2)*(height-2))/threadSize; // Find number of elements to compute for each thread, ignoring border elements.
+    threadInformation[1] = ((slices_compute_device[0])     *(width-2)*(height-2))%threadSize; // Finding which threads require 1 more element
+    threadInformation[2] = ((slices_compute_device[gpus-1])*(width-2)*(height-2))/threadSize; // Find number of elements to compute for each thread, ignoring border elements.
+    threadInformation[3] = ((slices_compute_device[gpus-1])*(width-2)*(height-2))%threadSize; // Finding which threads require 1 more element
+    threadInformation[4] = (1                              *(width-2)*(height-2))/threadSize; // Find number of elements for each thread for a slice, if 0 it means there are more threads than elements in slice
+    threadInformation[5] = (1                              *(width-2)*(height-2))%threadSize; // Finding which threads require 1 more element
+
+    
+    void ***kernelCollEdge;
+    cudaErrorHandle(cudaMallocHost(&kernelCollEdge, gpus * sizeof(void**)));
+    // Allocates the elements in the kernelCollEdge, used for cudaLaunchCooperativeKernel as functon variables.
+    for (int g = 0; g < gpus; g++) {
+        void **kernelArgs = new void*[7];
+        kernelArgs[0] = &data_gpu[g];
+        kernelArgs[1] = &data_gpu_tmp[g];
+        kernelArgs[2] = &width;
+        kernelArgs[3] = &height;
+        kernelArgs[4] = &slices_compute_device[g];
+        kernelArgs[5] = &threadInformation[4];
+        kernelArgs[6] = &threadInformation[5];
+
+        kernelCollEdge[g] = kernelArgs;
+    }
+
+    printf("FØR\n");
+
+    void ***kernelCollMid;
+    cudaErrorHandle(cudaMallocHost(&kernelCollMid, gpus * sizeof(void**)));
+    // Allocates the elements in the kernelCollMid, used for cudaLaunchCooperativeKernel as functon variables.
+    for (int g = 0; g < gpus; g++) {
+        void **kernelArgs = new void*[12];
+        kernelArgs[0] = &data_gpu[g];     
+        kernelArgs[1] = &data_gpu_tmp[g];
+        kernelArgs[2] = &width;
+        kernelArgs[3] = &height;
+        kernelArgs[4] = &slices_leftover;
+        kernelArgs[5] = &device_nr[g];
+        kernelArgs[6] = &slices_compute_device[g];
+        kernelArgs[7] = &threadInformation[0];
+        kernelArgs[8] = &threadInformation[1];
+        kernelArgs[9] = &threadInformation[2];
+        kernelArgs[10] = &threadInformation[3];
+        kernelArgs[11] = &overlap_calc;
+
+        kernelCollMid[g] = kernelArgs;
+    }
+
     if(rank == 0){
         MPI_Isend(&data[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[0]);
         MPI_Irecv(&data[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[1]); 
@@ -121,48 +199,50 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     }
     MPI_Waitall(rank == 0 || rank == size - 1 ? 2 : 4, myRequest, myStatus);
 
-    cudaErrorHandle(cudaDeviceSynchronize());
-    // Sends the grid from the CPU memory to GPU memory
-    cudaErrorHandle(cudaMemcpy(data_gpu, data, total*sizeof(double), cudaMemcpyHostToDevice));
-    cudaErrorHandle(cudaMemset(data_gpu_tmp, 0, total*sizeof(double)));
+    printf("Etter!\n");
 
+    for(int g = 0; g < gpus; g++){
+        cudaErrorHandle(cudaSetDevice(g));
+        cudaErrorHandle(cudaMemcpy(data_gpu[g], data+slices_starting_index[g]*width*height, slices_device[g]*width*height*sizeof(double), cudaMemcpyHostToDevice));
+    }
 
-    int jacobiSize = (width - 2) * (height - 2) * (depth_node - 2 - 2*overlap);
-    int elementsPerThread = jacobiSize / threadSize;
-    int leftover = jacobiSize % threadSize;
-    int elementsPerThreadOverlap = ((width-2)*(height-2))/threadSize;
-    int leftoverOverlap = ((width-2)*(height-2))%threadSize;
-
-
-
-
-    // Creates an array where its elements are features in cudaLaunchCooperativeKernel
-    void *kernelMid[] = {&data_gpu, &data_gpu_tmp, &width, &height, &threadSize, &elementsPerThread, &leftover, &overlap_calc};
-    void *kernelEdge[] = {&data_gpu, &data_gpu_tmp, &width, &height, &depth_node, &threadSize, &elementsPerThreadOverlap, &leftoverOverlap};
-
-    if(overlap == 1){
-        full_calculation_overlap(data_gpu, data_gpu_tmp, width, height, depth_node, iter, rank, size, gridDim, blockDim, kernelMid, kernelEdge);
+    printf("depth_node %i, gpus = %i, rank %i, size = %i, slices_device = %i\n", depth_node, gpus, rank, size, slices_device);
+    printf("threadinformation[0] = %i, threadinformation[1] = %i, threadinformation[2] = %i, threadinformation[3] = %i\n\n", threadInformation[0], threadInformation[1], threadInformation[2], threadInformation[3]);
+    
+    if(gpus < 2){
+        printf("You are running on less than 2 gpus, to be able to communicate between gpus you are required to compute on more than 1 gpu.\n");
     }
     else{
-        full_calculation_nooverlap(data_gpu, data_gpu_tmp, width, height, depth_node, iter, rank, size, gridDim, blockDim, kernelMid);
+        if(overlap == 1){
+            if(test == 0){
+                full_calculation_overlap(data_gpu, data_gpu_tmp, width, height, depth_node, iter, gpus, rank, size, slices_device, gridDim, blockDim, kernelCollEdge, kernelCollMid);
+            }
+        }
+        else{
+            if(test == 0){
+                full_calculation_nooverlap(data_gpu, data_gpu_tmp, width, height, depth_node, iter, gpus, rank, size, slices_device, gridDim, blockDim, kernelCollMid);
+            }
+        }
     }
-
-
-
-
 
 
     
-    cudaErrorHandle(cudaDeviceSynchronize());
+    for(int g = 0; g < gpus; g++){
+        cudaErrorHandle(cudaSetDevice(g));
+        cudaErrorHandle(cudaDeviceSynchronize());
+    }
 
-    // Copies data back from GPU memory into CPU memory
-    cudaErrorHandle(cudaMemcpyAsync(data, data_gpu, total*sizeof(double), cudaMemcpyDeviceToHost));
+    for(int g = 0; g < gpus; g++){
+        cudaErrorHandle(cudaSetDevice(g));
+        cudaErrorHandle(cudaMemcpyAsync(data + (slices_starting_index[g]+1)*width*height, data_gpu[g] + width*height, (slices_compute_device[g]+2*overlap)*width*height*sizeof(double), cudaMemcpyDeviceToHost));
+    }
 
-    cudaErrorHandle(cudaDeviceSynchronize());
+    for(int g = 0; g < gpus; g++){
+        cudaErrorHandle(cudaSetDevice(g));
+        cudaErrorHandle(cudaDeviceSynchronize());
+    }
+    cudaErrorHandle(cudaSetDevice(0));
 
-    // Combines the different node grid data all into Node 1 memory, so we can compare to original grid
-    double *data_combined;
-    cudaErrorHandle(cudaMallocHost(&data_combined, width*height*depth*sizeof(double)));
     int displacement[size];
     int counts[size];
     if(rank < depth_overlap){
@@ -197,29 +277,30 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
             }
         }
     }
-    
 
-    if (rank == 1) {
-        data_combined = (double*)malloc(width*height*depth * sizeof(double));
-    }
-
-    MPI_Allgatherv(&data[width*height], width*height*(depth_node-2), MPI_DOUBLE, 
-                data_combined + width * height, counts, displacement, MPI_DOUBLE, MPI_COMM_WORLD);
+    double *data_combined;
+    cudaErrorHandle(cudaMallocHost(&data_combined, width*height*depth*sizeof(double)));
+    MPI_Gatherv(&data[width*height], width*height*(depth_node-2), MPI_DOUBLE, 
+                &data_combined[width*height], counts, displacement, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
 
-    // Used to compare the grid to the grid which only the CPU created
+
     if(rank == 0){
+    // Used to compare the grid to the grid which only the CPU created
         if(compare == 1){
             double* data_compare = (double*)malloc(width * height * depth* sizeof(double));
             FILE *fptr;
             char filename[100];
             sprintf(filename, "../CPU_3d/grids/CPUGrid%d_%d_%d.txt", width, height, depth);
+
             printf("Comparing the grids\n");
+
             fptr = fopen(filename, "r");
             if (fptr == NULL) {
                 printf("Error opening file.\n");
                 exit(EXIT_FAILURE);
             }
+
             // Read grid values from the file
             for(int i = 0; i < depth; i++){
                 for (int j = 0; j < height; j++) {
@@ -233,7 +314,10 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
                     }
                 }
             }
+            
+
             fclose(fptr);
+
             for(int i = 0; i < depth; i++){
                 for (int j = 0; j < height; j++) {
                     for (int k = 0; k < width; k++) {
@@ -250,7 +334,26 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
             free(data_compare);
         }
     }
-}
+    
+
+
+
+    // Frees up memory as we are finished with the program
+    for(int g = 0; g < gpus; g++){
+        cudaErrorHandle(cudaSetDevice(g));
+        cudaErrorHandle(cudaFree(data_gpu[g]));
+        cudaErrorHandle(cudaFree(data_gpu_tmp[g]));
+    }
+    cudaErrorHandle(cudaFreeHost(data));
+    cudaErrorHandle(cudaFreeHost(data_gpu));
+    cudaErrorHandle(cudaFreeHost(data_gpu_tmp));
+    cudaErrorHandle(cudaFreeHost(threadInformation));
+    cudaErrorHandle(cudaFreeHost(device_nr));
+    cudaErrorHandle(cudaFreeHost(slices_device));
+    cudaErrorHandle(cudaFreeHost(slices_starting_index));
+    cudaErrorHandle(cudaFreeHost(slices_compute_device));
+
+ }
 
 
 

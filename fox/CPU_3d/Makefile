@@ -1,7 +1,7 @@
 # Define different grid sizes
-WIDTH = 129
-HEIGHT = 128
-DEPTH = 128
+WIDTH = 512
+HEIGHT = 512
+DEPTH = 512
 
 # Number of max iterations to run for the scenario
 ITERATIONS = 10000
@@ -9,7 +9,7 @@ ITERATIONS = 10000
 # Chooses which partition to run at.
 PARTITION = accel
 
-CREATEGRID = 1
+CREATEGRID = 0
 
 # Create a list of run identifiers for all combinations
 RUN_IDENTIFIERS = $(foreach width,$(WIDTH), \
@@ -19,7 +19,7 @@ RUN_IDENTIFIERS = $(foreach width,$(WIDTH), \
 	
 submit:
 	$(foreach partition,$(PARTITION), \
-		sbatch --account=ec12 -p $(partition) --time=00-00:01:00 --mem-per-cpu=3G --gpus-per-node=0  ./start.slurm $(partition) $(RUN_IDENTIFIERS); \
+		sbatch --account=ec12 -p $(partition) --time=00-00:01:00 --mem-per-cpu=4G --gpus-per-node=0  ./start.slurm $(partition) $(RUN_IDENTIFIERS); \
 	)
 
 
@@ -36,4 +36,4 @@ clean_all:
 	rm -rf slurm* out_* output/* error/*
 
 cancel:
-	scancel -u vidaro
+	scancel -u ec-vidarlol
