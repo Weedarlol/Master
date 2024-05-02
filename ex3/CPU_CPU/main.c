@@ -54,8 +54,8 @@ int main(int argc, char *argv[]) {
     MPI_Request myRequest[4];
     MPI_Status myStatus[4];
 
-    if (argc != 7) {
-        printf("Wrong number of inputs\n Required inputs: %s <Width> <Height> <Depth> <Iterations> <Node> <Compare> <Overlap>", argv[0]); // Programname
+    if (argc != 8) {
+        printf("Wrong number of inputs\n Required inputs: %s <Width> <Height> <Depth> <Iterations> <Node> <Compare> <Overlap> <Test>", argv[0]); // Programname
         return 1;
     }
 
@@ -65,6 +65,7 @@ int main(int argc, char *argv[]) {
     int iter = atoi(argv[4]);
     int compare = atoi(argv[5]);
     int overlap = atoi(argv[6]);
+    int test = atoi(argv[7]);
 
     int depth_node = (depth-2)/size;
     int depth_overlap = (depth-2)%size;
@@ -108,94 +109,205 @@ int main(int argc, char *argv[]) {
         MPI_Irecv(&data[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[3]);
     }
     MPI_Waitall(rank == 0 || rank == size - 1 ? 2 : 4, myRequest, myStatus);
+    MPI_Barrier(MPI_COMM_WORLD);
 
     start = clock();
     double division = 1/6.0;
 
+    MPI_Barrier(MPI_COMM_WORLD);
+
 
     /* Performing Jacobian grid Calculation */
-    // Performing a number of iterations while statement is not satisfied
     if(overlap == 0){
-        if(rank == 0){
-            while(iter > 0){
-                for(int i = 1; i < depth_node - 1; i++){
-                    for(int j = 1; j < height - 1; j++){
-                        for(int k = 1; k < width - 1; k++) {
-                            int index = k + j * width + i * width * height;
-                            data_tmp[index] = division * (
-                            data[index + 1]            + data[index - 1] +
-                            data[index + width]        + data[index - width] +
-                            data[index + width*height] + data[index - width*height]);
+        // Full calculation
+        if(test == 0){
+            if(rank == 0){
+                while(iter > 0){
+                    for(int i = 1; i < depth_node - 1; i++){
+                        for(int j = 1; j < height - 1; j++){
+                            for(int k = 1; k < width - 1; k++) {
+                                int index = k + j * width + i * width * height;
+                                data_tmp[index] = division * (
+                                data[index + 1]            + data[index - 1] +
+                                data[index + width]        + data[index - width] +
+                                data[index + width*height] + data[index - width*height]);
+                            }
                         }
                     }
+
+                    MPI_Isend(&data_tmp[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[0]);
+                    MPI_Irecv(&data_tmp[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[1]); 
+                    MPI_Waitall(2, myRequest, myStatus);
+
+                    double *data_tmp_swap = data_tmp;
+                    data_tmp = data;
+                    data = data_tmp_swap;
+
+                    iter--;
                 }
-                /* MPI_Sendrecv(&data_tmp[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0,
-                            &data_tmp[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myStatus[0]); */
-                MPI_Isend(&data_tmp[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[0]);
-                MPI_Irecv(&data_tmp[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[1]); 
-                MPI_Waitall(2, myRequest, myStatus);
-                /* MPI_Send(&data_tmp[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD);
-                MPI_Recv(&data_tmp[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myStatus[1]);  */
-
-                double *data_tmp_swap = data_tmp;
-                data_tmp = data;
-                data = data_tmp_swap;
-
-                iter--;
             }
-        }
-        else if(rank == size-1){
-            while(iter > 0){
-                for(int i = 1; i < depth_node - 1; i++){
-                    for(int j = 1; j < height - 1; j++){
-                        for(int k = 1; k < width - 1; k++) {
-                            int index = k + j * width + i * width * height;
-                            data_tmp[index] = division * (
-                            data[index + 1]            + data[index - 1] +
-                            data[index + width]        + data[index - width] +
-                            data[index + width*height] + data[index - width*height]);
+            else if(rank == size-1){
+                while(iter > 0){
+                    for(int i = 1; i < depth_node - 1; i++){
+                        for(int j = 1; j < height - 1; j++){
+                            for(int k = 1; k < width - 1; k++) {
+                                int index = k + j * width + i * width * height;
+                                data_tmp[index] = division * (
+                                data[index + 1]            + data[index - 1] +
+                                data[index + width]        + data[index - width] +
+                                data[index + width*height] + data[index - width*height]);
+                            }
                         }
                     }
+
+                    MPI_Irecv(&data_tmp[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[0]); 
+                    MPI_Isend(&data_tmp[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[1]); 
+                    MPI_Waitall(2, myRequest, myStatus);
+
+                    double *data_tmp_swap = data_tmp;
+                    data_tmp = data;
+                    data = data_tmp_swap;
+
+                    iter--;
                 }
-                /* MPI_Sendrecv(&data_tmp[width*height], width*height, MPI_DOUBLE, rank-1, 0, 
-                            &data_tmp[0], width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myStatus[0]); */
-                MPI_Irecv(&data_tmp[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[0]); 
-                MPI_Isend(&data_tmp[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[1]); 
-                MPI_Waitall(2, myRequest, myStatus);
-                /* MPI_Recv(&data_tmp[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myStatus[0]); 
-                MPI_Send(&data_tmp[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD); */
+            }
+            else{
+                while(iter > 0){
+                    for(int i = 1; i < depth_node - 1; i++){
+                        for(int j = 1; j < height - 1; j++){
+                            for(int k = 1; k < width - 1; k++) {
+                                int index = k + j * width + i * width * height;
+                                data_tmp[index] = division * (
+                                data[index + 1]            + data[index - 1] +
+                                data[index + width]        + data[index - width] +
+                                data[index + width*height] + data[index - width*height]);
+                            }
+                        }
+                    }
+                    MPI_Irecv(&data_tmp[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[0]);
+                    MPI_Isend(&data_tmp[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[1]); 
 
-                double *data_tmp_swap = data_tmp;
-                data_tmp = data;
-                data = data_tmp_swap;
+                    MPI_Isend(&data_tmp[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[2]);
+                    MPI_Irecv(&data_tmp[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[3]);
+                    MPI_Waitall(4, myRequest, myStatus);
 
-                iter--;
+                    double *data_tmp_swap = data_tmp;
+                    data_tmp = data;
+                    data = data_tmp_swap;
+
+                    iter--;
+                }
             }
         }
+        // Only computation
+        else if(test == 2){
+            if(rank == 0){
+                while(iter > 0){
+                    for(int i = 1; i < depth_node - 1; i++){
+                        for(int j = 1; j < height - 1; j++){
+                            for(int k = 1; k < width - 1; k++) {
+                                int index = k + j * width + i * width * height;
+                                data_tmp[index] = division * (
+                                data[index + 1]            + data[index - 1] +
+                                data[index + width]        + data[index - width] +
+                                data[index + width*height] + data[index - width*height]);
+                            }
+                        }
+                    }
+
+                    double *data_tmp_swap = data_tmp;
+                    data_tmp = data;
+                    data = data_tmp_swap;
+
+                    iter--;
+                }
+            }
+            else if(rank == size-1){
+                while(iter > 0){
+                    for(int i = 1; i < depth_node - 1; i++){
+                        for(int j = 1; j < height - 1; j++){
+                            for(int k = 1; k < width - 1; k++) {
+                                int index = k + j * width + i * width * height;
+                                data_tmp[index] = division * (
+                                data[index + 1]            + data[index - 1] +
+                                data[index + width]        + data[index - width] +
+                                data[index + width*height] + data[index - width*height]);
+                            }
+                        }
+                    }
+
+                    double *data_tmp_swap = data_tmp;
+                    data_tmp = data;
+                    data = data_tmp_swap;
+
+                    iter--;
+                }
+            }
+            else{
+                while(iter > 0){
+                    for(int i = 1; i < depth_node - 1; i++){
+                        for(int j = 1; j < height - 1; j++){
+                            for(int k = 1; k < width - 1; k++) {
+                                int index = k + j * width + i * width * height;
+                                data_tmp[index] = division * (
+                                data[index + 1]            + data[index - 1] +
+                                data[index + width]        + data[index - width] +
+                                data[index + width*height] + data[index - width*height]);
+                            }
+                        }
+                    }
+
+                    double *data_tmp_swap = data_tmp;
+                    data_tmp = data;
+                    data = data_tmp_swap;
+
+                    iter--;
+                }
+            }
+        }
+        // Only communication
         else{
-            while(iter > 0){
-                for(int i = 1; i < depth_node - 1; i++){
-                    for(int j = 1; j < height - 1; j++){
-                        for(int k = 1; k < width - 1; k++) {
-                            int index = k + j * width + i * width * height;
-                            data_tmp[index] = division * (
-                            data[index + 1]            + data[index - 1] +
-                            data[index + width]        + data[index - width] +
-                            data[index + width*height] + data[index - width*height]);
-                        }
-                    }
+            if(rank == 0){
+                while(iter > 0){
+                    MPI_Isend(&data_tmp[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[0]);
+                    MPI_Irecv(&data_tmp[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[1]); 
+                    MPI_Waitall(2, myRequest, myStatus);
+
+                    double *data_tmp_swap = data_tmp;
+                    data_tmp = data;
+                    data = data_tmp_swap;
+
+                    iter--;
                 }
-                MPI_Irecv(&data_tmp[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[0]);
-                MPI_Isend(&data_tmp[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[1]); 
-                MPI_Isend(&data_tmp[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[2]);
-                MPI_Irecv(&data_tmp[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[3]);
-                MPI_Waitall(4, myRequest, myStatus);
+            }
+            else if(rank == size-1){
+                while(iter > 0){
+                    MPI_Irecv(&data_tmp[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[0]); 
+                    MPI_Isend(&data_tmp[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[1]); 
+                    MPI_Waitall(2, myRequest, myStatus);
 
-                double *data_tmp_swap = data_tmp;
-                data_tmp = data;
-                data = data_tmp_swap;
+                    double *data_tmp_swap = data_tmp;
+                    data_tmp = data;
+                    data = data_tmp_swap;
 
-                iter--;
+                    iter--;
+                }
+            }
+            else{
+                while(iter > 0){
+                    MPI_Irecv(&data_tmp[0],                           width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[0]);
+                    MPI_Isend(&data_tmp[width*height],                width*height, MPI_DOUBLE, rank-1, 0, MPI_COMM_WORLD, &myRequest[1]); 
+
+                    MPI_Isend(&data_tmp[width*height*(depth_node-2)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[2]);
+                    MPI_Irecv(&data_tmp[width*height*(depth_node-1)], width*height, MPI_DOUBLE, rank+1, 0, MPI_COMM_WORLD, &myRequest[3]);
+                    MPI_Waitall(4, myRequest, myStatus);
+
+                    double *data_tmp_swap = data_tmp;
+                    data_tmp = data;
+                    data = data_tmp_swap;
+
+                    iter--;
+                }
             }
         }
     }
@@ -317,6 +429,7 @@ int main(int argc, char *argv[]) {
     }
 
 
+    MPI_Barrier(MPI_COMM_WORLD);
 
     end = clock();
     printf("Time(event) - %.5f s\n", ((double) (end - start)) / CLOCKS_PER_SEC);

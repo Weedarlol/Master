@@ -48,8 +48,9 @@ for SCENARIO in "$@"; do
 
 #SBATCH --job-name=${SCENARIO}_${PARTITION}_GPU${NUM_GPUS}
 #SBATCH -p ${PARTITION}
+#SBATCH --reservation=vidaro_21
 #SBATCH -N 1                                  # Antall noder, i dgx2q så er det bare 1 node bygd opp av DualProcessor AMD EPYC Milan 7763 64-core w/ 8 qty Nvidia Volta A100/80GB
-#SBATCH -n 1                                  # Antall CPU cores som vil bli allokert
+#SBATCH -n 1                                  # Prosesser
 #SBATCH -t 14:00:00
 #SBATCH --ntasks-per-node=1                   # Antall ganger en vil kjøre programmet på hver node
 #SBATCH --cpus-per-task=1                     # Antall CPUer en vil allokere, er 64 cores per CPU, så kan i teorien bare trenge å øke dene når -n > 64
@@ -61,10 +62,6 @@ for SCENARIO in "$@"; do
 
 module purge
 module load slurm/21.08.8
-module load cuda11.8/blas/11.8.0
-module load cuda11.8/fft/11.8.0
-module load cuda11.8/nsight/11.8.0
-module load cuda11.8/profiler/11.8.0
 module load cuda11.8/toolkit/11.8.0
 
 

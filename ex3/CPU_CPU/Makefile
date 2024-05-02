@@ -14,6 +14,8 @@ COMPARE = 1
 
 OVERLAP = 0
 
+TEST = 0
+
 # Chooses which partition to run at. Only one at a time
 PARTITION = a100q
 
@@ -24,7 +26,7 @@ RUN_IDENTIFIERS = $(foreach width,$(WIDTH), \
 					$(foreach depth,$(DEPTH), \
 					$(foreach node,$(NODES), \
 					$(foreach overlap,$(OVERLAP), \
-					width$(width)_height$(height)_depth$(depth)_gpu0_nodes$(node)_iter$(ITERATIONS)_compare$(COMPARE)_overlap$(overlap)_test0_createGrid0)))))
+					width$(width)_height$(height)_depth$(depth)_gpu0_nodes$(node)_iter$(ITERATIONS)_compare$(COMPARE)_overlap$(overlap)_test$(TEST)_createGrid0)))))
 
 
 submit:

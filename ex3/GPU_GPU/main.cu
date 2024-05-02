@@ -209,10 +209,10 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     printf("depth_node %i, gpus = %i, rank %i, size = %i, slices_device = %i\n", depth_node, gpus, rank, size, slices_device);
     printf("threadinformation[0] = %i, threadinformation[1] = %i, threadinformation[2] = %i, threadinformation[3] = %i\n\n", threadInformation[0], threadInformation[1], threadInformation[2], threadInformation[3]);
     
-    if(gpus < 2){
+    /* if(gpus < 2){
         printf("You are running on less than 2 gpus, to be able to communicate between gpus you are required to compute on more than 1 gpu.\n");
     }
-    else{
+    else{ */
         if(overlap == 1){
             if(test == 0){
                 full_calculation_overlap(data_gpu, data_gpu_tmp, width, height, depth_node, iter, gpus, rank, size, slices_device, gridDim, blockDim, kernelCollEdge, kernelCollMid);
@@ -223,7 +223,7 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
                 full_calculation_nooverlap(data_gpu, data_gpu_tmp, width, height, depth_node, iter, gpus, rank, size, slices_device, gridDim, blockDim, kernelCollMid);
             }
         }
-    }
+    //}
 
     printf("sist!\n");
 

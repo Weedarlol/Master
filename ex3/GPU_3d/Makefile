@@ -19,7 +19,7 @@ OVERLAP = 0 1
 TEST = 0 3 4
 
 # Chooses which partition to run at. Only one at a time
-PARTITION = hgx2q
+PARTITION = a100q
 
 
 # Create a list of run identifiers for all combinations

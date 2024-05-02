@@ -22,7 +22,7 @@ for SCENARIO in "$@"; do
     VAR1=$WIDTH
     VAR2=$HEIGHT
     VAR3=$DEPTH
-    VAR4=$ITERATIONS
+    VAR4=$ITERATIONSma
     VAR5=$CREATEGRID
 
     # Create a temporary Slurm script for this scenario

@@ -16,6 +16,7 @@ for SCENARIO in "$@"; do
     ITERATIONS=$(echo $SCENARIO | awk -F'iter' '{print $2}' | awk -F'_' '{print $1}')
     COMPARE=$(echo $SCENARIO | awk -F'compare' '{print $2}' | awk -F'_' '{print $1}')
     OVERLAP=$(echo $SCENARIO | awk -F'overlap' '{print $2}' | awk -F'_' '{print $1}')
+    TEST=$(echo $SCENARIO | awk -F'test' '{print $2}' | awk -F'_' '{print $1}')
 
     # Define the variable values
     VAR1=$WIDTH # Width
@@ -24,6 +25,7 @@ for SCENARIO in "$@"; do
     VAR4=$ITERATIONS  # Iterations
     VAR5=$COMPARE
     VAR6=$OVERLAP
+    VAR7=$TEST
 
     # Create a temporary Slurm script for this scenario
     TEMP_SCRIPT="slurm_script_${SCENARIO}_${PARTITION}.sh"
@@ -32,7 +34,7 @@ for SCENARIO in "$@"; do
 #!/bin/bash
 
 #SBATCH --job-name=${SCENARIO}_${PARTITION}
-#SBATCH --account=ec12
+#SBATCH --reservation=vidaro_21
 #SBATCH -p ${PARTITION}
 #SBATCH -N ${NODES}                                    # Antall Noder
 #SBATCH -n ${NODES}                            # Total number of tasks (processes)
@@ -50,7 +52,7 @@ module load openmpi4/gcc/4.1.5
 
 nvcc main.c -o out_${SCENARIO}_${PARTITION} -I$CPATH -L$LD_LIBRARY_PATH /cm/shared/apps/openmpi4/gcc/4.1.5/lib/libmpi.so -O3
 
-mpirun --mca btl_openib_allow_ib true -x OMPI_MCA_pmpi_profiling=1 -n ${NODES} out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5 $VAR6
+mpirun --mca btl_openib_allow_ib true -x OMPI_MCA_pmpi_profiling=1 -n ${NODES} out_${SCENARIO}_${PARTITION} $VAR1 $VAR2 $VAR3 $VAR4 $VAR5 $VAR6 $VAR7
 
 exit 0
 

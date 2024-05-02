@@ -46,6 +46,7 @@ for SCENARIO in "$@"; do
 
 #SBATCH --job-name=${SCENARIO}_${PARTITION}
 #SBATCH --mem-per-gpu=4G
+#SBATCH --reservation=vidaro_21
 #SBATCH -p ${PARTITION}
 #SBATCH -N 1                                   # Antall Noder
 #SBATCH -t 14:00:00

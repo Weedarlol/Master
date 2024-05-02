@@ -61,8 +61,10 @@ for SCENARIO in "$@"; do
 module purge
 module load slurm/21.08.8
 module load gcc11/11.3.0
-module load cuda12.0/toolkit/12.0.1
-module load openmpi4/gcc/4.1.5
+#module load cuda12.0/toolkit/12.0.1
+#module load openmpi4/gcc/4.1.5
+module load cuda11.8/toolkit/11.8.0
+module load openmpi4-cuda11.8-ofed5-gcc11/4.1.4
 
 
 nvcc $SOURCES -o out_${SCENARIO}_${PARTITION} -I$CPATH -L$LD_LIBRARY_PATH /cm/shared/apps/openmpi4/gcc/4.1.5/lib/libmpi.so -O3
