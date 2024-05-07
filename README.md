@@ -8,6 +8,11 @@
 - Parallel Programming
 - Computational Bioinformatics
 
+```bash
+python3 CGI.py x
+```
+
+
 ## Introduction
 
 The need for more computing power applies to all subjects of computational science. This is no exception in the case of computational bioinformatics, where typical applications that require supercomputing power include DNA sequence analytics and molecular dynamics simulations. Another timely example is the modeling of the spread of viruses.
