@@ -60,7 +60,7 @@ Fox had several nodes i was utilizing called "Accel" nodes, each of these nodes 
 ## Ex3 Cluster
 The Ex3 cluster was provided to me by Simula Research Laboratory through my project guidance Xing Cai.
 
-Ex3 had 3 partitions i was utilizing, "Dgx2q" and "Hgx2q". Each corresponding to only 1 node.
+Ex had 3 partitions i was utilizing, the first two of them "Dgx2q" and "Hgx2q" were containing only 1 Node. While the last "A100q" contained 2 nodes.
 
 Dgx2q was the less powerfull of the two partitions and it was made up of an [Dgx2](https://www.nvidia.com/content/dam/en-zz/Solutions/Data-Center/dgx-1/dgx-2-datasheet-us-nvidia-955420-r2-web-new.pdf) machine, but with the following parts
 - DualProcessor Intel Xeon Scalable Platinum 8176 CPU
@@ -69,6 +69,10 @@ Dgx2q was the less powerfull of the two partitions and it was made up of an [Dgx
 Hgx2q is the more powerfull partition and is also made up of its own machine called [Hgx2](https://images.nvidia.com/content/pdf/hgx2-datasheet.pdf), but with the following parts
 - DualProcessor AMD EPYC Milan 7763 64-core CPU
 - 8x Nvidia A100/80GB GPUs
+
+A100q is a more versitile partition, made up of two interconnected A100 machines. Each of these machines are made up of the following parts.
+- DualProcessor AMD EPYC Milan 7763 64-core CPU
+- 8 Nvidia A100 GPUs
 
 # Tasks
 ## CPU
