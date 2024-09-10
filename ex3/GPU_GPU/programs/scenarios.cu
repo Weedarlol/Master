@@ -160,10 +160,6 @@ void full_calculation_overlap(double **data_gpu, double **data_gpu_tmp, int widt
             double *data_change = data_gpu[g];
             data_gpu[g] = data_gpu_tmp[g];
             data_gpu_tmp[g] = data_change;
-            
-            /* void *temp_mid = kernelMid[g][0];
-            kernelMid[g][0] = kernelMid[g][1];
-            kernelMid[g][1] = temp_mid; */
         }
 
 

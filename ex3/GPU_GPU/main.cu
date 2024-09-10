@@ -159,8 +159,6 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
         kernelCollEdge[g] = kernelArgs;
     }
 
-    printf("FØR\n");
-
     void ***kernelCollMid;
     cudaErrorHandle(cudaMallocHost(&kernelCollMid, gpus * sizeof(void**)));
     // Allocates the elements in the kernelCollMid, used for cudaLaunchCooperativeKernel as functon variables.
@@ -199,33 +197,20 @@ void initialization(int width, int height, int depth, int iter, double dx, doubl
     }
     MPI_Waitall(rank == 0 || rank == size - 1 ? 2 : 4, myRequest, myStatus);
 
-    printf("Etter!\n");
-
     for(int g = 0; g < gpus; g++){
         cudaErrorHandle(cudaSetDevice(g));
         cudaErrorHandle(cudaMemcpy(data_gpu[g], data+slices_starting_index[g]*width*height, slices_device[g]*width*height*sizeof(double), cudaMemcpyHostToDevice));
     }
-
-    printf("depth_node %i, gpus = %i, rank %i, size = %i, slices_device = %i\n", depth_node, gpus, rank, size, slices_device);
-    printf("threadinformation[0] = %i, threadinformation[1] = %i, threadinformation[2] = %i, threadinformation[3] = %i\n\n", threadInformation[0], threadInformation[1], threadInformation[2], threadInformation[3]);
-    
-    /* if(gpus < 2){
-        printf("You are running on less than 2 gpus, to be able to communicate between gpus you are required to compute on more than 1 gpu.\n");
+    if(overlap == 1){
+        if(test == 0){
+            full_calculation_overlap(data_gpu, data_gpu_tmp, width, height, depth_node, iter, gpus, rank, size, slices_device, gridDim, blockDim, kernelCollEdge, kernelCollMid);
+        }
     }
-    else{ */
-        if(overlap == 1){
-            if(test == 0){
-                full_calculation_overlap(data_gpu, data_gpu_tmp, width, height, depth_node, iter, gpus, rank, size, slices_device, gridDim, blockDim, kernelCollEdge, kernelCollMid);
-            }
+    else{
+        if(test == 0){
+            full_calculation_nooverlap(data_gpu, data_gpu_tmp, width, height, depth_node, iter, gpus, rank, size, slices_device, gridDim, blockDim, kernelCollMid);
         }
-        else{
-            if(test == 0){
-                full_calculation_nooverlap(data_gpu, data_gpu_tmp, width, height, depth_node, iter, gpus, rank, size, slices_device, gridDim, blockDim, kernelCollMid);
-            }
-        }
-    //}
-
-    printf("sist!\n");
+    }
 
 
     

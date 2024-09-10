@@ -1,2 +1,0 @@
-/var/spool/slurmd/job497511/slurm_script: line 28:  8498 Killed                  ./out_width1024_height1024_depth1024_gpu2_iter10000_compare1_overlap1_test0_accel 1024 1024 1024 10000 2 1 1 0
-slurmstepd: error: Detected 1 oom_kill event in StepId=497511.batch. Some of the step tasks have been OOM Killed.

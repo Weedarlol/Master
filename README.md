@@ -8,11 +8,6 @@
 - Parallel Programming
 - Computational Bioinformatics
 
-```bash
-python3 CGI.py x
-```
-
-
 ## Introduction
 
 The need for more computing power applies to all subjects of computational science. This is no exception in the case of computational bioinformatics, where typical applications that require supercomputing power include DNA sequence analytics and molecular dynamics simulations. Another timely example is the modeling of the spread of viruses.
@@ -34,6 +29,18 @@ The candidate will learn about advanced parallel programming applicable to both 
 The candidate is expected to be skillful in technical programming (experience with parallel programming is not required but preferred). Importantly, the candidate must be hardworking and eager to learn new skills and knowledge, such as basic mathematical modeling and basic bioinformatics applications.
 
 
+# How to run
+
+Each subfolder of ex3 is a specified scenario where the parameters are specified in the Makefile document. The documents specifies the sizes and quantity of processors as well as at which partitions it wants to run.
+
+To run a specified scenario, enter the folder and write "make" to start the program with the parameters specified.
+
+
+## Output
+
+The output is written into files in either "error" or "output" folder, where the name specifies the parameters used, and the content specifies how long it took and if it ran correctly.
+
+The test parameter for the files specifies which type of program is run, 0 = full program, 3 = only calculation, 4 = only communication.
 
 # Content Information
 
@@ -43,7 +50,7 @@ These two clusters was chosen as they contained nodes which contained both CPUs 
 
 The folders "ex3" and "fox" are therefore each assigned to their own cluster, but they are in practice quite similar in code. The biggest difference is that i do not have the opportunity to perform cross-node computation in the "ex3" cluster as the partition i wanted to use there called "a100q" is occupied most of the time.
 
-## Fox cluster
+## Fox cluster(OUTDATED/REMOVED)
 The fox cluster was provided to me by Educloud Research through my masterstudent status at University of Oslo
 
 Fox had several nodes i was utilizing called "Accel" nodes, each of these nodes consisted of the following parts
@@ -77,17 +84,16 @@ Hgx2q is the more powerfull partition and is also made up of its own machine cal
 ## Nodes
 - [x] CPU to CPU
 - [x] CPU to 1GPU
-- [ ] CPU to GPU
-- [ ] GPU to GPU
+- [x] CPU to GPU
+- [x] GPU to GPU
 
 ## Plots
 - [x] 2d plots
 - [x] 3d plots
-- [ ] Communication plot
-- [ ] Node plot
+- [x] Communication plot
+- [x] Node plot
 
 ## General
-- [ ] Create one folder for all clusters
-- [ ] Clean up github
-- [ ] Finish tests
-- [ ] Finish Master Document
+- [x] Clean up github
+- [x] Finish tests
+- [x] Finish Master Document
